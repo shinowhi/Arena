@@ -30,7 +30,7 @@ Base URL, model, and key are env-configurable (`META_MODEL_API_BASE_URL`, `META_
 ```bash
 npm install
 cp .env.example .env.local   # fill in keys, never commit .env.local
-# Apply supabase/migrations/0001_init.sql in your Supabase project (SQL editor)
+# Apply supabase/migrations/*.sql in order in your Supabase project (SQL editor)
 node scripts/seed.mjs        # optional demo data, labeled seed-demo
 npm run dev
 ```
