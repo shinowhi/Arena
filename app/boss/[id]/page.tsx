@@ -2,6 +2,9 @@
 import { Suspense, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import katex from "katex";
+import { skillName } from "@/lib/graph/skills";
+import HpBar from "@/components/HpBar";
+import BossAvatar from "@/components/BossAvatar";
 
 type BossView = {
   id: string;
@@ -11,8 +14,11 @@ type BossView = {
   status: string;
   despawn_at: string;
   correct_indices: number[];
+  verified_count: number;
   questions: Array<{ level: number; prompt_latex: string; hint: string }>;
 };
+
+const ATTACK_TIMEOUT_MS = 20000;
 
 function fmt(ms: number): string {
   if (ms < 0) ms = 0;
@@ -30,7 +36,9 @@ function BossInner() {
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
-  const [now, setNow] = useState(() => Date.now());
+  const [flash, setFlash] = useState(false);
+  const [dmg, setDmg] = useState(0);
+  const [now, setNow] = useState(() => (typeof window === "undefined" ? 0 : Date.now()));
 
   useEffect(() => {
     fetch("/api/boss/" + id)
@@ -60,25 +68,43 @@ function BossInner() {
     }
     setBusy(true);
     setMsg("");
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ATTACK_TIMEOUT_MS);
     try {
       const res = await fetch("/api/boss/" + id + "/attack", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question_index: idx, answer: n }),
+        body: JSON.stringify({ question_index: idx % boss.questions.length, answer: n }),
+        signal: ctrl.signal,
       });
       const d = await res.json();
+      if (res.status === 410) {
+        // Boss died or expired mid-fight (possibly in another tab): show the end screen.
+        setBoss({ ...boss, status: d.status ?? "EXPIRED" });
+        return;
+      }
       if (!res.ok) throw new Error(d.error ?? "Attack failed.");
       setBoss({ ...boss, current_hp: d.current_hp, status: d.status });
       if (d.correct) {
         setMsg("Hit! -" + d.damage + " HP");
         setAnswer("");
+        setDmg(d.damage);
         setIdx((i) => i + 1);
+        setFlash(true);
+        setTimeout(() => setFlash(false), 600);
       } else {
         setMsg("Miss. Check the hint and try again.");
       }
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Attack failed.");
+      setMsg(
+        e instanceof DOMException && e.name === "AbortError"
+          ? "Attack timed out. Reload to see the latest HP before retrying."
+          : e instanceof Error
+            ? e.message
+            : "Attack failed.",
+      );
     } finally {
+      clearTimeout(timer);
       setBusy(false);
     }
   }
@@ -90,33 +116,59 @@ function BossInner() {
       </main>
     );
   }
-  const q = boss.questions[Math.min(idx, boss.questions.length - 1)];
+  // Cycle questions so high-HP (World) bosses stay killable after question 5.
+  const q = boss.questions[idx % boss.questions.length];
   const pct = Math.max(0, (boss.current_hp / boss.max_hp) * 100);
   const left = new Date(boss.despawn_at).getTime() - now;
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-6">
       <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-bold">Boss: {boss.skill_tag}</h1>
+        <h1 className="text-2xl font-bold">Boss: {skillName(boss.skill_tag)}</h1>
         <span className="text-sm tabular-nums text-zinc-500">{fmt(left)}</span>
       </div>
-      <div className="h-4 overflow-hidden rounded-full bg-zinc-200">
-        <div className="h-full bg-red-500 transition-all duration-500" style={{ width: `${pct}%` }} />
+      <div className="relative flex justify-center">
+        <div className={flash ? "arena-shake" : ""}>
+          <BossAvatar pct={pct} />
+        </div>
+        {flash && dmg > 0 ? (
+          <span key={boss.current_hp} className="arena-damage">
+            -{dmg}
+          </span>
+        ) : null}
       </div>
+      <HpBar current={boss.current_hp} max={boss.max_hp} flash={flash} />
       <p className="text-sm text-zinc-600">
         HP {boss.current_hp}/{boss.max_hp} — {boss.status}
       </p>
+      <p className="text-xs text-zinc-500">
+        ✓ {boss.verified_count}/{boss.questions.length} answers recomputed by a math engine — the AI is
+        never trusted with answers.
+      </p>
       {boss.status === "DEAD" ? (
-        <div className="rounded-lg border p-4">
+        <div className="arena-pop rounded-lg border p-4">
           <p className="text-lg font-semibold">Boss slain. Skill patched.</p>
+          <nav className="flex gap-4 text-sm">
+            <a href="/arena" className="underline">
+              Back to arena
+            </a>
+            <a href="/scan" className="underline">
+              Scan another work
+            </a>
+          </nav>
+        </div>
+      ) : boss.status !== "ALIVE" ? (
+        <div className="rounded-lg border p-4">
+          <p className="text-lg font-semibold">This boss has expired.</p>
           <a href="/scan" className="text-sm underline">
-            Scan another work
+            Scan your work to summon a fresh one
           </a>
         </div>
       ) : (
         <div className="flex flex-col gap-3 rounded-lg border p-4">
           <p className="text-sm text-zinc-500">
-            Question {Math.min(idx + 1, boss.questions.length)}/{boss.questions.length} — level {q.level}
+            Question {(idx % boss.questions.length) + 1}/{boss.questions.length} — level {q.level}
+            {idx >= boss.questions.length ? " — boss still standing, questions loop" : null}
           </p>
           <div
             className="text-lg"

@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { skillName } from "@/lib/graph/skills";
+import HpBar from "@/components/HpBar";
 
 type BossCard = {
   id: string;
@@ -60,26 +62,33 @@ export default function ArenaPage() {
         </a>
       </div>
       {bosses === null ? (
-        <p>Loading arena (spawning World Boss on first visit takes ~30s)...</p>
+        <p>Loading arena — first visit summons today&apos;s World Boss from the most-missed skill (~30s)…</p>
       ) : bosses.length === 0 ? (
         <p>No live bosses. Scan your work to summon one.</p>
       ) : (
         bosses.map((b) => {
-          const pct = Math.max(0, (b.current_hp / b.max_hp) * 100);
           const left = new Date(b.despawn_at).getTime() - now;
           return (
             <a key={b.id} href={"/boss/" + b.id} className="flex flex-col gap-2 rounded-lg border p-4 hover:bg-zinc-50">
               <div className="flex items-baseline justify-between">
-                <p className="font-semibold">
+                <p className="flex flex-wrap items-center gap-2 font-semibold">
                   {b.is_world ? "World Boss: " : "Boss: "}
-                  {b.skill_tag}
-                  {b.is_world ? " (shared HP)" : null}
+                  {skillName(b.skill_tag)}
+                  {b.rarity !== "COMMON" ? (
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                      {b.rarity}
+                    </span>
+                  ) : null}
+                  {b.is_world ? (
+                    <span className="flex items-center gap-1 text-xs font-semibold text-red-600">
+                      <span className="arena-livedot" />
+                      LIVE · shared HP
+                    </span>
+                  ) : null}
                 </p>
                 <span className="text-sm tabular-nums text-zinc-500">{fmt(left)}</span>
               </div>
-              <div className="h-4 overflow-hidden rounded-full bg-zinc-200">
-                <div className="h-full bg-red-500 transition-all duration-500" style={{ width: `${pct}%` }} />
-              </div>
+              <HpBar current={b.current_hp} max={b.max_hp} />
               <p className="text-sm text-zinc-600">
                 HP {b.current_hp}/{b.max_hp} — {b.status}
               </p>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateBossQuestions } from "@/lib/agents/boss-generator";
 import { createClient } from "@/lib/supabase/server";
+import { getOrCreatePlayerId } from "@/lib/game/player";
 import { worldBossHp, bossTtlSeconds } from "@/lib/game/boss-rules";
 
 // Seed fallback when <24h of scan data exists.
@@ -34,6 +35,7 @@ function pub(b: BossRow) {
 
 export async function GET() {
   const supabase = await createClient();
+  const playerId = await getOrCreatePlayerId();
   const now = new Date().toISOString();
   // Lazy expiry (no cron).
   await supabase.from("bosses").update({ status: "EXPIRED" }).eq("status", "ALIVE").lt("despawn_at", now);
@@ -43,7 +45,8 @@ export async function GET() {
     .eq("status", "ALIVE")
     .gt("despawn_at", now)
     .order("spawn_at", { ascending: false });
-  const alive = ((data ?? []) as BossRow[]).filter((b) => b.owner_player_id !== null);
+  // Only the shared World Boss plus your own: other players' bosses would 403 on open.
+  const alive = ((data ?? []) as BossRow[]).filter((b) => b.owner_player_id === playerId);
   let world = ((data ?? []) as BossRow[]).find((b) => b.owner_player_id === null) ?? null;
 
   // Lazy World Boss spawn: none alive -> create one.

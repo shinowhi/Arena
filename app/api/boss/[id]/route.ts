@@ -40,6 +40,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     status: b.status,
     despawn_at: b.despawn_at,
     correct_indices,
+    verified_count: b.questions.length,
     questions: b.questions.map((q) => ({ level: q.level, prompt_latex: q.prompt_latex, hint: q.hint })),
   });
 }
