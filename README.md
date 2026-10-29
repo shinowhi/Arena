@@ -6,14 +6,14 @@ Built for the **Meta Global AI Developer Hackathon** (theme: *Build for Your Wor
 
 ## How it works
 
-1. **Scan** (`/scan`) — upload a photo of handwritten math work. Agent 1 (vision) breaks it into problems; Agent 2 maps mistakes to a hand-written 36-skill Calculus prerequisite graph and reports `weak_skill` + `root_cause`.
+1. **Scan** (`/scan`) — upload a photo of handwritten math work, or pick a pre-verified sample photo. Agent 1 (vision) breaks it into problems; Agent 2 maps mistakes to a hand-written 36-skill Calculus prerequisite graph and reports `weak_skill` + `root_cause`.
 2. **Summon** — Agent 3 generates a Boss: 5 isomorphic questions (same shape, new numbers, rising difficulty), numeric answers only.
 3. **Verify** — every generated answer is recomputed with `mathjs` before it is stored. Wrong or uncomputable questions are discarded and regenerated (max 3 rounds). The LLM is never trusted for answers.
-4. **Fight** (`/boss/[id]`) — answer one question at a time; each correct answer deals 20 damage. Grading happens server-side; answers are never sent to the client.
+4. **Fight** (`/boss/[id]`) — answer one question at a time; each correct answer deals 20 damage, builds a combo streak, and shows a machine-verified badge. Grading happens server-side; answers are never sent to the client. High-HP bosses loop questions until slain; the victory screen shows your clear time.
 5. **Arena** (`/arena`) — live world boss with shared HP over Supabase Realtime, countdown, lazy hourly spawn from the most-missed skills of the last 24h.
 6. **Invite** — `/arena?invite=<playerId>` gives **+50 XP to both** players (pair-tracked, rewarded once). Header shows level + XP.
 7. **Leaderboard** — top 10 hunters on /arena by bosses slain (XP breaks ties), computed from existing tables, no extra migration.
-8. **Heroes & bosses** — click your avatar on /arena to build a hero (4 species x 7 accessories x 5 colors, SVG 2.5D, saved in browser). Bosses wear rarity bodies; your hero lunges and fires its skill on every hit.
+8. **Heroes & bosses** — click your avatar on /arena to pick 1 of 4 pre-drawn heroes (saved in browser). Bosses wear rarity bodies; your hero lunges and fires its skill on every hit.
 
 ## Meta model usage
 
@@ -53,6 +53,7 @@ Probes (need `MODEL_API_KEY` + Supabase env): `npx -y tsx scripts/probe-scan.mjs
 ## Sample data
 
 - `fixtures/` — sample homework photos for testing.
+- `public/samples/` — 2 pre-verified photos wired to one-click sample buttons on `/scan`.
 - `scripts/seed.mjs` — inserts 1 player + 6 scans labeled `seed-demo`.
 - World-boss fallback skills (when under 24h of real data) come from this seed.
 

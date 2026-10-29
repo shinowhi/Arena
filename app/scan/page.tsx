@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import katex from "katex";
+import { skillName } from "@/lib/graph/skills";
 
 type ScanResult = {
   items: Array<{ cau_hoi: string; dap_an_sinh_vien: string; skill_tag: string[] }>;
@@ -10,11 +12,43 @@ type ScanResult = {
   can_summon: boolean;
 };
 
+const STAGES = [
+  "Reading handwriting…",
+  "Mapping mistakes to skills…",
+  "Tracing the root cause…",
+];
+const ANALYZE_TIMEOUT_MS = 120000;
+const SUMMON_TIMEOUT_MS = 180000;
+
+const SAMPLES = [
+  { label: "Sample: area integral", path: "/samples/area-integral.png", file: "area-integral.png" },
+  { label: "Sample: implicit diff", path: "/samples/implicit-diff.png", file: "implicit-diff.png" },
+];
+
+// Agent 1 returns LaTeX "when it contains math", plain text otherwise.
+// Only KaTeX-render strings that actually contain a LaTeX command.
+const LATEX_HINT =
+  /\\(frac|int|sum|sqrt|lim|sin|cos|tan|log|ln|exp|vec|times|div|pm|infty|alpha|beta|gamma|theta|pi|partial|left|right|begin|text)\b/;
+
+function ProblemText({ text }: { text: string }) {
+  let html: string | null = null;
+  if (LATEX_HINT.test(text)) {
+    try {
+      html = katex.renderToString(text, { throwOnError: false });
+    } catch {
+      html = null;
+    }
+  }
+  if (html) return <div className="text-sm text-zinc-200" dangerouslySetInnerHTML={{ __html: html }} />;
+  return <pre className="whitespace-pre-wrap text-sm text-zinc-200">{text}</pre>;
+}
+
 export default function ScanPage() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [stage, setStage] = useState(0);
   const [summoning, setSummoning] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
@@ -28,21 +62,45 @@ export default function ScanPage() {
     setError("");
   }
 
+  async function loadSample(path: string, name: string) {
+    setError("");
+    try {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error("Sample failed to load.");
+      const blob = await res.blob();
+      pick(new File([blob], name, { type: blob.type || "image/png" }));
+    } catch {
+      setError("Sample failed to load. Pick a photo instead.");
+    }
+  }
+
   async function analyze() {
     if (!file || loading) return;
     setLoading(true);
+    setStage(0);
     setError("");
     setResult(null);
+    const ticker = setInterval(() => setStage((s) => (s + 1) % STAGES.length), 4000);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ANALYZE_TIMEOUT_MS);
     try {
       const form = new FormData();
       form.append("image", file);
-      const res = await fetch("/api/scan", { method: "POST", body: form });
+      const res = await fetch("/api/scan", { method: "POST", body: form, signal: ctrl.signal });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Analysis failed.");
       setResult(data as ScanResult);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Analysis failed.");
+      setError(
+        e instanceof DOMException && e.name === "AbortError"
+          ? "Analysis timed out. Try again with a clearer photo."
+          : e instanceof Error
+            ? e.message
+            : "Analysis failed.",
+      );
     } finally {
+      clearInterval(ticker);
+      clearTimeout(timer);
       setLoading(false);
     }
   }
@@ -51,18 +109,28 @@ export default function ScanPage() {
     if (!result || summoning) return;
     setSummoning(true);
     setError("");
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), SUMMON_TIMEOUT_MS);
     try {
       const res = await fetch("/api/boss/summon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ skill_tag: result.weak_skill }),
+        signal: ctrl.signal,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Summon failed.");
-      router.push("/boss/" + data.boss_id);
+      router.push("/boss/" + data.boss_id + "?root=" + result.root_cause);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Summon failed.");
+      setError(
+        e instanceof DOMException && e.name === "AbortError"
+          ? "Summon timed out — check the arena, your boss may already be waiting."
+          : e instanceof Error
+            ? e.message
+            : "Summon failed.",
+      );
     } finally {
+      clearTimeout(timer);
       setSummoning(false);
     }
   }
@@ -102,13 +170,25 @@ export default function ScanPage() {
           Choose photo
           <input type="file" accept="image/*" className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
         </label>
+        <div className="flex flex-wrap justify-center gap-2">
+          {SAMPLES.map((s) => (
+            <button
+              key={s.path}
+              type="button"
+              onClick={() => loadSample(s.path, s.file)}
+              className="rounded-full border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-800"
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
       </div>
       <button
         onClick={analyze}
         disabled={!file || loading}
-        className="arena-enter arena-d2 arena-btn-primary rounded-full px-5 py-3 font-semibold text-white disabled:opacity-40 disabled:shadow-none"
+        className={`arena-enter arena-d2 arena-btn-primary rounded-full px-5 py-3 font-semibold text-white disabled:opacity-40 disabled:shadow-none ${loading ? "animate-pulse" : ""}`}
       >
-        {loading ? "Reading your work…" : "Analyze"}
+        {loading ? STAGES[stage] : "Analyze"}
       </button>
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {result ? (
@@ -116,15 +196,44 @@ export default function ScanPage() {
           <div className="arena-pop arena-card rounded-2xl p-5">
             <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Diagnosis</p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-red-500/60 bg-red-950/60 px-3 py-1 text-sm font-semibold text-red-200">
-                Weak: {result.weak_skill}
+              <span
+                title={result.weak_skill}
+                className="rounded-full border border-red-500/60 bg-red-950/60 px-3 py-1 text-sm font-semibold text-red-200"
+              >
+                Weak: {skillName(result.weak_skill)}
               </span>
               <span className="text-zinc-500">← rooted in</span>
-              <span className="rounded-full border border-amber-500/60 bg-amber-950/60 px-3 py-1 text-sm font-semibold text-amber-200">
-                {result.root_cause}
+              <span
+                title={result.root_cause}
+                className="rounded-full border border-amber-500/60 bg-amber-950/60 px-3 py-1 text-sm font-semibold text-amber-200"
+              >
+                {skillName(result.root_cause)}
               </span>
             </div>
             <p className="mt-2 text-sm text-zinc-400">Confidence: {Math.round(result.confidence * 100)}%</p>
+            <div className="mt-3 border-t border-zinc-800 pt-3">
+              <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Your patch plan</p>
+              <ol className="mt-2 flex flex-col gap-2">
+              <li className="flex items-start gap-2 text-sm">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-xs font-bold text-amber-300">
+                  1
+                </span>
+                <span className="text-zinc-300">
+                  Rebuild the root: {skillName(result.root_cause)} — 10 minutes of basics unlocks
+                  everything above it.
+                </span>
+              </li>
+              <li className="flex items-start gap-2 text-sm">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-xs font-bold text-red-300">
+                  2
+                </span>
+                <span className="text-zinc-300">
+                  Attack the weakness: {skillName(result.weak_skill)} — summon the boss below and slay
+                  5 questions to close it.
+                </span>
+              </li>
+              </ol>
+            </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {result.can_summon ? (
                 <button
@@ -132,7 +241,7 @@ export default function ScanPage() {
                   disabled={summoning}
                   className="arena-btn-primary rounded-full px-5 py-2 text-sm font-semibold text-white disabled:opacity-40 disabled:shadow-none"
                 >
-                  {summoning ? "Summoning…" : "Summon boss"}
+                  {summoning ? "Forging 5 questions, verifying answers…" : "Summon boss"}
                 </button>
               ) : (
                 <p className="text-sm text-zinc-500">Low confidence — retake a clearer photo.</p>
@@ -148,9 +257,18 @@ export default function ScanPage() {
           {result.items.map((it, i) => (
             <div key={i} className="arena-card rounded-2xl p-4">
               <p className="text-sm font-bold text-zinc-300">Problem {i + 1}</p>
-              <pre className="whitespace-pre-wrap text-sm text-zinc-200">{it.cau_hoi}</pre>
+              <ProblemText text={it.cau_hoi} />
               <p className="mt-1 text-sm text-zinc-400">Student: {it.dap_an_sinh_vien || "?"}</p>
-              <p className="mt-1 text-xs text-zinc-500">{it.skill_tag.join(", ")}</p>
+              <p className="mt-1 flex flex-wrap gap-1">
+                {it.skill_tag.map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-full border border-zinc-700 bg-zinc-900/70 px-2 py-0.5 text-xs text-zinc-400"
+                  >
+                    {skillName(t)}
+                  </span>
+                ))}
+              </p>
             </div>
           ))}
         </section>

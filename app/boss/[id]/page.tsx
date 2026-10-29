@@ -1,6 +1,6 @@
 "use client";
 import { Suspense, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import katex from "katex";
 import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
@@ -23,6 +23,50 @@ type BossView = {
 
 const ATTACK_TIMEOUT_MS = 20000;
 
+// A5: Web Audio sound effects, zero audio files. The context is created lazily
+// on the first attack click, so browser autoplay policies stay happy.
+let audioCtx: AudioContext | null = null;
+function soundCtx(): AudioContext | null {
+  try {
+    if (!audioCtx) {
+      const AC =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === "suspended") void audioCtx.resume();
+    return audioCtx;
+  } catch {
+    return null;
+  }
+}
+function tone(freq: number, at: number, dur: number, type: OscillatorType, vol: number) {
+  const ac = soundCtx();
+  if (!ac) return;
+  const o = ac.createOscillator();
+  const g = ac.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, ac.currentTime + at);
+  g.gain.exponentialRampToValueAtTime(vol, ac.currentTime + at + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + at + dur);
+  o.connect(g);
+  g.connect(ac.destination);
+  o.start(ac.currentTime + at);
+  o.stop(ac.currentTime + at + dur + 0.05);
+}
+function playSound(kind: "hit" | "miss" | "victory", muted: boolean) {
+  if (muted || typeof window === "undefined") return;
+  if (kind === "hit") {
+    tone(320, 0, 0.12, "sawtooth", 0.1);
+    tone(640, 0.05, 0.15, "square", 0.06);
+  } else if (kind === "miss") {
+    tone(140, 0, 0.2, "sine", 0.14);
+  } else {
+    [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.12, 0.25, "triangle", 0.1));
+  }
+}
+
 function fmt(ms: number): string {
   if (ms < 0) ms = 0;
   const s = Math.floor(ms / 1000);
@@ -34,6 +78,8 @@ function fmt(ms: number): string {
 
 function BossInner() {
   const { id } = useParams<{ id: string }>();
+  const search = useSearchParams();
+  const rootParam = search.get("root") ?? "";
   const [boss, setBoss] = useState<BossView | null>(null);
   const [idx, setIdx] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -42,6 +88,25 @@ function BossInner() {
   const [flash, setFlash] = useState(false);
   const [miss, setMiss] = useState(false);
   const [dmg, setDmg] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [t0, setT0] = useState(0);
+  const [muted, setMuted] = useState(() => {
+    try {
+      return localStorage.getItem("arena_muted") === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  function toggleMute() {
+    const next = !muted;
+    try {
+      localStorage.setItem("arena_muted", next ? "1" : "0");
+    } catch {
+      // Private mode: mute still works for this session.
+    }
+    setMuted(next);
+  }
   const [avatar, setAvatar] = useState<AvatarSpec>(DEFAULT_AVATAR);
   const [now, setNow] = useState(() => (typeof window === "undefined" ? 0 : Date.now()));
 
@@ -51,6 +116,7 @@ function BossInner() {
         const d = (await r.json()) as BossView & { error?: string };
         if (!r.ok) throw new Error(d.error ?? "Load failed.");
         setBoss(d);
+        setT0(Date.now());
         const done = new Set<number>(d.correct_indices);
         let i = 0;
         while (i < d.questions.length && done.has(i)) i++;
@@ -59,7 +125,8 @@ function BossInner() {
       .catch((e) => setMsg(e instanceof Error ? e.message : "Load failed."));
   }, [id]);
   useEffect(() => {
-    setAvatar(loadAvatar());
+    // Client-only read after hydration; microtask keeps the no-sync-setState lint rule happy.
+    queueMicrotask(() => setAvatar(loadAvatar()));
   }, []);
 
   useEffect(() => {
@@ -97,13 +164,17 @@ function BossInner() {
         setMsg("Hit! " + skillOf(avatar.species).skill + " -" + d.damage + " HP");
         setAnswer("");
         setDmg(d.damage);
+        setCombo((c) => c + 1);
         setIdx((i) => i + 1);
         setFlash(true);
         setTimeout(() => setFlash(false), 600);
+        playSound(d.status === "DEAD" ? "victory" : "hit", muted);
       } else {
         setMsg("Miss. Check the hint and try again.");
+        setCombo(0);
         setMiss(true);
         setTimeout(() => setMiss(false), 500);
+        playSound("miss", muted);
       }
     } catch (e) {
       setMsg(
@@ -167,7 +238,28 @@ function BossInner() {
             -{dmg}
           </span>
         ) : null}
+        {flash ? (
+          <span key={"ring" + boss.current_hp} className="pointer-events-none absolute inset-0 flex items-center justify-end pr-8">
+            {[0, 150, 300].map((delay) => (
+              <span
+                key={delay}
+                className="absolute h-28 w-28 animate-ping rounded-full border-2 border-red-400"
+                style={{ animationDelay: `${delay}ms` }}
+              />
+            ))}
+          </span>
+        ) : null}
       </div>
+      {rootParam !== "" && rootParam !== boss.skill_tag ? (
+        <div className="arena-enter rounded-2xl border border-cyan-500/50 bg-cyan-950/40 p-4 text-center">
+          <p className="text-xs font-bold tracking-widest text-cyan-300 uppercase">Time portal open</p>
+          <p className="mt-1 text-sm text-zinc-300">
+            This {skillName(boss.skill_tag)} boss is rooted in{" "}
+            <span className="font-bold text-cyan-200">{skillName(rootParam)}</span> — patch the past to
+            fix the present.
+          </p>
+        </div>
+      ) : null}
       <div className="arena-enter arena-d1">
         <HpBar current={boss.current_hp} max={boss.max_hp} flash={flash} />
         <div className="mt-1 flex items-baseline justify-between text-sm">
@@ -182,10 +274,20 @@ function BossInner() {
       {boss.status === "DEAD" ? (
         <div className="arena-pop arena-card relative overflow-hidden rounded-2xl p-8 text-center">
           <div className="arena-rays" aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+            {["left-6 top-6", "right-6 top-10", "left-10 bottom-8", "right-10 bottom-10"].map((pos, i) => (
+              <span
+                key={pos}
+                className={`absolute h-10 w-10 animate-ping rounded-full border-2 border-amber-300 [animation-iteration-count:4] ${pos}`}
+                style={{ animationDelay: `${i * 200}ms` }}
+              />
+            ))}
+          </div>
           <div className="relative">
             <p className="text-3xl">🏆</p>
             <p className="arena-title mt-2 text-2xl font-black">Boss slain.</p>
             <p className="mt-1 text-sm text-zinc-400">Skill patched. The root cause is closed.</p>
+            {t0 > 0 ? <p className="mt-1 text-sm text-zinc-500">Slain in {fmt(now - t0)}</p> : null}
             <nav className="mt-4 flex justify-center gap-3 text-sm">
               <a href="/arena" className="arena-btn-primary rounded-full px-5 py-2 font-semibold text-white">
                 Back to arena
@@ -205,11 +307,21 @@ function BossInner() {
         </div>
       ) : (
         <div className={`arena-enter arena-d2 arena-card flex flex-col gap-3 rounded-2xl p-5 ${miss ? "arena-shake border-red-800" : ""}`}>
-          <p className="text-sm text-zinc-400">
-            Question {(idx % boss.questions.length) + 1}/{boss.questions.length} —{" "}
-            <span className="font-bold text-amber-300">level {q.level}</span>
-            {idx >= boss.questions.length ? " — boss still standing, questions loop" : null}
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm text-zinc-400">
+              Question {(idx % boss.questions.length) + 1}/{boss.questions.length} —{" "}
+              <span className="font-bold text-amber-300">level {q.level}</span>
+              {idx >= boss.questions.length ? " — boss still standing, questions loop" : null}
+            </p>
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-label={muted ? "Unmute sound effects" : "Mute sound effects"}
+              className="shrink-0 rounded-full border border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-800"
+            >
+              {muted ? "Sound off" : "Sound on"}
+            </button>
+          </div>
           <div
             className="overflow-x-auto text-xl text-zinc-100"
             dangerouslySetInnerHTML={{ __html: katex.renderToString(q.prompt_latex, { throwOnError: false }) }}
@@ -225,6 +337,7 @@ function BossInner() {
                 if (e.key === "Enter") attack();
               }}
               placeholder="Your numeric answer"
+              aria-label="Your numeric answer"
               className="arena-input min-w-0 flex-1 rounded-xl px-4 py-2.5 text-zinc-100 placeholder:text-zinc-600"
             />
             <button
@@ -236,6 +349,7 @@ function BossInner() {
             </button>
           </div>
           {msg ? <p className={`text-sm ${msgColor}`}>{msg}</p> : null}
+          {combo >= 2 ? <p className="text-sm font-bold text-amber-300">Combo x{combo}</p> : null}
         </div>
       )}
     </main>
