@@ -54,43 +54,66 @@ export default function ArenaPage() {
   }, []);
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-6">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-bold">Arena</h1>
-        <a href="/scan" className="text-sm underline">
-          Scan work
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <div className="arena-enter flex items-end justify-between">
+        <div>
+          <p className="text-xs font-bold tracking-widest text-red-400 uppercase">Live battlefield</p>
+          <h1 className="mt-1 text-3xl font-black tracking-tight">
+            The <span className="arena-title">Arena</span>
+          </h1>
+        </div>
+        <a href="/scan" className="arena-btn-ghost rounded-full px-4 py-2 text-sm font-medium text-zinc-200">
+          + Scan work
         </a>
       </div>
       {bosses === null ? (
-        <p>Loading arena — first visit summons today&apos;s World Boss from the most-missed skill (~30s)…</p>
+        <div className="flex flex-col gap-3">
+          <div className="arena-shimmer h-28 rounded-2xl" />
+          <div className="arena-shimmer h-28 rounded-2xl" />
+          <p className="text-sm text-zinc-500">Loading arena — first visit summons today&apos;s World Boss (~30s)…</p>
+        </div>
       ) : bosses.length === 0 ? (
-        <p>No live bosses. Scan your work to summon one.</p>
+        <div className="arena-card rounded-2xl p-8 text-center">
+          <p className="text-lg font-bold">No live bosses.</p>
+          <p className="mt-1 text-sm text-zinc-400">Scan your work to summon one.</p>
+          <a href="/scan" className="arena-btn-primary mt-4 inline-block rounded-full px-6 py-2.5 text-sm font-semibold text-white">
+            Scan now
+          </a>
+        </div>
       ) : (
-        bosses.map((b) => {
+        bosses.map((b, i) => {
           const left = new Date(b.despawn_at).getTime() - now;
+          const urgent = left < 60000 && b.status === "ALIVE";
           return (
-            <a key={b.id} href={"/boss/" + b.id} className="flex flex-col gap-2 rounded-lg border p-4 hover:bg-zinc-50">
-              <div className="flex items-baseline justify-between">
-                <p className="flex flex-wrap items-center gap-2 font-semibold">
+            <a
+              key={b.id}
+              href={"/boss/" + b.id}
+              className={`arena-enter arena-card group flex flex-col gap-3 rounded-2xl p-5 transition-all hover:-translate-y-0.5 ${i === 1 ? "arena-d1" : i === 2 ? "arena-d2" : ""} ${b.is_world ? "border-red-900 shadow-[0_0_32px_rgba(239,68,68,0.25)] hover:shadow-[0_0_44px_rgba(239,68,68,0.4)]" : "hover:border-zinc-600"}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="flex flex-wrap items-center gap-2 font-bold">
                   {b.is_world ? "World Boss: " : "Boss: "}
                   {skillName(b.skill_tag)}
                   {b.rarity !== "COMMON" ? (
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                    <span className="rounded-full border border-amber-500/60 bg-amber-950/60 px-2 py-0.5 text-xs font-bold text-amber-200">
                       {b.rarity}
                     </span>
                   ) : null}
                   {b.is_world ? (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-red-600">
+                    <span className="flex items-center gap-1.5 text-xs font-bold text-red-400">
                       <span className="arena-livedot" />
                       LIVE · shared HP
                     </span>
                   ) : null}
                 </p>
-                <span className="text-sm tabular-nums text-zinc-500">{fmt(left)}</span>
+                <span className={`shrink-0 font-mono text-sm tabular-nums ${urgent ? "arena-urgent font-bold" : "text-zinc-400"}`}>
+                  {fmt(left)}
+                </span>
               </div>
               <HpBar current={b.current_hp} max={b.max_hp} />
-              <p className="text-sm text-zinc-600">
+              <p className="text-sm text-zinc-400">
                 HP {b.current_hp}/{b.max_hp} — {b.status}
+                <span className="ml-2 text-zinc-600 transition-colors group-hover:text-red-400">Fight →</span>
               </p>
             </a>
           );
@@ -99,5 +122,3 @@ export default function ArenaPage() {
     </main>
   );
 }
-
-

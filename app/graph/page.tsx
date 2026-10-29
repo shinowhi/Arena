@@ -32,60 +32,58 @@ export default async function GraphPage({
   const cols = levels(nodes);
   const ring = (id: string) =>
     id === weak
-      ? "border-red-500 ring-2 ring-red-300"
+      ? "border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.45)]"
       : id === root
-        ? "border-amber-500 ring-2 ring-amber-300"
-        : "border-zinc-200";
+        ? "border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.4)]"
+        : "border-zinc-800";
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-4 py-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold">Skill graph</h1>
-        <span className="text-sm text-zinc-500">{nodes.length} skills, foundations on the left</span>
-        <span className="ml-auto flex gap-4 text-xs">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-4 py-8">
+      <div className="arena-enter">
+        <p className="text-xs font-bold tracking-widest text-red-400 uppercase">36 skills · foundations left</p>
+        <h1 className="mt-1 text-3xl font-black tracking-tight">
+          Skill <span className="arena-title">graph</span>
+        </h1>
+        <div className="mt-2 flex gap-4 text-xs text-zinc-400">
           {weak ? (
             <span>
-              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-red-500" />
+              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
               Weak: {skillName(weak)}
             </span>
           ) : null}
           {root ? (
             <span>
-              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-amber-500" />
+              <span className="mr-1 inline-block h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]" />
               Root: {skillName(root)}
             </span>
           ) : null}
-        </span>
+        </div>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-4">
+      <div className="arena-enter arena-d1 flex gap-3 overflow-x-auto pb-4">
         {cols.map((col, d) => (
           <div key={d} className="flex w-56 shrink-0 flex-col gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Level {d}</p>
+            <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Level {d}</p>
             {col.map((n) => (
-              <div
-                key={n.id}
-                title={n.description}
-                className={`rounded-lg border bg-white p-2.5 dark:bg-zinc-950 ${ring(n.id)}`}
-              >
-                <p className="text-sm font-medium">{n.name}</p>
+              <div key={n.id} className={`arena-card rounded-xl border p-2.5 ${ring(n.id)}`}>
+                <p className="text-sm font-semibold text-zinc-100">{n.name}</p>
                 <p className="text-xs text-zinc-500">
                   <code>{n.id}</code>
                 </p>
                 {n.prereqs.length > 0 ? (
                   <p className="mt-1 text-xs text-zinc-500">needs: {n.prereqs.join(", ")}</p>
                 ) : (
-                  <p className="mt-1 text-xs text-zinc-400">foundation</p>
+                  <p className="mt-1 text-xs text-zinc-600">foundation</p>
                 )}
               </div>
             ))}
           </div>
         ))}
       </div>
-      <nav className="flex gap-3 text-sm">
-        <a href="/scan" className="underline">
-          Back to scan
+      <nav className="flex gap-4 text-sm text-zinc-400">
+        <a href="/scan" className="transition-colors hover:text-white">
+          ← Back to scan
         </a>
-        <a href="/arena" className="underline">
+        <a href="/arena" className="transition-colors hover:text-white">
           Enter arena
         </a>
       </nav>
