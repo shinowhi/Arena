@@ -11,6 +11,7 @@ Built for the **Meta Global AI Developer Hackathon** (theme: *Build for Your Wor
 3. **Verify** — every generated answer is recomputed with `mathjs` before it is stored. Wrong or uncomputable questions are discarded and regenerated (max 3 rounds). The LLM is never trusted for answers.
 4. **Fight** (`/boss/[id]`) — answer one question at a time; each correct answer deals 20 damage. Grading happens server-side; answers are never sent to the client.
 5. **Arena** (`/arena`) — live world boss with shared HP over Supabase Realtime, countdown, lazy hourly spawn from the most-missed skills of the last 24h.
+6. **Invite** — `/arena?invite=<playerId>` gives **+50 XP to both** players (pair-tracked, rewarded once). Header shows level + XP.
 
 ## Meta model usage
 

@@ -30,6 +30,7 @@ Show (live):
 1. Click "Summon boss" — boss appears with 5 verified questions. Point at the "answers recomputed by a math engine" line.
 2. Answer 2 questions: one right (HP bar drops, red hit flash), one wrong (no damage) to show grading.
 3. Open the second `/arena` tab side by side: attack in one, HP falls in both.
+4. Click Invite friends, open the link in a second browser: +50 XP banner for both.
 Say: "The boss is five isomorphic questions — same shape, new numbers, rising difficulty. Every answer is recomputed by a math engine before the boss exists; the AI is never trusted with answers. And the world boss is shared: the whole class fights the same HP pool in realtime."
 
 ## 2:30-3:00 — Slay and close
