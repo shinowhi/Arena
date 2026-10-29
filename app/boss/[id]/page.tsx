@@ -5,6 +5,8 @@ import katex from "katex";
 import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
 import BossAvatar from "@/components/BossAvatar";
+import HeroAvatar from "@/components/HeroAvatar";
+import { DEFAULT_AVATAR, loadAvatar, skillOf, type AvatarSpec } from "@/lib/game/avatar";
 
 type BossView = {
   id: string;
@@ -13,6 +15,7 @@ type BossView = {
   max_hp: number;
   status: string;
   despawn_at: string;
+  rarity: string;
   correct_indices: number[];
   verified_count: number;
   questions: Array<{ level: number; prompt_latex: string; hint: string }>;
@@ -39,6 +42,7 @@ function BossInner() {
   const [flash, setFlash] = useState(false);
   const [miss, setMiss] = useState(false);
   const [dmg, setDmg] = useState(0);
+  const [avatar, setAvatar] = useState<AvatarSpec>(DEFAULT_AVATAR);
   const [now, setNow] = useState(() => (typeof window === "undefined" ? 0 : Date.now()));
 
   useEffect(() => {
@@ -54,6 +58,9 @@ function BossInner() {
       })
       .catch((e) => setMsg(e instanceof Error ? e.message : "Load failed."));
   }, [id]);
+  useEffect(() => {
+    setAvatar(loadAvatar());
+  }, []);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -87,7 +94,7 @@ function BossInner() {
       if (!res.ok) throw new Error(d.error ?? "Attack failed.");
       setBoss({ ...boss, current_hp: d.current_hp, status: d.status });
       if (d.correct) {
-        setMsg("Hit! -" + d.damage + " HP");
+        setMsg("Hit! " + skillOf(avatar.species).skill + " -" + d.damage + " HP");
         setAnswer("");
         setDmg(d.damage);
         setIdx((i) => i + 1);
@@ -139,12 +146,24 @@ function BossInner() {
           {fmt(left)}
         </span>
       </div>
-      <div className="arena-enter arena-d1 relative flex justify-center py-2">
-        <div className={`rounded-full border-2 bg-zinc-900/80 p-4 transition-all ${ring} ${flash ? "arena-shake" : "arena-float"}`}>
-          <BossAvatar pct={pct} />
+      <div className="arena-enter arena-d1 arena-battleground relative overflow-hidden rounded-2xl border border-zinc-800 px-4 pt-4 pb-6">
+        <div className="flex items-end justify-between gap-2">
+          <div className={flash ? "arena-lunge" : "arena-float"}>
+            <HeroAvatar spec={avatar} size={88} />
+          </div>
+          <div className={`rounded-full border-2 bg-zinc-900/80 p-3 transition-all ${ring} ${flash ? "arena-shake" : "arena-float"}`}>
+            <BossAvatar pct={pct} rarity={boss.rarity} size={88} />
+          </div>
         </div>
+        {flash ? (
+          <span
+            key={boss.current_hp}
+            className="arena-bolt"
+            style={{ background: skillOf(avatar.species).bolt, boxShadow: `0 0 16px ${skillOf(avatar.species).bolt}` }}
+          />
+        ) : null}
         {flash && dmg > 0 ? (
-          <span key={boss.current_hp} className="arena-damage">
+          <span key={"dmg" + boss.current_hp} className="arena-damage right-6">
             -{dmg}
           </span>
         ) : null}

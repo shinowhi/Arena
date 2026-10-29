@@ -100,3 +100,9 @@ body {
   .arena-hitflash, .arena-scanline, .arena-shake, .arena-damage, .arena-pop, .arena-enter,
   .arena-livedot, .arena-float, .arena-rays, .arena-shimmer, .arena-urgent { animation: none; }
 }
+.arena-battleground { background: radial-gradient(80% 90% at 50% 110%, rgba(239,68,68,0.22), transparent 60%), radial-gradient(60% 50% at 50% 0%, rgba(99,102,241,0.12), transparent 70%), #0c0c0e; }
+.arena-battleground::after { content: ""; position: absolute; left: 8%; right: 8%; bottom: 10px; height: 18px; background: radial-gradient(50% 100% at 50% 50%, rgba(0,0,0,0.7), transparent 70%); pointer-events: none; }
+.arena-lunge { animation: arena-lunge 0.5s ease-out; }
+.arena-bolt { position: absolute; top: 44%; left: 16%; width: 44px; height: 8px; border-radius: 9999px; animation: arena-bolt 0.5s ease-out forwards; pointer-events: none; }
+@keyframes arena-lunge { 0% { transform: translateX(0); } 40% { transform: translateX(30px); } 100% { transform: translateX(0); } }
+@keyframes arena-bolt { 0% { left: 18%; opacity: 1; transform: scaleX(0.6); } 100% { left: 68%; opacity: 0; transform: scaleX(1.4); } }

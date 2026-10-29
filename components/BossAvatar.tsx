@@ -1,21 +1,50 @@
-// CSS/SVG boss: healthy -> hurt -> dead based on remaining HP. No assets, no deps.
-export default function BossAvatar({ pct }: { pct: number }) {
+import { useId } from "react";
+
+// CSS/SVG boss: body color by rarity, mood by remaining HP. No assets, no deps.
+const PALETTE: Record<string, { body: string; dark: string; belly: string; horn: string }> = {
+  COMMON: { body: "#ef4444", dark: "#7f1d1d", belly: "#fca5a5", horn: "#7f1d1d" },
+  ELITE: { body: "#8b5cf6", dark: "#4c1d95", belly: "#c4b5fd", horn: "#2e1065" },
+  LEGENDARY: { body: "#f59e0b", dark: "#92400e", belly: "#fde68a", horn: "#78350f" },
+};
+
+export default function BossAvatar({
+  pct,
+  rarity = "COMMON",
+  size = 96,
+}: {
+  pct: number;
+  rarity?: string;
+  size?: number;
+}) {
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const dead = pct <= 0;
   const hurt = !dead && pct <= 50;
-  const body = dead ? "#a1a1aa" : hurt ? "#b91c1c" : "#ef4444";
-  const belly = dead ? "#d4d4d8" : hurt ? "#7f1d1d" : "#fca5a5";
-  const horn = dead ? "#71717a" : "#7f1d1d";
+  const pal = PALETTE[rarity] ?? PALETTE.COMMON;
+  const body = dead ? "#a1a1aa" : pal.body;
+  const dark = dead ? "#71717a" : pal.dark;
+  const belly = dead ? "#d4d4d8" : pal.belly;
+  const g = `bg${uid}`;
   return (
-    <svg
-      width="96"
-      height="96"
-      viewBox="0 0 96 96"
-      role="img"
-      aria-label={dead ? "slain boss" : hurt ? "hurt boss" : "boss"}
-    >
-      <path d="M22 30 L14 12 L32 22 Z" fill={horn} />
-      <path d="M74 30 L82 12 L64 22 Z" fill={horn} />
-      <ellipse cx="48" cy="54" rx="34" ry="30" fill={body} />
+    <svg width={size} height={size} viewBox="0 0 96 96" role="img" aria-label={dead ? "slain boss" : hurt ? "hurt boss" : "boss"}>
+      <defs>
+        <radialGradient id={g} cx="35%" cy="30%" r="85%">
+          <stop offset="0%" stopColor={body} />
+          <stop offset="100%" stopColor={dark} />
+        </radialGradient>
+      </defs>
+      <ellipse cx="48" cy="88" rx="28" ry="6" fill="#000" opacity="0.45" />
+      {!dead && rarity === "LEGENDARY" ? (
+        <path d="M32 24 L36 8 L44 18 L48 4 L52 18 L60 8 L64 24 Z" fill="#fde047" stroke="#92400e" strokeWidth="1.5" strokeLinejoin="round" />
+      ) : null}
+      <path d="M22 30 L14 12 L32 22 Z" fill={dead ? "#71717a" : pal.horn} />
+      <path d="M74 30 L82 12 L64 22 Z" fill={dead ? "#71717a" : pal.horn} />
+      {!dead && rarity === "ELITE" ? (
+        <g fill={pal.horn}>
+          <path d="M28 34 L24 22 L34 28 Z" />
+          <path d="M68 34 L72 22 L62 28 Z" />
+        </g>
+      ) : null}
+      <ellipse cx="48" cy="54" rx="34" ry="30" fill={`url(#${g})`} />
       <ellipse cx="48" cy="66" rx="20" ry="14" fill={belly} opacity="0.55" />
       {dead ? (
         <g stroke="#18181b" strokeWidth="4" strokeLinecap="round">

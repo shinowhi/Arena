@@ -12,6 +12,8 @@ Built for the **Meta Global AI Developer Hackathon** (theme: *Build for Your Wor
 4. **Fight** (`/boss/[id]`) — answer one question at a time; each correct answer deals 20 damage. Grading happens server-side; answers are never sent to the client.
 5. **Arena** (`/arena`) — live world boss with shared HP over Supabase Realtime, countdown, lazy hourly spawn from the most-missed skills of the last 24h.
 6. **Invite** — `/arena?invite=<playerId>` gives **+50 XP to both** players (pair-tracked, rewarded once). Header shows level + XP.
+7. **Leaderboard** — top 10 hunters on /arena by bosses slain (XP breaks ties), computed from existing tables, no extra migration.
+8. **Heroes & bosses** — click your avatar on /arena to build a hero (4 species x 7 accessories x 5 colors, SVG 2.5D, saved in browser). Bosses wear rarity bodies; your hero lunges and fires its skill on every hit.
 
 ## Meta model usage
 

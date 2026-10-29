@@ -11,6 +11,7 @@ type BossRow = {
   status: string;
   despawn_at: string;
   owner_player_id: string | null;
+  rarity: string;
   questions: Q[];
 };
 
@@ -38,6 +39,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     current_hp: b.current_hp,
     max_hp: b.max_hp,
     status: b.status,
+    rarity: b.rarity,
     despawn_at: b.despawn_at,
     correct_indices,
     verified_count: b.questions.length,

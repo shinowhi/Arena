@@ -3,6 +3,10 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
+import HeroAvatar from "@/components/HeroAvatar";
+import AvatarBuilder from "@/components/AvatarBuilder";
+import BossAvatar from "@/components/BossAvatar";
+import { DEFAULT_AVATAR, loadAvatar, saveAvatar, type AvatarSpec } from "@/lib/game/avatar";
 
 type BossCard = {
   id: string;
@@ -14,6 +18,9 @@ type BossCard = {
   current_hp: number;
   status: string;
 };
+
+type Leader = { id: string; name: string; xp: number; level: number; bosses_slain: number };
+
 
 function fmt(ms: number): string {
   if (ms < 0) ms = 0;
@@ -28,6 +35,9 @@ export default function ArenaPage() {
   const [xp, setXp] = useState(0);
   const [inviteMsg, setInviteMsg] = useState("");
   const [copied, setCopied] = useState(false);
+  const [avatar, setAvatar] = useState<AvatarSpec>(DEFAULT_AVATAR);
+  const [builderOpen, setBuilderOpen] = useState(false);
+  const [leaders, setLeaders] = useState<Leader[] | null>(null);
 
   useEffect(() => {
     let stop = false;
@@ -64,6 +74,15 @@ export default function ArenaPage() {
         }
       })
       .catch(() => {});
+    fetch("/api/leaderboard")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!stop) setLeaders(d.leaders ?? []);
+      })
+      .catch(() => {
+        if (!stop) setLeaders([]);
+      });
+    setAvatar(loadAvatar());
     const supabase = createClient();
     const ch = supabase
       .channel("bosses-hp")
@@ -99,6 +118,13 @@ export default function ArenaPage() {
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <div className="arena-enter flex items-end justify-between gap-3">
         <div>
+          <button
+            onClick={() => setBuilderOpen(true)}
+            title="Create your hero"
+            className="mb-1 block rounded-full ring-2 ring-zinc-700 transition hover:ring-red-400"
+          >
+            <HeroAvatar spec={avatar} size={48} />
+          </button>
           <p className="text-xs font-bold tracking-widest text-red-400 uppercase">Live battlefield</p>
           <h1 className="mt-1 text-3xl font-black tracking-tight">
             The <span className="arena-title">Arena</span>
@@ -154,6 +180,7 @@ export default function ArenaPage() {
             >
               <div className="flex items-start justify-between gap-3">
                 <p className="flex flex-wrap items-center gap-2 font-bold">
+                  <BossAvatar pct={(b.current_hp / b.max_hp) * 100} rarity={b.rarity} size={40} />
                   {b.is_world ? "World Boss: " : "Boss: "}
                   {skillName(b.skill_tag)}
                   {b.rarity !== "COMMON" ? (
@@ -181,6 +208,42 @@ export default function ArenaPage() {
           );
         })
       )}
+      <div className="arena-card rounded-2xl p-5">
+        <p className="text-xs font-bold tracking-widest text-amber-300 uppercase">Top hunters</p>
+        {leaders === null ? (
+          <p className="mt-2 text-sm text-zinc-500">Loading leaderboard...</p>
+        ) : leaders.length === 0 ? (
+          <p className="mt-2 text-sm text-zinc-500">No hunters yet - slay a boss to top the board.</p>
+        ) : (
+          <ol className="mt-3 flex flex-col gap-2">
+            {leaders.map((l, i) => (
+              <li
+                key={l.id}
+                className={`flex items-center gap-3 rounded-xl border px-3 py-2 text-sm ${l.id === playerId ? "border-emerald-700 bg-emerald-950/40" : "border-zinc-800 bg-zinc-900/50"}`}
+              >
+                <span className="w-6 shrink-0 text-center font-black text-zinc-400">{i + 1}</span>
+                <span className="min-w-0 flex-1 truncate font-semibold">
+                  {l.name}
+                  {l.id === playerId ? <span className="ml-2 text-xs font-bold text-emerald-300">YOU</span> : null}
+                </span>
+                <span className="shrink-0 text-zinc-400">{l.bosses_slain} slain</span>
+                <span className="shrink-0 text-xs text-zinc-500">Lv {l.level} · {l.xp} XP</span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+      {builderOpen ? (
+        <AvatarBuilder
+          spec={avatar}
+          onSave={(s) => {
+            saveAvatar(s);
+            setAvatar(s);
+            setBuilderOpen(false);
+          }}
+          onClose={() => setBuilderOpen(false)}
+        />
+      ) : null}
     </main>
   );
 }
