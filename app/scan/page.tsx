@@ -20,6 +20,16 @@ const STAGES = [
 ];
 const ANALYZE_TIMEOUT_MS = 120000;
 const SUMMON_TIMEOUT_MS = 180000;
+const LIFE_TIMEOUT_MS = 180000;
+
+const LIFE_STAGES = [
+  "Spotting math in your photo…",
+  "Writing the problem…",
+  "Verifying the answer…",
+  "Forging your boss…",
+];
+
+type LifeResult = { boss_id: string; skill_tag: string; problem_latex: string };
 
 const SAMPLES = [
   { label: "Sample: area integral", path: "/samples/area-integral.png", file: "area-integral.png" },
@@ -51,6 +61,8 @@ export default function ScanPage() {
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState(0);
   const [summoning, setSummoning] = useState(false);
+  const [mode, setMode] = useState<"exam" | "life">("exam");
+  const [lifeResult, setLifeResult] = useState<LifeResult | null>(null);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -60,6 +72,14 @@ export default function ScanPage() {
     setFile(f);
     setPreview(URL.createObjectURL(f));
     setResult(null);
+    setLifeResult(null);
+    setError("");
+  }
+
+  function switchMode(m: "exam" | "life") {
+    setMode(m);
+    setResult(null);
+    setLifeResult(null);
     setError("");
   }
 
@@ -98,6 +118,37 @@ export default function ScanPage() {
           : e instanceof Error
             ? e.message
             : "Analysis failed.",
+      );
+    } finally {
+      clearInterval(ticker);
+      clearTimeout(timer);
+      setLoading(false);
+    }
+  }
+
+  async function analyzeLife() {
+    if (!file || loading) return;
+    setLoading(true);
+    setStage(0);
+    setError("");
+    setLifeResult(null);
+    const ticker = setInterval(() => setStage((s) => (s + 1) % LIFE_STAGES.length), 4000);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), LIFE_TIMEOUT_MS);
+    try {
+      const form = new FormData();
+      form.append("image", file);
+      const res = await fetch("/api/photo-problem", { method: "POST", body: form, signal: ctrl.signal });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Photo scan failed.");
+      setLifeResult(data as LifeResult);
+    } catch (e) {
+      setError(
+        e instanceof DOMException && e.name === "AbortError"
+          ? "Photo scan timed out. Try again with a clearer photo."
+          : e instanceof Error
+            ? e.message
+            : "Photo scan failed.",
       );
     } finally {
       clearInterval(ticker);
@@ -184,13 +235,54 @@ export default function ScanPage() {
           ))}
         </div>
       </div>
+      <div className="flex justify-center gap-2" role="tablist" aria-label="Scan mode">
+        {(["exam", "life"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            role="tab"
+            aria-selected={mode === m}
+            onClick={() => switchMode(m)}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              mode === m ? "bg-zinc-100 text-zinc-900" : "border border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+            }`}
+          >
+            {m === "exam" ? "Exam work" : "Real life"}
+          </button>
+        ))}
+      </div>
       <button
-        onClick={analyze}
+        onClick={mode === "exam" ? analyze : analyzeLife}
         disabled={!file || loading}
         className={`arena-enter arena-d2 arena-btn-primary rounded-full px-5 py-3 font-semibold text-white disabled:opacity-40 disabled:shadow-none ${loading ? "animate-pulse" : ""}`}
       >
-        {loading ? STAGES[stage] : "Analyze"}
+        {loading ? (mode === "exam" ? STAGES[stage % STAGES.length] : LIFE_STAGES[stage]) : mode === "exam" ? "Analyze" : "Find math in this"}
       </button>
+      {mode === "exam" ? null : (
+        <p className="-mt-2 text-center text-xs text-zinc-500">
+          Snap anything — pizza, stairs, bills — AI turns it into a boss fight.
+        </p>
+      )}
+      {lifeResult ? (
+        <section className="arena-enter arena-card flex flex-col gap-2 rounded-2xl p-4">
+          <h2 className="font-semibold text-zinc-100">Found it in your photo</h2>
+          <ProblemText text={lifeResult.problem_latex} />
+          <p>
+            <span className="rounded-full border border-zinc-700 bg-zinc-900/70 px-2 py-0.5 text-xs text-zinc-400">
+              {skillName(lifeResult.skill_tag)}
+            </span>
+          </p>
+          <div>
+            <button
+              type="button"
+              onClick={() => router.push("/boss/" + lifeResult.boss_id)}
+              className="arena-btn-primary mt-1 rounded-full px-5 py-2 text-sm font-semibold text-white"
+            >
+              Fight this boss
+            </button>
+          </div>
+        </section>
+      ) : null}
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {result ? (
         <section className="flex flex-col gap-3">
@@ -253,6 +345,12 @@ export default function ScanPage() {
                 className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
               >
                 View on skill graph
+              </a>
+              <a
+                href="/streak"
+                className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
+              >
+                View your streak
               </a>
             </div>
           </div>
