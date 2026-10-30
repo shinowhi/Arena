@@ -1,0 +1,57 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { skillGrade, skillGradeLabel, skillName } from "@/lib/graph/skills";
+
+// Shows only when the root cause comes from an older grade than the weak skill.
+// Mount on the scan result: <TimePortalCard weak={gap.weak_skill} root={gap.root_cause} />
+export default function TimePortalCard({ weak, root }: { weak: string; root: string }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+  if (!root || root === weak || skillGrade(root) >= skillGrade(weak)) return null;
+
+  async function enter() {
+    setBusy(true);
+    setError("");
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 180000);
+      try {
+        const r = await fetch("/api/boss/summon", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ skill_tag: root }),
+          signal: ctrl.signal,
+        });
+        const d = await r.json();
+        if (!d.boss_id) throw new Error(d.error ?? "Summon failed.");
+        router.push(`/boss/${d.boss_id}?root=${root}`);
+      } finally {
+        clearTimeout(t);
+      }
+    } catch (e) {
+      setError(e instanceof Error && e.name === "AbortError" ? "Timed out — reload to see the latest bosses before retrying." : "Portal failed. Try again.");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 rounded-xl border border-cyan-400/50 bg-cyan-950/60 p-4 text-center">
+      <p className="text-lg font-bold text-cyan-300">🌀 Time portal open</p>
+      <p className="mt-1 text-sm text-cyan-100">
+        This weakness traces back to {skillGradeLabel(root)}: {skillName(root)}.
+        Patch the past to fix the present.
+      </p>
+      <button
+        onClick={enter}
+        disabled={busy}
+        className="mt-3 rounded-lg bg-cyan-400 px-5 py-2 font-semibold text-black disabled:opacity-50"
+      >
+        {busy ? "Opening portal…" : `Enter the portal → ${skillGradeLabel(root)} mini-boss`}
+      </button>
+      {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
+    </div>
+  );
+}

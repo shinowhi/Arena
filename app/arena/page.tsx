@@ -21,6 +21,9 @@ type BossCard = {
 
 type Leader = { id: string; name: string; xp: number; level: number; bosses_slain: number };
 
+type Rush = { reset_at: string; boss: BossCard };
+type RushRank = { id: string; name: string; solved: number; time: string };
+
 
 function fmt(ms: number): string {
   if (ms < 0) ms = 0;
@@ -38,6 +41,8 @@ export default function ArenaPage() {
   const [avatar, setAvatar] = useState<AvatarSpec>(DEFAULT_AVATAR);
   const [builderOpen, setBuilderOpen] = useState(false);
   const [leaders, setLeaders] = useState<Leader[] | null>(null);
+  const [rush, setRush] = useState<Rush | null>(null);
+  const [rushRanks, setRushRanks] = useState<RushRank[] | null>(null);
 
   useEffect(() => {
     let stop = false;
@@ -82,7 +87,23 @@ export default function ArenaPage() {
       .catch(() => {
         if (!stop) setLeaders([]);
       });
-    setAvatar(loadAvatar());
+    fetch("/api/rush/today")
+      .then((r) => r.json())
+      .then((d) => {
+        if (stop || !d.boss) return;
+        setRush({ reset_at: d.reset_at as string, boss: d.boss as BossCard });
+        fetch("/api/leaderboard?boss=" + (d.boss as BossCard).id)
+          .then((r) => r.json())
+          .then((rk) => {
+            if (!stop) setRushRanks((rk.ranks as RushRank[]) ?? []);
+          })
+          .catch(() => {
+            if (!stop) setRushRanks([]);
+          });
+      })
+      .catch(() => {});
+    // Client-only read after hydration; microtask keeps the no-sync-setState lint rule happy.
+    queueMicrotask(() => setAvatar(loadAvatar()));
     const supabase = createClient();
     const ch = supabase
       .channel("bosses-hp")
@@ -153,6 +174,41 @@ export default function ArenaPage() {
         <p className="arena-pop rounded-xl border border-emerald-700 bg-emerald-950/60 px-4 py-2 text-sm font-medium text-emerald-200">
           {inviteMsg}
         </p>
+      ) : null}
+      {rush ? (
+        <a
+          href={"/boss/" + rush.boss.id}
+          className="arena-enter arena-card group flex flex-col gap-3 rounded-2xl border-cyan-800 p-5 shadow-[0_0_32px_rgba(34,211,238,0.2)] transition-all hover:-translate-y-0.5"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <p className="font-bold">
+              <span className="mr-2 text-xs font-bold tracking-widest text-cyan-300 uppercase">Daily Rush</span>
+              {skillName(rush.boss.skill_tag)}
+            </p>
+            <span className="shrink-0 font-mono text-sm text-zinc-400 tabular-nums">
+              {fmt(new Date(rush.reset_at).getTime() - now)}
+            </span>
+          </div>
+          <HpBar current={rush.boss.current_hp} max={rush.boss.max_hp} />
+          <p className="text-sm text-zinc-400">
+            HP {rush.boss.current_hp}/{rush.boss.max_hp} — everyone fights the same boss
+            <span className="ml-2 text-zinc-600 transition-colors group-hover:text-cyan-300">Join →</span>
+          </p>
+          {rushRanks && rushRanks.length > 0 ? (
+            <ol className="flex flex-col gap-1 text-sm">
+              {rushRanks.slice(0, 5).map((r, i) => (
+                <li key={r.id} className="flex items-center gap-2 text-zinc-300">
+                  <span className="w-5 text-center font-black text-zinc-500">{i + 1}</span>
+                  <span className="flex-1 truncate">
+                    {r.name}
+                    {r.id === playerId ? <span className="ml-1 text-xs font-bold text-emerald-300">YOU</span> : null}
+                  </span>
+                  <span className="text-zinc-500">{r.solved}/5</span>
+                </li>
+              ))}
+            </ol>
+          ) : null}
+        </a>
       ) : null}
       {bosses === null ? (
         <div className="flex flex-col gap-3">

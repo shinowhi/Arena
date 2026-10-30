@@ -5,6 +5,8 @@ import katex from "katex";
 import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
 import BossAvatar from "@/components/BossAvatar";
+import BossIntro from "@/components/BossIntro";
+import RaidFeed from "@/components/RaidFeed";
 import HeroAvatar from "@/components/HeroAvatar";
 import { DEFAULT_AVATAR, loadAvatar, skillOf, type AvatarSpec } from "@/lib/game/avatar";
 
@@ -55,6 +57,20 @@ function tone(freq: number, at: number, dur: number, type: OscillatorType, vol: 
   o.start(ac.currentTime + at);
   o.stop(ac.currentTime + at + dur + 0.05);
 }
+function speak(text: string, muted: boolean) {
+  if (muted || typeof window === "undefined") return;
+  try {
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.95;
+    u.pitch = 0.7;
+    synth.speak(u);
+  } catch {
+    // Speech unsupported: the fight works fine silent.
+  }
+}
 function playSound(kind: "hit" | "miss" | "victory", muted: boolean) {
   if (muted || typeof window === "undefined") return;
   if (kind === "hit") {
@@ -90,6 +106,25 @@ function BossInner() {
   const [dmg, setDmg] = useState(0);
   const [combo, setCombo] = useState(0);
   const [t0, setT0] = useState(0);
+  const [intro, setIntro] = useState(false);
+  const [copiedWin, setCopiedWin] = useState(false);
+
+  async function copyWin() {
+    if (!boss) return;
+    const comboBit = combo >= 2 ? ` with a x${combo} combo` : "";
+    const timeBit = t0 > 0 ? ` in ${fmt(Date.now() - t0)}` : "";
+    const text =
+      `I slayed the ${skillName(boss.skill_tag)} boss in Arena${comboBit}${timeBit} — ` +
+      `5 machine-verified questions down. Think you can? ${window.location.origin}`;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      window.prompt("Copy your victory:", text);
+      return;
+    }
+    setCopiedWin(true);
+    setTimeout(() => setCopiedWin(false), 2000);
+  }
   const [muted, setMuted] = useState(() => {
     try {
       return localStorage.getItem("arena_muted") === "1";
@@ -121,6 +156,17 @@ function BossInner() {
         let i = 0;
         while (i < d.questions.length && done.has(i)) i++;
         setIdx(i);
+        if (d.status === "ALIVE" && done.size === 0) {
+          setIntro(true);
+          setTimeout(() => setIntro(false), 3000);
+          let m = false;
+          try {
+            m = localStorage.getItem("arena_muted") === "1";
+          } catch {
+            m = false;
+          }
+          speak(`I am ${skillName(d.skill_tag)}. Answer my five questions, if you can.`, m);
+        }
       })
       .catch((e) => setMsg(e instanceof Error ? e.message : "Load failed."));
   }, [id]);
@@ -208,6 +254,9 @@ function BossInner() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      {intro && boss.status === "ALIVE" ? (
+        <BossIntro name={skillName(boss.skill_tag)} onSkip={() => setIntro(false)} />
+      ) : null}
       <div className="arena-enter flex items-end justify-between gap-3">
         <div>
           <p className="text-xs font-bold tracking-widest text-red-400 uppercase">Boss fight</p>
@@ -271,6 +320,7 @@ function BossInner() {
           </p>
         </div>
       </div>
+      <RaidFeed bossId={boss.id} />
       {boss.status === "DEAD" ? (
         <div className="arena-pop arena-card relative overflow-hidden rounded-2xl p-8 text-center">
           <div className="arena-rays" aria-hidden="true" />
@@ -295,6 +345,13 @@ function BossInner() {
               <a href="/scan" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
                 Scan another work
               </a>
+              <button
+                type="button"
+                onClick={copyWin}
+                className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200"
+              >
+                {copiedWin ? "Copied!" : "Share victory"}
+              </button>
             </nav>
           </div>
         </div>

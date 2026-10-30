@@ -41,6 +41,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     correct,
     damage,
   });
+  if (correct) {
+    try {
+      // Raid feed is best-effort: never break the attack (table lands in migration 0004).
+      await supabase.from("raid_hits").insert({ boss_id: id, player_id: playerId, damage });
+    } catch {}
+  }
   let hp = b.current_hp;
   let status = b.status;
   if (correct) {

@@ -1,33 +1,15 @@
-export type Species = "slime" | "knight" | "dragon" | "robot";
-export type Accessory = "none" | "hat" | "crown" | "sword" | "shield" | "wings" | "glasses";
-export type AvatarSpec = { species: Species; accessory: Accessory; color: string };
+export type Species = "fox" | "cat" | "frog" | "dragon";
 
-export const SPECIES: Array<{ id: Species; name: string; skill: string; bolt: string }> = [
-  { id: "slime", name: "Slime", skill: "Goo Shot", bolt: "#4ade80" },
-  { id: "knight", name: "Knight", skill: "Sword Slash", bolt: "#fbbf24" },
-  { id: "dragon", name: "Dragon", skill: "Fire Breath", bolt: "#fb7185" },
-  { id: "robot", name: "Robot", skill: "Laser Beam", bolt: "#22d3ee" },
+export type AvatarSpec = { species: Species };
+
+export const SPECIES: Array<{ id: Species; name: string; skill: string; bolt: string; art: string }> = [
+  { id: "fox", name: "Fox", skill: "Flame Tail", bolt: "#fb923c", art: "/art/hero-fox.png" },
+  { id: "cat", name: "Cat", skill: "Claw Slash", bolt: "#a78bfa", art: "/art/hero-cat.png" },
+  { id: "dragon", name: "Dragon", skill: "Fire Breath", bolt: "#fb7185", art: "/art/hero-dragon.png" },
+  { id: "frog", name: "Frog", skill: "Bubble Shot", bolt: "#4ade80", art: "/art/hero-frog.png" },
 ];
 
-export const ACCESSORIES: Array<{ id: Accessory; name: string }> = [
-  { id: "none", name: "None" },
-  { id: "hat", name: "Wizard hat" },
-  { id: "crown", name: "Crown" },
-  { id: "sword", name: "Sword" },
-  { id: "shield", name: "Shield" },
-  { id: "wings", name: "Wings" },
-  { id: "glasses", name: "Glasses" },
-];
-
-export const COLORS: Array<{ id: string; name: string; c1: string; c2: string }> = [
-  { id: "emerald", name: "Emerald", c1: "#34d399", c2: "#065f46" },
-  { id: "sky", name: "Sky", c1: "#38bdf8", c2: "#0c4a6e" },
-  { id: "amber", name: "Amber", c1: "#fbbf24", c2: "#92400e" },
-  { id: "violet", name: "Violet", c1: "#a78bfa", c2: "#4c1d95" },
-  { id: "rose", name: "Rose", c1: "#fb7185", c2: "#881337" },
-];
-
-export const DEFAULT_AVATAR: AvatarSpec = { species: "slime", accessory: "none", color: "emerald" };
+export const DEFAULT_AVATAR: AvatarSpec = { species: "fox" };
 
 const KEY = "arena_avatar_v1";
 
@@ -35,8 +17,8 @@ export function skillOf(species: Species): { skill: string; bolt: string } {
   return SPECIES.find((s) => s.id === species) ?? SPECIES[0];
 }
 
-export function colorsOf(id: string): { c1: string; c2: string } {
-  return COLORS.find((c) => c.id === id) ?? COLORS[0];
+export function artOf(species: Species): string {
+  return SPECIES.find((s) => s.id === species)?.art ?? SPECIES[0].art;
 }
 
 export function loadAvatar(): AvatarSpec {
@@ -44,10 +26,8 @@ export function loadAvatar(): AvatarSpec {
     const raw = localStorage.getItem(KEY);
     if (!raw) return DEFAULT_AVATAR;
     const p = JSON.parse(raw) as Partial<AvatarSpec>;
-    const species = SPECIES.some((s) => s.id === p.species) ? (p.species as Species) : "slime";
-    const accessory = ACCESSORIES.some((a) => a.id === p.accessory) ? (p.accessory as Accessory) : "none";
-    const color = COLORS.some((c) => c.id === p.color) ? (p.color as string) : "emerald";
-    return { species, accessory, color };
+    const species = SPECIES.some((s) => s.id === p.species) ? (p.species as Species) : "fox";
+    return { species };
   } catch {
     return DEFAULT_AVATAR;
   }

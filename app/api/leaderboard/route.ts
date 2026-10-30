@@ -14,7 +14,45 @@ type PlayerRow = {
   xp: number;
 };
 
-export async function GET() {
+type RushRow = { player_id: string; question_index: number; created_at: string };
+
+// Rush ranks: unique correct questions per player, tiebreak = earliest completion.
+async function rushRanks(bossId: string) {
+  try {
+    const supabase = await createClient();
+    // shortcut: in-JS aggregation capped at 1000 rows; move to a SQL RPC when attacks grow.
+    const [{ data: attacks }, { data: players }] = await Promise.all([
+      supabase.from("attacks").select("player_id, question_index, created_at").eq("boss_id", bossId).eq("correct", true).order("created_at").limit(1000),
+      supabase.from("players").select("id, display_name").limit(200),
+    ]);
+    const names = new Map(((players as PlayerRow[] | null) ?? []).map((p) => [p.id, p.display_name]));
+    const per = new Map<string, { seen: Set<number>; doneAt: string }>();
+    for (const a of ((attacks as RushRow[] | null) ?? [])) {
+      const p = per.get(a.player_id) ?? { seen: new Set<number>(), doneAt: a.created_at };
+      if (!p.seen.has(a.question_index)) {
+        p.seen.add(a.question_index);
+        p.doneAt = a.created_at;
+      }
+      per.set(a.player_id, p);
+    }
+    const ranks = [...per.entries()]
+      .map(([id, p]) => ({
+        id,
+        name: names.get(id) ?? "Hunter #" + id.slice(0, 4),
+        solved: p.seen.size,
+        time: p.doneAt,
+      }))
+      .sort((x, y) => y.solved - x.solved || +new Date(x.time) - +new Date(y.time))
+      .slice(0, 10);
+    return NextResponse.json({ boss: bossId, ranks });
+  } catch {
+    return NextResponse.json({ error: "Could not load rush ranks." }, { status: 500 });
+  }
+}
+
+export async function GET(req: Request) {
+  const bossId = new URL(req.url).searchParams.get("boss");
+  if (bossId) return rushRanks(bossId);
   try {
     await getOrCreatePlayerId();
     const supabase = await createClient();

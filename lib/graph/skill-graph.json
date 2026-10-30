@@ -1,41 +1,379 @@
 {
   "version": 1,
   "skills": [
-    {"id": "algebraic_manipulation", "name": "Algebraic manipulation", "description": "Simplify, factor, and solve algebraic expressions and equations.", "prereqs": []},
-    {"id": "exponents_logarithms", "name": "Exponents and logarithms", "description": "Apply exponent and logarithm rules to rewrite expressions.", "prereqs": ["algebraic_manipulation"]},
-    {"id": "functions_graphs", "name": "Functions and graphs", "description": "Read domains, ranges, and transformations from graphs and formulas.", "prereqs": ["algebraic_manipulation"]},
-    {"id": "trig_functions", "name": "Trigonometric functions", "description": "Evaluate trig functions and use core identities.", "prereqs": ["functions_graphs"]},
-    {"id": "limits_intuitive", "name": "Limits (intuitive)", "description": "Estimate one-sided and two-sided limits from graphs and tables.", "prereqs": ["functions_graphs"]},
-    {"id": "limit_laws", "name": "Limit laws", "description": "Compute limits with algebraic simplification and limit laws.", "prereqs": ["limits_intuitive"]},
-    {"id": "squeeze_theorem", "name": "Squeeze theorem", "description": "Prove a limit by bounding it between two known limits.", "prereqs": ["limit_laws"]},
-    {"id": "continuity", "name": "Continuity", "description": "Classify discontinuities and use continuity in calculations.", "prereqs": ["limit_laws"]},
-    {"id": "intermediate_value_theorem", "name": "Intermediate value theorem", "description": "Locate roots of continuous functions on an interval.", "prereqs": ["continuity"]},
-    {"id": "derivatives_definition", "name": "Derivative by definition", "description": "Compute derivatives from the limit definition.", "prereqs": ["limit_laws"]},
-    {"id": "differentiation_rules", "name": "Power, product, quotient rules", "description": "Differentiate polynomials, products, and quotients.", "prereqs": ["derivatives_definition", "exponents_logarithms"]},
-    {"id": "derivatives_trig", "name": "Derivatives of trig functions", "description": "Differentiate sine, cosine, and other trig functions.", "prereqs": ["differentiation_rules", "trig_functions"]},
-    {"id": "derivatives_exp_log", "name": "Derivatives of exp and log", "description": "Differentiate exponential and logarithmic functions.", "prereqs": ["differentiation_rules", "exponents_logarithms"]},
-    {"id": "chain_rule", "name": "Chain rule", "description": "Differentiate composite functions.", "prereqs": ["differentiation_rules", "functions_graphs"]},
-    {"id": "implicit_differentiation", "name": "Implicit differentiation", "description": "Differentiate equations that define y implicitly.", "prereqs": ["chain_rule"]},
-    {"id": "related_rates", "name": "Related rates", "description": "Relate rates of change in word problems.", "prereqs": ["implicit_differentiation"]},
-    {"id": "linear_approximation", "name": "Linear approximation", "description": "Approximate values with tangent lines and differentials.", "prereqs": ["chain_rule"]},
-    {"id": "mean_value_theorem", "name": "Mean value theorem", "description": "Apply Rolle and mean value theorems on an interval.", "prereqs": ["derivatives_definition", "continuity"]},
-    {"id": "curve_sketching", "name": "Curve sketching", "description": "Find extrema, monotonicity, and concavity to sketch graphs.", "prereqs": ["chain_rule", "limits_intuitive"]},
-    {"id": "optimization", "name": "Optimization", "description": "Set up and solve max/min word problems.", "prereqs": ["curve_sketching"]},
-    {"id": "lhopital_rule", "name": "L Hopital rule", "description": "Resolve indeterminate forms with derivatives.", "prereqs": ["derivatives_exp_log", "limit_laws"]},
-    {"id": "antiderivatives", "name": "Antiderivatives", "description": "Find indefinite integrals of basic functions.", "prereqs": ["differentiation_rules"]},
-    {"id": "definite_integrals", "name": "Definite integrals", "description": "Evaluate definite integrals via Riemann sums and properties.", "prereqs": ["antiderivatives", "limits_intuitive"]},
-    {"id": "fundamental_theorem_calculus", "name": "Fundamental theorem of calculus", "description": "Connect differentiation and integration across both parts.", "prereqs": ["definite_integrals"]},
-    {"id": "substitution_rule", "name": "Integration by substitution", "description": "Integrate composite functions with u-substitution.", "prereqs": ["fundamental_theorem_calculus", "chain_rule"]},
-    {"id": "integration_by_parts", "name": "Integration by parts", "description": "Integrate products by choosing u and dv.", "prereqs": ["substitution_rule", "differentiation_rules"]},
-    {"id": "trig_integrals", "name": "Trigonometric integrals", "description": "Integrate powers and products of trig functions.", "prereqs": ["substitution_rule", "trig_functions"]},
-    {"id": "trig_substitution", "name": "Trigonometric substitution", "description": "Handle radicals with trig substitutions.", "prereqs": ["trig_integrals"]},
-    {"id": "partial_fractions", "name": "Partial fractions", "description": "Decompose rational functions to integrate them.", "prereqs": ["substitution_rule", "algebraic_manipulation"]},
-    {"id": "improper_integrals", "name": "Improper integrals", "description": "Decide convergence of unbounded integrals.", "prereqs": ["fundamental_theorem_calculus", "limit_laws"]},
-    {"id": "area_between_curves", "name": "Area between curves", "description": "Set up and compute planar areas with integrals.", "prereqs": ["definite_integrals"]},
-    {"id": "volumes_revolution", "name": "Volumes of revolution", "description": "Compute volumes with disks, washers, or shells.", "prereqs": ["definite_integrals"]},
-    {"id": "sequences", "name": "Sequences", "description": "Find limits and monotonicity of sequences.", "prereqs": ["limit_laws", "functions_graphs"]},
-    {"id": "series_convergence_tests", "name": "Series and convergence tests", "description": "Test series with comparison, ratio, root, and integral tests.", "prereqs": ["sequences", "improper_integrals"]},
-    {"id": "power_series", "name": "Power series and Taylor polynomials", "description": "Build Taylor polynomials and find radius of convergence.", "prereqs": ["series_convergence_tests", "chain_rule"]},
-    {"id": "vectors_3d", "name": "3D vectors and coordinates", "description": "Operate on vectors and points in Oxyz space.", "prereqs": ["algebraic_manipulation"]}
+    {
+      "id": "algebraic_manipulation",
+      "name": "Algebraic manipulation",
+      "description": "Simplify, factor, and solve algebraic expressions and equations.",
+      "prereqs": [],
+      "grade": 10,
+      "gradeLabel": "Grade 10"
+    },
+    {
+      "id": "exponents_logarithms",
+      "name": "Exponents and logarithms",
+      "description": "Apply exponent and logarithm rules to rewrite expressions.",
+      "prereqs": [
+        "algebraic_manipulation"
+      ],
+      "grade": 11,
+      "gradeLabel": "Grade 11"
+    },
+    {
+      "id": "functions_graphs",
+      "name": "Functions and graphs",
+      "description": "Read domains, ranges, and transformations from graphs and formulas.",
+      "prereqs": [
+        "algebraic_manipulation"
+      ],
+      "grade": 10,
+      "gradeLabel": "Grade 10"
+    },
+    {
+      "id": "trig_functions",
+      "name": "Trigonometric functions",
+      "description": "Evaluate trig functions and use core identities.",
+      "prereqs": [
+        "functions_graphs"
+      ],
+      "grade": 10,
+      "gradeLabel": "Grade 10"
+    },
+    {
+      "id": "limits_intuitive",
+      "name": "Limits (intuitive)",
+      "description": "Estimate one-sided and two-sided limits from graphs and tables.",
+      "prereqs": [
+        "functions_graphs"
+      ],
+      "grade": 11,
+      "gradeLabel": "Grade 11"
+    },
+    {
+      "id": "limit_laws",
+      "name": "Limit laws",
+      "description": "Compute limits with algebraic simplification and limit laws.",
+      "prereqs": [
+        "limits_intuitive"
+      ],
+      "grade": 11,
+      "gradeLabel": "Grade 11"
+    },
+    {
+      "id": "squeeze_theorem",
+      "name": "Squeeze theorem",
+      "description": "Prove a limit by bounding it between two known limits.",
+      "prereqs": [
+        "limit_laws"
+      ],
+      "grade": 13,
+      "gradeLabel": "University"
+    },
+    {
+      "id": "continuity",
+      "name": "Continuity",
+      "description": "Classify discontinuities and use continuity in calculations.",
+      "prereqs": [
+        "limit_laws"
+      ],
+      "grade": 11,
+      "gradeLabel": "Grade 11"
+    },
+    {
+      "id": "intermediate_value_theorem",
+      "name": "Intermediate value theorem",
+      "description": "Locate roots of continuous functions on an interval.",
+      "prereqs": [
+        "continuity"
+      ],
+      "grade": 11,
+      "gradeLabel": "Grade 11"
+    },
+    {
+      "id": "derivatives_definition",
+      "name": "Derivative by definition",
+      "description": "Compute derivatives from the limit definition.",
+      "prereqs": [
+        "limit_laws"
+      ],
+      "grade": 11,
+      "gradeLabel": "Grade 11"
+    },
+    {
+      "id": "differentiation_rules",
+      "name": "Power, product, quotient rules",
+      "description": "Differentiate polynomials, products, and quotients.",
+      "prereqs": [
+        "derivatives_definition",
+        "exponents_logarithms"
+      ],
+      "grade": 11,
+      "gradeLabel": "Grade 11"
+    },
+    {
+      "id": "derivatives_trig",
+      "name": "Derivatives of trig functions",
+      "description": "Differentiate sine, cosine, and other trig functions.",
+      "prereqs": [
+        "differentiation_rules",
+        "trig_functions"
+      ],
+      "grade": 11,
+      "gradeLabel": "Grade 11"
+    },
+    {
+      "id": "derivatives_exp_log",
+      "name": "Derivatives of exp and log",
+      "description": "Differentiate exponential and logarithmic functions.",
+      "prereqs": [
+        "differentiation_rules",
+        "exponents_logarithms"
+      ],
+      "grade": 11,
+      "gradeLabel": "Grade 11"
+    },
+    {
+      "id": "chain_rule",
+      "name": "Chain rule",
+      "description": "Differentiate composite functions.",
+      "prereqs": [
+        "differentiation_rules",
+        "functions_graphs"
+      ],
+      "grade": 11,
+      "gradeLabel": "Grade 11"
+    },
+    {
+      "id": "implicit_differentiation",
+      "name": "Implicit differentiation",
+      "description": "Differentiate equations that define y implicitly.",
+      "prereqs": [
+        "chain_rule"
+      ],
+      "grade": 13,
+      "gradeLabel": "University"
+    },
+    {
+      "id": "related_rates",
+      "name": "Related rates",
+      "description": "Relate rates of change in word problems.",
+      "prereqs": [
+        "implicit_differentiation"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "linear_approximation",
+      "name": "Linear approximation",
+      "description": "Approximate values with tangent lines and differentials.",
+      "prereqs": [
+        "chain_rule"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "mean_value_theorem",
+      "name": "Mean value theorem",
+      "description": "Apply Rolle and mean value theorems on an interval.",
+      "prereqs": [
+        "derivatives_definition",
+        "continuity"
+      ],
+      "grade": 13,
+      "gradeLabel": "University"
+    },
+    {
+      "id": "curve_sketching",
+      "name": "Curve sketching",
+      "description": "Find extrema, monotonicity, and concavity to sketch graphs.",
+      "prereqs": [
+        "chain_rule",
+        "limits_intuitive"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "optimization",
+      "name": "Optimization",
+      "description": "Set up and solve max/min word problems.",
+      "prereqs": [
+        "curve_sketching"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "lhopital_rule",
+      "name": "L Hopital rule",
+      "description": "Resolve indeterminate forms with derivatives.",
+      "prereqs": [
+        "derivatives_exp_log",
+        "limit_laws"
+      ],
+      "grade": 13,
+      "gradeLabel": "University"
+    },
+    {
+      "id": "antiderivatives",
+      "name": "Antiderivatives",
+      "description": "Find indefinite integrals of basic functions.",
+      "prereqs": [
+        "differentiation_rules"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "definite_integrals",
+      "name": "Definite integrals",
+      "description": "Evaluate definite integrals via Riemann sums and properties.",
+      "prereqs": [
+        "antiderivatives",
+        "limits_intuitive"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "fundamental_theorem_calculus",
+      "name": "Fundamental theorem of calculus",
+      "description": "Connect differentiation and integration across both parts.",
+      "prereqs": [
+        "definite_integrals"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "substitution_rule",
+      "name": "Integration by substitution",
+      "description": "Integrate composite functions with u-substitution.",
+      "prereqs": [
+        "fundamental_theorem_calculus",
+        "chain_rule"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "integration_by_parts",
+      "name": "Integration by parts",
+      "description": "Integrate products by choosing u and dv.",
+      "prereqs": [
+        "substitution_rule",
+        "differentiation_rules"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "trig_integrals",
+      "name": "Trigonometric integrals",
+      "description": "Integrate powers and products of trig functions.",
+      "prereqs": [
+        "substitution_rule",
+        "trig_functions"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "trig_substitution",
+      "name": "Trigonometric substitution",
+      "description": "Handle radicals with trig substitutions.",
+      "prereqs": [
+        "trig_integrals"
+      ],
+      "grade": 13,
+      "gradeLabel": "University"
+    },
+    {
+      "id": "partial_fractions",
+      "name": "Partial fractions",
+      "description": "Decompose rational functions to integrate them.",
+      "prereqs": [
+        "substitution_rule",
+        "algebraic_manipulation"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "improper_integrals",
+      "name": "Improper integrals",
+      "description": "Decide convergence of unbounded integrals.",
+      "prereqs": [
+        "fundamental_theorem_calculus",
+        "limit_laws"
+      ],
+      "grade": 13,
+      "gradeLabel": "University"
+    },
+    {
+      "id": "area_between_curves",
+      "name": "Area between curves",
+      "description": "Set up and compute planar areas with integrals.",
+      "prereqs": [
+        "definite_integrals"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "volumes_revolution",
+      "name": "Volumes of revolution",
+      "description": "Compute volumes with disks, washers, or shells.",
+      "prereqs": [
+        "definite_integrals"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "sequences",
+      "name": "Sequences",
+      "description": "Find limits and monotonicity of sequences.",
+      "prereqs": [
+        "limit_laws",
+        "functions_graphs"
+      ],
+      "grade": 11,
+      "gradeLabel": "Grade 11"
+    },
+    {
+      "id": "series_convergence_tests",
+      "name": "Series and convergence tests",
+      "description": "Test series with comparison, ratio, root, and integral tests.",
+      "prereqs": [
+        "sequences",
+        "improper_integrals"
+      ],
+      "grade": 13,
+      "gradeLabel": "University"
+    },
+    {
+      "id": "power_series",
+      "name": "Power series and Taylor polynomials",
+      "description": "Build Taylor polynomials and find radius of convergence.",
+      "prereqs": [
+        "series_convergence_tests",
+        "chain_rule"
+      ],
+      "grade": 13,
+      "gradeLabel": "University"
+    },
+    {
+      "id": "vectors_3d",
+      "name": "3D vectors and coordinates",
+      "description": "Operate on vectors and points in Oxyz space.",
+      "prereqs": [
+        "algebraic_manipulation"
+      ],
+      "grade": 12,
+      "gradeLabel": "Grade 12"
+    }
   ]
 }

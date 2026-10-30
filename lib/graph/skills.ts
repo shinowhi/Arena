@@ -1,6 +1,6 @@
 import graph from "../graph/skill-graph.json" with { type: "json" };
 
-export type SkillNode = { id: string; name: string; description: string; prereqs: string[] };
+export type SkillNode = { id: string; name: string; description: string; prereqs: string[]; grade: number; gradeLabel: string };
 
 const skills = (graph as { skills: SkillNode[] }).skills;
 const byId = new Map(skills.map((s) => [s.id, s]));
@@ -9,6 +9,14 @@ export const SKILL_IDS: string[] = skills.map((s) => s.id);
 
 export function isValidSkill(id: string): boolean {
   return byId.has(id);
+}
+
+export function skillGrade(id: string): number {
+  return byId.get(id)?.grade ?? 13;
+}
+
+export function skillGradeLabel(id: string): string {
+  return byId.get(id)?.gradeLabel ?? "University";
 }
 
 export function skillName(id: string): string {

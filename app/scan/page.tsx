@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import katex from "katex";
 import { skillName } from "@/lib/graph/skills";
+import TimePortalCard from "@/components/TimePortalCard";
 
 type ScanResult = {
   items: Array<{ cau_hoi: string; dap_an_sinh_vien: string; skill_tag: string[] }>;
@@ -234,6 +235,7 @@ export default function ScanPage() {
               </li>
               </ol>
             </div>
+            <TimePortalCard weak={result.weak_skill} root={result.root_cause} />
             <div className="mt-3 flex flex-wrap gap-2">
               {result.can_summon ? (
                 <button
