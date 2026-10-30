@@ -7,7 +7,7 @@ import HpBar from "@/components/HpBar";
 import BossAvatar from "@/components/BossAvatar";
 import BossIntro from "@/components/BossIntro";
 import RaidFeed from "@/components/RaidFeed";
-import HeroAvatar from "@/components/HeroAvatar";
+import Hero3D from "@/components/Hero3D";
 import { DEFAULT_AVATAR, loadAvatar, skillOf, type AvatarSpec } from "@/lib/game/avatar";
 
 type BossView = {
@@ -269,7 +269,7 @@ function BossInner() {
       <div className="arena-enter arena-d1 arena-battleground relative overflow-hidden rounded-2xl border border-zinc-800 px-4 pt-4 pb-6">
         <div className="flex items-end justify-between gap-2">
           <div className={flash ? "arena-lunge" : "arena-float"}>
-            <HeroAvatar spec={avatar} size={88} />
+            <Hero3D spec={avatar} size={88} />
           </div>
           <div className={`rounded-full border-2 bg-zinc-900/80 p-3 transition-all ${ring} ${flash ? "arena-shake" : "arena-float"}`}>
             <BossAvatar pct={pct} rarity={boss.rarity} size={88} />
