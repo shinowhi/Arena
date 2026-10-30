@@ -31,7 +31,13 @@ export default function CardsPage() {
   const [error, setError] = useState("");
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
   const [flipped, setFlipped] = useState(false);
-  const [now] = useState(() => (typeof window === "undefined" ? 0 : Date.now()));
+  // Current time is read after paint only — reading it during render breaks static prerender.
+  const [nowMs, setNowMs] = useState(0);
+
+  useEffect(() => {
+    const t = setTimeout(() => setNowMs(Date.now()), 0);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     fetch("/api/diary")
@@ -62,7 +68,7 @@ export default function CardsPage() {
 
   const dueSkills = (unlocked ?? []).filter((s) => {
     const p = progress[s];
-    return !p || new Date(p.due).getTime() <= now;
+    return !p || new Date(p.due).getTime() <= nowMs;
   });
   const current = dueSkills[0] ?? null;
 
@@ -73,8 +79,8 @@ export default function CardsPage() {
         <h1 className="text-2xl font-bold text-zinc-100">Flip before you forget</h1>
       </div>
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
-      {unlocked === null && !error ? <p className="text-zinc-500">Opening your card box…</p> : null}
-      {unlocked !== null ? (
+      {(unlocked === null || nowMs === 0) && !error ? <p className="text-zinc-500">Opening your card box…</p> : null}
+      {unlocked !== null && nowMs > 0 ? (
         <>
           {current ? (
             <div className="arena-card rounded-2xl p-6 text-center">
@@ -130,7 +136,7 @@ export default function CardsPage() {
               <div className="flex flex-wrap gap-1.5">
                 {unlocked.map((s) => {
                   const p = progress[s];
-                  const due = !p || new Date(p.due).getTime() <= now;
+                  const due = !p || new Date(p.due).getTime() <= nowMs;
                   return (
                     <span
                       key={s}

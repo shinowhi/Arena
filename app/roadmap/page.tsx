@@ -35,6 +35,13 @@ export default function RoadmapPage() {
   const [error, setError] = useState("");
   const [checks, setChecks] = useState<Set<string>>(new Set());
   const [summoning, setSummoning] = useState("");
+  // Current time is read after paint only — reading it during render breaks static prerender.
+  const [todayMs, setTodayMs] = useState(0);
+
+  useEffect(() => {
+    const t = setTimeout(() => setTodayMs(Date.now()), 0);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -95,13 +102,11 @@ export default function RoadmapPage() {
     }
   }
 
-  const today = new Date();
-  const todayKey = dateKey(today);
+  const todayKey = todayMs > 0 ? dateKey(new Date(todayMs)) : "";
   const open = weak.filter((w) => !w.healed);
   const focusList = open.length > 0 ? open : weak; // review mode when everything is healed
   const days = Array.from({ length: DAYS }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() + i);
+    const d = new Date(todayMs + i * 86400000);
     const focus = focusList.length > 0 ? focusList[i % focusList.length]! : null;
     return { date: d, key: dateKey(d), focus };
   });
@@ -131,7 +136,7 @@ export default function RoadmapPage() {
 
       {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
 
-      {loaded && focusList.length > 0 && (
+      {loaded && todayMs > 0 && focusList.length > 0 && (
         <>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
             <span className={`rounded-full px-3 py-1 font-semibold ${todayDone ? "bg-emerald-500/20 text-emerald-300" : "bg-zinc-800 text-zinc-300"}`}>

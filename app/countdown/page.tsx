@@ -15,8 +15,8 @@ function loadLocal(key: string): string {
   }
 }
 
-function dayISO(base: Date, offset: number): string {
-  return new Date(base.getTime() + offset * 86400000).toISOString().slice(0, 10);
+function dayISO(baseMs: number, offset: number): string {
+  return new Date(baseMs + offset * 86400000).toISOString().slice(0, 10);
 }
 
 export default function CountdownPage() {
@@ -30,6 +30,17 @@ export default function CountdownPage() {
       return [];
     }
   });
+  // Current time is read after paint only — reading it during render breaks static prerender.
+  const [nowMs, setNowMs] = useState(0);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const d = new Date();
+      d.setUTCHours(0, 0, 0, 0);
+      setNowMs(d.getTime());
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     fetch("/api/countdown")
@@ -62,10 +73,9 @@ export default function CountdownPage() {
     });
   }
 
-  const now = new Date();
-  now.setUTCHours(0, 0, 0, 0);
   const examDate = exam ? new Date(exam + "T00:00:00Z") : null;
-  const daysLeft = examDate ? Math.round((examDate.getTime() - now.getTime()) / 86400000) : null;
+  const daysLeft =
+    examDate && nowMs > 0 ? Math.round((examDate.getTime() - nowMs) / 86400000) : null;
   const unhealed = (plan?.weak ?? []).filter((w) => !w.healed);
 
   return (
@@ -114,9 +124,10 @@ export default function CountdownPage() {
               {unhealed.length} skills left but only {daysLeft} days — double up: 2 skills some days.
             </p>
           ) : null}
+          {nowMs > 0 ? (
           <ol className="flex flex-col gap-2">
             {unhealed.map((w, i) => {
-              const key = dayISO(now, i);
+              const key = dayISO(nowMs, i);
               const checked = done.includes(key);
               return (
                 <li key={w.tag} className="arena-card flex items-center gap-3 rounded-2xl p-3">
@@ -145,6 +156,7 @@ export default function CountdownPage() {
               );
             })}
           </ol>
+          ) : null}
         </>
       ) : null}
     </main>
