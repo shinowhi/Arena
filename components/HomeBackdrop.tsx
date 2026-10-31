@@ -49,7 +49,7 @@ export default function HomeBackdrop() {
         ["--my" as string]: "30%",
         ["--mhue" as string]: 280,
         background:
-          "radial-gradient(640px circle at var(--mx) var(--my), hsl(var(--mhue) 85% 50% / 0.3), transparent 70%), linear-gradient(180deg, hsl(var(--shue) 65% 14%), #08080f 75%)",
+          "radial-gradient(3200px circle at var(--mx) var(--my), hsl(var(--mhue) 85% 50% / 0.3), transparent 70%), linear-gradient(180deg, hsl(var(--shue) 65% 14%), #08080f 75%)",
       }}
     />
   );
