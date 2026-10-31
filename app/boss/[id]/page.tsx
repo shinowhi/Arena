@@ -1,7 +1,7 @@
 "use client";
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import katex from "katex";
+import MathText from "@/components/MathText";
 import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
 import BossAvatar from "@/components/BossAvatar";
@@ -379,10 +379,7 @@ function BossInner() {
               {muted ? "Sound off" : "Sound on"}
             </button>
           </div>
-          <div
-            className="overflow-x-auto text-xl text-zinc-100"
-            dangerouslySetInnerHTML={{ __html: katex.renderToString(q.prompt_latex, { throwOnError: false }) }}
-          />
+          <MathText text={q.prompt_latex} className="overflow-x-auto text-xl text-zinc-100" />
           <p className="text-sm text-zinc-400">💡 Hint: {q.hint}</p>
           <div className="flex gap-2">
             <input

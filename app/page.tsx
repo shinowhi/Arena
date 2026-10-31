@@ -1,25 +1,33 @@
+import StreakBadge from "@/components/StreakBadge";
+
 const STEPS = [
   { n: "01", t: "Scan", d: "Snap a photo of your math work. Vision AI reads the handwriting directly — no OCR." },
   { n: "02", t: "Diagnose", d: "Your mistake is mapped onto a 36-skill graph and traced to its root cause." },
   { n: "03", t: "Slay", d: "Fight a boss of 5 isomorphic questions. Every answer is recomputed by a math engine." },
 ];
 
-const FEATURES = [
-  { t: "Healing streak", d: "Days count when you solve or scan. GitHub-style heatmap.", href: "/streak" },
-  { t: "Root diary", d: "Every skill you slew — fails, dates, flawless wins.", href: "/diary" },
-  { t: "Exam countdown", d: "Weakest-first battle plan before exam day.", href: "/countdown" },
-  { t: "Formula cards", d: "Spaced-repetition cards unlocked by slain bosses.", href: "/cards" },
-  { t: "Real-life problems", d: "Snap anything — get a solvable problem from the scene.", href: "/scan" },
-  { t: "Ghost classroom", d: "Anonymous hunters grinding beside you tonight.", href: "/ghosts" },
-  { t: "30-day roadmap", d: "One focus a day, weakest first. Check in daily.", href: "/roadmap" },
-  { t: "Night market", d: "Post XP bounties — or solve others' for XP.", href: "/market" },
-  { t: "Parent report", d: "One-time code links a parent to progress numbers.", href: "/parent" },
+const SPOTLIGHT = [
+  { e: "⚔️", t: "Boss fight", d: "Your weakest skill, alive. Five questions stand between you and the kill.", href: "/arena", cta: "Enter arena", dl: "arena-d1", accent: "hover:border-red-500/70 hover:shadow-[0_0_36px_rgba(239,68,68,0.35)]", glow: "text-red-400" },
+  { e: "📸", t: "Scan", d: "Snap your work. Vision AI reads handwriting directly — no OCR.", href: "/scan", cta: "Scan now", dl: "arena-d2", accent: "hover:border-cyan-400/70 hover:shadow-[0_0_36px_rgba(34,211,238,0.3)]", glow: "text-cyan-300" },
+  { e: "🌍", t: "Real life", d: "Snap anything around you — get a solvable problem from the scene.", href: "/scan", cta: "Try it", dl: "arena-d3", accent: "hover:border-emerald-400/70 hover:shadow-[0_0_36px_rgba(52,211,153,0.3)]", glow: "text-emerald-300" },
+  { e: "👻", t: "Ghost classroom", d: "Anonymous hunters grinding beside you tonight. Never study alone.", href: "/ghosts", cta: "Join them", dl: "arena-d4", accent: "hover:border-violet-400/70 hover:shadow-[0_0_36px_rgba(167,139,250,0.3)]", glow: "text-violet-300" },
+];
+
+const MORE = [
+  { t: "Healing streak", href: "/streak" },
+  { t: "Root diary", href: "/diary" },
+  { t: "Exam countdown", href: "/countdown" },
+  { t: "Formula cards", href: "/cards" },
+  { t: "30-day roadmap", href: "/roadmap" },
+  { t: "Night market", href: "/market" },
+  { t: "Parent report", href: "/parent" },
 ];
 
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col">
-      <header className="mx-auto flex w-full max-w-5xl items-center gap-2 px-4 py-4 text-sm">
+      <StreakBadge />
+      <header className="mx-auto flex w-full max-w-5xl items-center gap-2 py-4 pl-4 pr-14 text-sm sm:pr-32">
         <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
         <span className="font-bold tracking-wide">ARENA</span>
         <nav className="ml-auto flex gap-4 text-zinc-400">
@@ -60,13 +68,40 @@ export default function Home() {
         </div>
         <div className="w-full pt-10 text-left">
           <p className="text-xs font-bold tracking-widest text-red-400">04</p>
-          <p className="mt-1 text-lg font-bold">Beyond the boss</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((f) => (
-              <a key={f.href + f.t} href={f.href} className="arena-card block rounded-2xl p-5 transition-transform hover:-translate-y-0.5">
-                <p className="font-bold">{f.t}</p>
-                <p className="mt-1 text-sm text-zinc-400">{f.d}</p>
-                <p className="mt-2 text-xs font-semibold text-red-400">Open →</p>
+          <p className="mt-1 text-lg font-bold">Pick your battle</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {SPOTLIGHT.map((f, i) => (
+              <a
+                key={f.t}
+                href={f.href}
+                className={
+                  "arena-enter arena-card group block rounded-2xl p-5 transition-all hover:-translate-y-1 " +
+                  f.dl +
+                  " " +
+                  f.accent +
+                  (i === 0 ? " sm:col-span-2 sm:flex sm:items-center sm:gap-6" : "")
+                }
+              >
+                <span className={"block text-4xl " + (i === 0 ? "arena-float sm:text-5xl" : "")} aria-hidden="true">
+                  {f.e}
+                </span>
+                <span className={i === 0 ? "mt-3 block sm:mt-0" : "mt-3 block"}>
+                  <span className="block text-lg font-black">{f.t}</span>
+                  <span className="mt-1 block text-sm text-zinc-400">{f.d}</span>
+                  <span className={"mt-2 block text-sm font-bold " + f.glow}>{f.cta} →</span>
+                </span>
+              </a>
+            ))}
+          </div>
+          <p className="mt-8 text-xs font-bold tracking-widest text-zinc-500">MORE ARSENAL</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {MORE.map((m) => (
+              <a
+                key={m.href}
+                href={m.href}
+                className="arena-btn-ghost rounded-full px-4 py-2 text-sm font-medium text-zinc-300 transition-transform hover:-translate-y-0.5"
+              >
+                {m.t} →
               </a>
             ))}
           </div>
