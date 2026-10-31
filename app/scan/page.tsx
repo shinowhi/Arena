@@ -5,6 +5,7 @@ import katex from "katex";
 import { skillName } from "@/lib/graph/skills";
 import PageHeader from "@/components/ui/PageHeader";
 import DiagnosisReveal from "@/components/DiagnosisReveal";
+import ScreenCapture from "@/components/ScreenCapture";
 
 type ScanResult = {
   items: Array<{ cau_hoi: string; dap_an_sinh_vien: string; skill_tag: string[] }>;
@@ -67,6 +68,7 @@ export default function ScanPage() {
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [screenOpen, setScreenOpen] = useState(false);
 
   function pick(f: File | undefined) {
     if (!f) return;
@@ -203,6 +205,15 @@ export default function ScanPage() {
         title={<>Show us <span className="arena-title">your work</span></>}
         sub="One photo. We find the weak skill and its root cause."
       />
+      {screenOpen ? (
+        <ScreenCapture
+          onCapture={(f) => {
+            pick(f);
+            setScreenOpen(false);
+          }}
+          onClose={() => setScreenOpen(false)}
+        />
+      ) : (
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -233,10 +244,19 @@ export default function ScanPage() {
             <p className="text-sm text-zinc-500">Drag a photo here, or choose one below.</p>
           </div>
         )}
-        <label className="arena-btn-ghost cursor-pointer rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
-          {preview ? "Choose another" : "Choose photo"}
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
-        </label>
+        <div className="flex flex-wrap justify-center gap-2">
+          <label className="arena-btn-ghost cursor-pointer rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
+            {preview ? "Choose another" : "Choose photo"}
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
+          </label>
+          <button
+            type="button"
+            onClick={() => setScreenOpen(true)}
+            className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
+          >
+            Capture screen
+          </button>
+        </div>
         <div className="flex flex-wrap items-center justify-center gap-2">
           <span className="text-xs text-zinc-600">No homework handy?</span>
           {SAMPLES.map((s) => (
@@ -251,6 +271,7 @@ export default function ScanPage() {
           ))}
         </div>
       </div>
+      )}
       <div className="mx-auto flex gap-1 rounded-full border border-zinc-800 bg-zinc-900/60 p-1" role="tablist" aria-label="Scan mode">
         {(["exam", "life"] as const).map((m) => (
           <button
