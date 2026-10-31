@@ -134,17 +134,17 @@ body {
 /* Gold glitter in drifting wave patches: sparse amber specks, visible only inside
    three soft mask blobs that swim across the screen on a slow loop. */
 .arena-glitter {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 0.68 0 0 0 0 0.28 0.9 0.9 0.9 0 -1.6'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 0.68 0 0 0 0 0.28 0.9 0.9 0.9 0 -1.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
   background-size: 220px 220px;
   -webkit-mask-image:
-    radial-gradient(36% 28% at 22% 30%, black 0%, transparent 70%),
-    radial-gradient(40% 32% at 76% 60%, black 0%, transparent 70%),
-    radial-gradient(30% 26% at 52% 88%, black 0%, transparent 70%);
+    radial-gradient(46% 38% at 22% 30%, black 0%, transparent 80%),
+    radial-gradient(48% 40% at 76% 60%, black 0%, transparent 80%),
+    radial-gradient(38% 34% at 52% 88%, black 0%, transparent 80%);
   -webkit-mask-size: 170% 170%, 190% 190%, 160% 160%;
   mask-image:
-    radial-gradient(36% 28% at 22% 30%, black 0%, transparent 70%),
-    radial-gradient(40% 32% at 76% 60%, black 0%, transparent 70%),
-    radial-gradient(30% 26% at 52% 88%, black 0%, transparent 70%);
+    radial-gradient(46% 38% at 22% 30%, black 0%, transparent 80%),
+    radial-gradient(48% 40% at 76% 60%, black 0%, transparent 80%),
+    radial-gradient(38% 34% at 52% 88%, black 0%, transparent 80%);
   mask-size: 170% 170%, 190% 190%, 160% 160%;
   animation:
     arena-glitter-drift 18s linear infinite,
@@ -166,7 +166,7 @@ body {
   }
 }
 @keyframes arena-glitter-twinkle {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 0.6; }
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
 }
 @media (prefers-reduced-motion: reduce) { .arena-glitter { animation: none; } }
