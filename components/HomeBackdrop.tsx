@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
+// z-index -1 = same layer as .arena-bg in layout, but later in DOM so it paints above it.
 // Interactive home backdrop: scroll shifts the base hue (red -> violet -> cyan),
 // the mouse carries a soft glow whose hue follows the cursor x. Static when
 // the user prefers reduced motion. Zero libs, CSS vars only (no re-renders).
@@ -41,14 +42,14 @@ export default function HomeBackdrop() {
     <div
       ref={ref}
       aria-hidden
-      className="pointer-events-none fixed inset-0 -z-10"
+      className="pointer-events-none fixed inset-0 -z-1"
       style={{
         ["--shue" as string]: 355,
         ["--mx" as string]: "50%",
         ["--my" as string]: "30%",
         ["--mhue" as string]: 280,
         background:
-          "radial-gradient(640px circle at var(--mx) var(--my), hsl(var(--mhue) 85% 45% / 0.22), transparent 70%), linear-gradient(180deg, hsl(var(--shue) 65% 14%), #08080f 75%)",
+          "radial-gradient(640px circle at var(--mx) var(--my), hsl(var(--mhue) 85% 50% / 0.3), transparent 70%), linear-gradient(180deg, hsl(var(--shue) 65% 14%), #08080f 75%)",
       }}
     />
   );
