@@ -3,10 +3,10 @@
 import { useEffect, useRef } from "react";
 
 // z-index -1 = same layer as .arena-bg in layout, but later in DOM so it paints above it.
-// Interactive home backdrop: scroll shifts the base hue (red -> violet -> cyan),
+// Global interactive backdrop (mounted once in layout): scroll shifts the base hue (red -> violet -> cyan),
 // the mouse carries a soft glow whose hue follows the cursor x. Static when
 // the user prefers reduced motion. Zero libs, CSS vars only (no re-renders).
-export default function HomeBackdrop() {
+export default function ArenaBackdrop() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function HomeBackdrop() {
         ["--my" as string]: "30%",
         ["--mhue" as string]: 280,
         background:
-          "radial-gradient(2560px circle at var(--mx) var(--my), hsl(var(--mhue) 85% 50% / 0.3), transparent 70%), radial-gradient(900px circle at 85% 12%, hsl(calc(var(--shue) + 70) 80% 50% / 0.18), transparent 70%), radial-gradient(1000px circle at 8% 88%, hsl(calc(var(--shue) - 70) 80% 45% / 0.16), transparent 70%), linear-gradient(180deg, hsl(var(--shue) 65% 14%), #08080f 75%)",
+          "radial-gradient(2560px circle at var(--mx) var(--my), hsl(var(--mhue) 85% 50% / 0.3), transparent 70%), radial-gradient(900px circle at 85% 12%, hsl(calc(var(--shue) + 70) 80% 50% / 0.18), transparent 70%), radial-gradient(1000px circle at 8% 88%, hsl(calc(var(--shue) - 70) 80% 45% / 0.16), transparent 70%), linear-gradient(180deg, hsl(var(--shue) 65% 15% / 0.85), transparent 85%)",
       }}
     />
   );

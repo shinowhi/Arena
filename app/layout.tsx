@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
+import ArenaBackdrop from "@/components/ArenaBackdrop";
 import "katex/dist/katex.min.css";
 
 export const metadata: Metadata = {
@@ -13,6 +14,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         <div className="arena-bg" aria-hidden="true" />
+        <ArenaBackdrop />
         {children}
       </body>
     </html>
