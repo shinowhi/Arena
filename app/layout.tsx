@@ -22,6 +22,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className={`min-h-full flex flex-col ${display.variable}`}>
         <div className="arena-bg" aria-hidden="true" />
         <ArenaBackdrop />
+        <div className="arena-glitter pointer-events-none fixed inset-0 -z-1" aria-hidden="true" />
         {children}
       </body>
     </html>
