@@ -3,8 +3,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import katex from "katex";
 import { skillName } from "@/lib/graph/skills";
-import TimePortalCard from "@/components/TimePortalCard";
 import PageHeader from "@/components/ui/PageHeader";
+import DiagnosisReveal from "@/components/DiagnosisReveal";
 
 type ScanResult = {
   items: Array<{ cau_hoi: string; dap_an_sinh_vien: string; skill_tag: string[] }>;
@@ -79,6 +79,14 @@ export default function ScanPage() {
 
   function switchMode(m: "exam" | "life") {
     setMode(m);
+    setResult(null);
+    setLifeResult(null);
+    setError("");
+  }
+
+  function resetAll() {
+    setFile(null);
+    setPreview("");
     setResult(null);
     setLifeResult(null);
     setError("");
@@ -271,6 +279,15 @@ export default function ScanPage() {
           Snap anything — pizza, stairs, bills — AI turns it into a boss fight.
         </p>
       )}
+      {(file || result || lifeResult) && !loading ? (
+        <button
+          type="button"
+          onClick={resetAll}
+          className="-mt-2 text-center text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
+        >
+          Start over with a new photo
+        </button>
+      ) : null}
       {lifeResult ? (
         <section className="arena-enter arena-card flex flex-col gap-2 rounded-2xl p-4">
           <h2 className="font-semibold text-zinc-100">Found it in your photo</h2>
@@ -293,98 +310,7 @@ export default function ScanPage() {
       ) : null}
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {result ? (
-        <section className="flex flex-col gap-3">
-          <div className="arena-pop arena-card rounded-2xl p-5">
-            <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Diagnosis</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span
-                title={result.weak_skill}
-                className="rounded-xl border border-red-500/60 bg-red-950/60 px-4 py-2 text-base font-bold text-red-200"
-              >
-                Weak: {skillName(result.weak_skill)}
-              </span>
-              <span className="text-sm text-zinc-500">← rooted in</span>
-              <span
-                title={result.root_cause}
-                className="rounded-xl border border-amber-500/60 bg-amber-950/60 px-4 py-2 text-base font-bold text-amber-200"
-              >
-                {skillName(result.root_cause)}
-              </span>
-            </div>
-            <div className="mt-3 flex items-center gap-2">
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-800" role="progressbar" aria-valuenow={Math.round(result.confidence * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Diagnosis confidence">
-                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.round(result.confidence * 100)}%` }} />
-              </div>
-              <span className="arena-num text-xs font-semibold text-zinc-400">{Math.round(result.confidence * 100)}%</span>
-            </div>
-            <div className="mt-3 border-t border-zinc-800 pt-3">
-              <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Your patch plan</p>
-              <ol className="mt-2 flex flex-col gap-2">
-              <li className="flex items-start gap-2 text-sm">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-xs font-bold text-amber-300">
-                  1
-                </span>
-                <span className="text-zinc-300">
-                  Rebuild the root: {skillName(result.root_cause)} — 10 minutes of basics unlocks
-                  everything above it.
-                </span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-xs font-bold text-red-300">
-                  2
-                </span>
-                <span className="text-zinc-300">
-                  Attack the weakness: {skillName(result.weak_skill)} — summon the boss below and slay
-                  5 questions to close it.
-                </span>
-              </li>
-              </ol>
-            </div>
-            <TimePortalCard weak={result.weak_skill} root={result.root_cause} />
-            <div className="mt-3 flex flex-wrap gap-2">
-              {result.can_summon ? (
-                <button
-                  onClick={summon}
-                  disabled={summoning}
-                  className="arena-btn-primary font-display rounded-full px-6 py-2.5 text-base font-bold text-white disabled:opacity-40 disabled:shadow-none"
-                >
-                  {summoning ? "Forging 5 questions, verifying answers…" : "⚔ Summon boss"}
-                </button>
-              ) : (
-                <p className="text-sm text-zinc-500">Low confidence — retake a clearer photo.</p>
-              )}
-              <a
-                href={"/graph?weak=" + result.weak_skill + "&root=" + result.root_cause}
-                className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
-              >
-                View on skill graph
-              </a>
-              <a
-                href="/streak"
-                className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
-              >
-                View your streak
-              </a>
-            </div>
-          </div>
-          {result.items.map((it, i) => (
-            <div key={i} className="arena-card rounded-2xl p-4">
-              <p className="text-sm font-bold text-zinc-300">Problem {i + 1}</p>
-              <ProblemText text={it.cau_hoi} />
-              <p className="mt-1 text-sm text-zinc-400">Student: {it.dap_an_sinh_vien || "?"}</p>
-              <p className="mt-1 flex flex-wrap gap-1">
-                {it.skill_tag.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-full border border-zinc-700 bg-zinc-900/70 px-2 py-0.5 text-xs text-zinc-400"
-                  >
-                    {skillName(t)}
-                  </span>
-                ))}
-              </p>
-            </div>
-          ))}
-        </section>
+        <DiagnosisReveal result={result} preview={preview} summoning={summoning} onSummon={summon} />
       ) : null}
     </main>
   );

@@ -98,7 +98,31 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .arena-hitflash, .arena-scanline, .arena-shake, .arena-damage, .arena-pop, .arena-enter,
-  .arena-livedot, .arena-float, .arena-rays, .arena-shimmer, .arena-urgent { animation: none; }
+  .arena-livedot, .arena-float, .arena-rays, .arena-shimmer, .arena-urgent,
+  .arena-scan-once, .arena-cta-pulse, .arena-flowline { animation: none; }
+}
+/* One-shot evidence sweep for the diagnosis reveal. */
+.arena-scan-once {
+  position: absolute; left: 0; right: 0; top: 0; height: 3px;
+  background: linear-gradient(90deg, transparent, #34d399, transparent);
+  box-shadow: 0 0 12px #34d399;
+  animation: arena-scanline 1.4s ease-in-out 1;
+}
+/* The single pulsing CTA: summoning the boss. */
+.arena-cta-pulse { animation: arena-cta-pulse 2.4s ease-in-out infinite; }
+@keyframes arena-cta-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(252,165,165,0.35), 0 6px 24px rgba(239,68,68,0.45); }
+  50% { box-shadow: 0 0 0 2px rgba(252,165,165,0.7), 0 6px 40px rgba(239,68,68,0.75); }
+}
+/* Animated energy flow between weak skill and root cause. */
+.arena-flowline {
+  background: linear-gradient(90deg, #ef4444, #f59e0b, #ef4444);
+  background-size: 200% 100%;
+  animation: arena-flow 2.2s linear infinite;
+}
+@keyframes arena-flow {
+  0% { background-position: 0 0; }
+  100% { background-position: 200% 0; }
 }
 .arena-battleground { background: radial-gradient(80% 90% at 50% 110%, rgba(239,68,68,0.22), transparent 60%), radial-gradient(60% 50% at 50% 0%, rgba(99,102,241,0.12), transparent 70%), #0c0c0e; }
 .arena-battleground::after { content: ""; position: absolute; left: 8%; right: 8%; bottom: 10px; height: 18px; background: radial-gradient(50% 100% at 50% 50%, rgba(0,0,0,0.7), transparent 70%); pointer-events: none; }
