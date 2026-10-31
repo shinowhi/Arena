@@ -1,3 +1,5 @@
+import HomeBackdrop from "@/components/HomeBackdrop";
+
 const STEPS = [
   { n: "01", t: "Scan", d: "Snap a photo of your math work. Vision AI reads the handwriting directly — no OCR." },
   { n: "02", t: "Diagnose", d: "Your mistake is mapped onto a 36-skill graph and traced to its root cause." },
@@ -19,6 +21,7 @@ const FEATURES = [
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col">
+      <HomeBackdrop />
       <header className="mx-auto flex w-full max-w-5xl items-center gap-2 px-4 py-4 text-sm">
         <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
         <span className="font-bold tracking-wide">ARENA</span>
