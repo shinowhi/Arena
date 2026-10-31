@@ -40,7 +40,7 @@ export default function Home() {
         <p className="arena-enter rounded-full border border-zinc-700 bg-zinc-900/70 px-4 py-1 text-xs font-medium tracking-widest text-zinc-300 uppercase">
           Find the hole · Patch it with a game
         </p>
-        <h1 className="arena-enter arena-d1 text-5xl font-black tracking-tight text-balance sm:text-6xl">
+        <h1 className="arena-enter arena-d1 font-display text-5xl font-black tracking-tight text-balance sm:text-6xl">
           Scan your work.
           <br />
           <span className="arena-title">Slay the boss.</span>
@@ -60,15 +60,15 @@ export default function Home() {
         <div className="grid w-full gap-3 pt-6 text-left sm:grid-cols-3">
           {STEPS.map((s, i) => (
             <div key={s.n} className={`arena-enter arena-card rounded-2xl p-5 ${i === 1 ? "arena-d2" : i === 2 ? "arena-d3" : "arena-d1"}`}>
-              <p className="text-xs font-bold tracking-widest text-red-400">{s.n}</p>
-              <p className="mt-1 text-lg font-bold">{s.t}</p>
+              <p className="arena-kicker">{s.n}</p>
+              <p className="font-display mt-1 text-lg font-bold">{s.t}</p>
               <p className="mt-1 text-sm text-zinc-400">{s.d}</p>
             </div>
           ))}
         </div>
         <div className="w-full pt-10 text-left">
-          <p className="text-xs font-bold tracking-widest text-red-400">04</p>
-          <p className="mt-1 text-lg font-bold">Pick your battle</p>
+          <p className="arena-kicker">04</p>
+          <p className="font-display mt-1 text-2xl font-extrabold">Pick your battle</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {SPOTLIGHT.map((f, i) => (
               <a
@@ -86,7 +86,7 @@ export default function Home() {
                   {f.e}
                 </span>
                 <span className={i === 0 ? "mt-3 block sm:mt-0" : "mt-3 block"}>
-                  <span className="block text-lg font-black">{f.t}</span>
+                  <span className="font-display block text-xl font-black">{f.t}</span>
                   <span className="mt-1 block text-sm text-zinc-400">{f.d}</span>
                   <span className={"mt-2 block text-sm font-bold " + f.glow}>{f.cta} →</span>
                 </span>

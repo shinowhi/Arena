@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import graph from "@/lib/graph/skill-graph.json";
+import EmptyState from "@/components/ui/EmptyState";
 
 type Week = { week: string; skills: Record<string, "red" | "green"> };
 type Timeline = { ready: boolean; timeline?: Week[] };
@@ -57,25 +58,38 @@ export default function ProgressPage() {
   if (failed)
     return (
       <main className="mx-auto max-w-3xl p-6 text-center">
-        <h1 className="text-2xl font-bold">Your healing story</h1>
+        <p className="arena-kicker">Progress</p>
+        <h1 className="font-display mt-1 text-2xl font-extrabold">Your healing story</h1>
         <p className="mt-4 text-zinc-400">Could not load progress. Try again later.</p>
       </main>
     );
   if (!data)
     return (
       <main className="mx-auto max-w-3xl p-6 text-center">
-        <h1 className="text-2xl font-bold">Your healing story</h1>
-        <p className="mt-4 animate-pulse text-zinc-400">Loading your time-lapse…</p>
+        <p className="arena-kicker">Progress</p>
+        <h1 className="font-display mt-1 text-2xl font-extrabold">Your healing story</h1>
+        <div className="mx-auto mt-6 grid max-w-md grid-cols-9 gap-2" aria-label="Loading your time-lapse">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <div key={i} className="arena-shimmer aspect-square rounded-lg" />
+          ))}
+        </div>
       </main>
     );
   if (!data.ready || !data.timeline?.length)
     return (
-      <main className="mx-auto max-w-3xl p-6 text-center">
-        <h1 className="text-2xl font-bold">Your healing story</h1>
-        <p className="mt-4 text-zinc-400">Keep scanning — your story starts here.</p>
-        <Link href="/scan" className="mt-6 inline-block rounded-lg bg-emerald-500 px-6 py-3 font-semibold text-black">
-          Scan your first exam
-        </Link>
+      <main className="mx-auto max-w-3xl p-6">
+        <div className="text-center">
+          <p className="arena-kicker">Progress</p>
+          <h1 className="font-display mt-1 text-2xl font-extrabold">Your healing story</h1>
+        </div>
+        <div className="mt-6">
+          <EmptyState
+            title="Your story starts here."
+            body="Keep scanning — every scan adds a week to your time-lapse."
+            actionLabel="Scan your first exam"
+            actionHref="/scan"
+          />
+        </div>
       </main>
     );
 
@@ -83,11 +97,12 @@ export default function ProgressPage() {
   const cur = weeks[Math.min(idx, weeks.length - 1)];
   return (
     <main className="mx-auto max-w-3xl p-6">
-      <h1 className="text-center text-2xl font-bold">Your healing story</h1>
-      <p className="mt-1 text-center text-sm text-zinc-400">
+      <p className="arena-kicker text-center">Progress</p>
+      <h1 className="font-display mt-1 text-center text-2xl font-extrabold">Your healing story</h1>
+      <p className="arena-num mt-1 text-center text-sm text-zinc-400">
         Week of {cur.week} · {idx + 1} of {weeks.length}
       </p>
-      <div className="mt-4 flex items-center gap-3">
+      <div className="arena-card mt-4 flex items-center gap-3 rounded-2xl p-3">
         <button
           onClick={() => {
             if (playing) {
@@ -98,9 +113,10 @@ export default function ProgressPage() {
               setPlaying(true);
             }
           }}
-          className="rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-black"
+          aria-label={playing ? "Pause replay" : "Replay healing story"}
+          className="arena-btn-primary shrink-0 rounded-full px-5 py-2 text-sm font-bold text-white"
         >
-          {playing ? "Pause" : "Play"}
+          {playing ? "❚❚ Pause" : "▶ Replay"}
         </button>
         <input
           type="range"
@@ -120,7 +136,7 @@ export default function ProgressPage() {
         {SKILLS.map((s) => {
           const st = cur.skills[s.id] ?? "gray";
           return (
-            <div key={s.id} title={s.name} className={`aspect-square rounded-lg ${DOT[st]}`} />
+            <div key={s.id} title={s.name} className={`aspect-square rounded-lg transition-transform hover:scale-110 ${DOT[st]}`} />
           );
         })}
       </div>
@@ -130,7 +146,7 @@ export default function ProgressPage() {
         <span><span className="mr-1 inline-block h-3 w-3 rounded bg-zinc-700" />Unknown</span>
       </div>
       <div className="mt-6 text-center">
-        <Link href="/graph" className="text-sm text-emerald-400 underline">Open full skill tree</Link>
+        <Link href="/graph" className="arena-btn-ghost inline-block rounded-full px-5 py-2 text-sm font-medium text-zinc-200">Open full skill tree</Link>
       </div>
     </main>
   );

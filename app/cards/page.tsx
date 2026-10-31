@@ -76,7 +76,7 @@ export default function CardsPage() {
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <div>
         <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Smart card box</p>
-        <h1 className="text-2xl font-bold text-zinc-100">Flip before you forget</h1>
+        <h1 className="font-display text-3xl font-extrabold text-zinc-100">Flip before you forget</h1>
       </div>
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {(unlocked === null || nowMs === 0) && !error ? <p className="text-zinc-500">Opening your card box…</p> : null}

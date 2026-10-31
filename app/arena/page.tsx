@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
+import EmptyState from "@/components/ui/EmptyState";
 import HeroAvatar from "@/components/HeroAvatar";
 import AvatarBuilder from "@/components/AvatarBuilder";
 import BossAvatar from "@/components/BossAvatar";
@@ -146,12 +147,12 @@ export default function ArenaPage() {
           >
             <HeroAvatar spec={avatar} size={48} />
           </button>
-          <p className="text-xs font-bold tracking-widest text-red-400 uppercase">Live battlefield</p>
-          <h1 className="mt-1 text-3xl font-black tracking-tight">
+          <p className="arena-kicker">Live battlefield</p>
+          <h1 className="font-display mt-1 text-3xl font-black tracking-tight">
             The <span className="arena-title">Arena</span>
           </h1>
           {playerId ? (
-            <p className="mt-1 inline-block rounded-full border border-zinc-700 bg-zinc-900/70 px-3 py-0.5 text-xs font-semibold text-zinc-300">
+            <p className="arena-num mt-1 inline-block rounded-full border border-zinc-700 bg-zinc-900/70 px-3 py-0.5 text-xs font-semibold text-zinc-300">
               Lv {Math.floor(xp / 100) + 1} · {xp} XP
             </p>
           ) : null}
@@ -190,7 +191,7 @@ export default function ArenaPage() {
             </span>
           </div>
           <HpBar current={rush.boss.current_hp} max={rush.boss.max_hp} />
-          <p className="text-sm text-zinc-400">
+          <p className="arena-num text-sm text-zinc-400">
             HP {rush.boss.current_hp}/{rush.boss.max_hp} — everyone fights the same boss
             <span className="ml-2 text-zinc-600 transition-colors group-hover:text-cyan-300">Join →</span>
           </p>
@@ -198,12 +199,12 @@ export default function ArenaPage() {
             <ol className="flex flex-col gap-1 text-sm">
               {rushRanks.slice(0, 5).map((r, i) => (
                 <li key={r.id} className="flex items-center gap-2 text-zinc-300">
-                  <span className="w-5 text-center font-black text-zinc-500">{i + 1}</span>
+                  <span className={`w-5 text-center font-black ${i === 0 ? "text-amber-300" : i === 1 ? "text-zinc-200" : i === 2 ? "text-orange-300" : "text-zinc-500"}`}>{i + 1}</span>
                   <span className="flex-1 truncate">
                     {r.name}
                     {r.id === playerId ? <span className="ml-1 text-xs font-bold text-emerald-300">YOU</span> : null}
                   </span>
-                  <span className="text-zinc-500">{r.solved}/5</span>
+                  <span className="arena-num text-zinc-500">{r.solved}/5</span>
                 </li>
               ))}
             </ol>
@@ -217,13 +218,12 @@ export default function ArenaPage() {
           <p className="text-sm text-zinc-500">Loading arena — first visit summons today&apos;s World Boss (~30s)…</p>
         </div>
       ) : bosses.length === 0 ? (
-        <div className="arena-card rounded-2xl p-8 text-center">
-          <p className="text-lg font-bold">No live bosses.</p>
-          <p className="mt-1 text-sm text-zinc-400">Scan your work to summon one.</p>
-          <a href="/scan" className="arena-btn-primary mt-4 inline-block rounded-full px-6 py-2.5 text-sm font-semibold text-white">
-            Scan now
-          </a>
-        </div>
+        <EmptyState
+          title="No live bosses."
+          body="Scan your work to summon one."
+          actionLabel="Scan now"
+          actionHref="/scan"
+        />
       ) : (
         bosses.map((b, i) => {
           const left = new Date(b.despawn_at).getTime() - now;
@@ -256,7 +256,7 @@ export default function ArenaPage() {
                 </span>
               </div>
               <HpBar current={b.current_hp} max={b.max_hp} />
-              <p className="text-sm text-zinc-400">
+              <p className="arena-num text-sm text-zinc-400">
                 HP {b.current_hp}/{b.max_hp} — {b.status}
                 <span className="ml-2 text-zinc-600 transition-colors group-hover:text-red-400">Fight →</span>
               </p>
@@ -265,9 +265,13 @@ export default function ArenaPage() {
         })
       )}
       <div className="arena-card rounded-2xl p-5">
-        <p className="text-xs font-bold tracking-widest text-amber-300 uppercase">Top hunters</p>
+        <p className="font-display text-lg font-extrabold text-zinc-100">Top hunters</p>
         {leaders === null ? (
-          <p className="mt-2 text-sm text-zinc-500">Loading leaderboard...</p>
+          <div className="mt-3 flex flex-col gap-2" aria-label="Loading leaderboard">
+            <div className="arena-shimmer h-10 rounded-xl" />
+            <div className="arena-shimmer h-10 rounded-xl" />
+            <div className="arena-shimmer h-10 rounded-xl" />
+          </div>
         ) : leaders.length === 0 ? (
           <p className="mt-2 text-sm text-zinc-500">No hunters yet - slay a boss to top the board.</p>
         ) : (
@@ -277,13 +281,13 @@ export default function ArenaPage() {
                 key={l.id}
                 className={`flex items-center gap-3 rounded-xl border px-3 py-2 text-sm ${l.id === playerId ? "border-emerald-700 bg-emerald-950/40" : "border-zinc-800 bg-zinc-900/50"}`}
               >
-                <span className="w-6 shrink-0 text-center font-black text-zinc-400">{i + 1}</span>
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-black ${i === 0 ? "bg-amber-400/20 text-amber-300 ring-1 ring-amber-400/50" : i === 1 ? "bg-zinc-300/15 text-zinc-200 ring-1 ring-zinc-400/40" : i === 2 ? "bg-orange-700/25 text-orange-300 ring-1 ring-orange-500/40" : "text-zinc-500"}`}>{i + 1}</span>
                 <span className="min-w-0 flex-1 truncate font-semibold">
                   {l.name}
                   {l.id === playerId ? <span className="ml-2 text-xs font-bold text-emerald-300">YOU</span> : null}
                 </span>
-                <span className="shrink-0 text-zinc-400">{l.bosses_slain} slain</span>
-                <span className="shrink-0 text-xs text-zinc-500">Lv {l.level} · {l.xp} XP</span>
+                <span className="arena-num shrink-0 text-zinc-400">{l.bosses_slain} slain</span>
+                <span className="arena-num shrink-0 text-xs text-zinc-500">Lv {l.level} · {l.xp} XP</span>
               </li>
             ))}
           </ol>

@@ -174,7 +174,7 @@ export default function MarketPage() {
             answer wins — your escrow is locked until someone earns it.
           </p>
         </div>
-        <p className="shrink-0 rounded-lg border border-amber-700 bg-amber-950/40 px-3 py-1 text-sm font-bold text-amber-300">
+        <p className="arena-num font-display shrink-0 rounded-lg border border-amber-700 bg-amber-950/40 px-3 py-1 text-base font-extrabold text-amber-300">
           {xp} XP
         </p>
       </div>

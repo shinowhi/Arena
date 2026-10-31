@@ -40,8 +40,8 @@ export default function GraphView() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-4 py-8">
       <div className="arena-enter">
-        <p className="text-xs font-bold tracking-widest text-red-400 uppercase">36 skills · foundations left</p>
-        <h1 className="mt-1 text-3xl font-black tracking-tight">
+        <p className="arena-kicker">36 skills · foundations left</p>
+        <h1 className="font-display mt-1 text-3xl font-black tracking-tight">
           Skill <span className="arena-title">graph</span>
         </h1>
         <div className="mt-2 flex gap-4 text-xs text-zinc-400">
@@ -59,12 +59,12 @@ export default function GraphView() {
           ) : null}
         </div>
       </div>
-      <div className="arena-enter arena-d1 flex gap-3 overflow-x-auto pb-4">
+      <div className="arena-enter arena-d1 arena-scrollx flex gap-3 overflow-x-auto pb-4">
         {cols.map((col, d) => (
           <div key={d} className="flex w-56 shrink-0 flex-col gap-2">
-            <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Level {d}</p>
+            <p className="arena-num text-xs font-bold tracking-widest text-zinc-500 uppercase">Level {d}</p>
             {col.map((n) => (
-              <div key={n.id} className={`arena-card rounded-xl border p-2.5 ${ring(n.id)}`}>
+              <div key={n.id} className={`arena-card rounded-xl border p-2.5 transition-transform hover:-translate-y-0.5 ${ring(n.id)}`}>
                 <p className="text-sm font-semibold text-zinc-100">{n.name}</p>
                 <p className="text-xs text-zinc-500">
                   <code>{n.id}</code>

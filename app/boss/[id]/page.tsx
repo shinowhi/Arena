@@ -335,7 +335,7 @@ function BossInner() {
           </div>
           <div className="relative">
             <p className="text-3xl">🏆</p>
-            <p className="arena-title mt-2 text-2xl font-black">Boss slain.</p>
+            <p className="arena-title font-display mt-2 text-3xl font-black">Boss slain.</p>
             <p className="mt-1 text-sm text-zinc-400">Skill patched. The root cause is closed.</p>
             {t0 > 0 ? <p className="mt-1 text-sm text-zinc-500">Slain in {fmt(now - t0)}</p> : null}
             <nav className="mt-4 flex justify-center gap-3 text-sm">
@@ -365,11 +365,21 @@ function BossInner() {
       ) : (
         <div className={`arena-enter arena-d2 arena-card flex flex-col gap-3 rounded-2xl p-5 ${miss ? "arena-shake border-red-800" : ""}`}>
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm text-zinc-400">
-              Question {(idx % boss.questions.length) + 1}/{boss.questions.length} —{" "}
-              <span className="font-bold text-amber-300">level {q.level}</span>
-              {idx >= boss.questions.length ? " — boss still standing, questions loop" : null}
-            </p>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1" aria-hidden="true">
+                {boss.questions.map((_, i) => (
+                  <span
+                    key={i}
+                    className={`h-1.5 w-5 rounded-full ${i === idx % boss.questions.length ? "bg-amber-400" : i < idx % boss.questions.length && idx < boss.questions.length ? "bg-emerald-500" : "bg-zinc-700"}`}
+                  />
+                ))}
+              </div>
+              <p className="arena-num text-sm text-zinc-400">
+                {(idx % boss.questions.length) + 1}/{boss.questions.length} ·{" "}
+                <span className="font-bold text-amber-300">Lv {q.level}</span>
+                {idx >= boss.questions.length ? " · looping" : null}
+              </p>
+            </div>
             <button
               type="button"
               onClick={toggleMute}
@@ -392,7 +402,7 @@ function BossInner() {
               }}
               placeholder="Your numeric answer"
               aria-label="Your numeric answer"
-              className="arena-input min-w-0 flex-1 rounded-xl px-4 py-2.5 text-zinc-100 placeholder:text-zinc-600"
+              className="arena-input arena-num min-w-0 flex-1 rounded-xl px-4 py-2.5 text-lg text-zinc-100 placeholder:text-zinc-600"
             />
             <button
               onClick={attack}
@@ -403,7 +413,11 @@ function BossInner() {
             </button>
           </div>
           {msg ? <p className={`text-sm ${msgColor}`}>{msg}</p> : null}
-          {combo >= 2 ? <p className="text-sm font-bold text-amber-300">Combo x{combo}</p> : null}
+          {combo >= 2 ? (
+            <p key={combo} className="arena-pop font-display inline-block w-fit rounded-lg bg-amber-500/15 px-3 py-1 text-lg font-extrabold text-amber-300">
+              Combo ×{combo}
+            </p>
+          ) : null}
         </div>
       )}
     </main>

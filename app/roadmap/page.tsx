@@ -116,7 +116,7 @@ export default function RoadmapPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">
       <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-200">← Back</Link>
-      <h1 className="mt-2 text-3xl font-extrabold text-zinc-100">30-day roadmap</h1>
+      <h1 className="font-display mt-2 text-3xl font-extrabold text-zinc-100">30-day roadmap</h1>
       <p className="mt-1 text-sm text-zinc-400">
         Built from your scan history, weakest skill first. Fight one focus a day, check it off, and
         watch the list shrink.

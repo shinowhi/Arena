@@ -43,14 +43,14 @@ export default function GhostsPage() {
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <div>
         <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Ghost classroom</p>
-        <h1 className="text-2xl font-bold text-zinc-100">You never grind alone</h1>
+        <h1 className="font-display text-3xl font-extrabold text-zinc-100">You never grind alone</h1>
       </div>
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {!data && !error ? <p className="text-zinc-500">Sensing nearby ghosts…</p> : null}
       {data ? (
         <>
           <div className="arena-card rounded-2xl p-6 text-center">
-            <p className="text-5xl font-black text-zinc-100">{data.ghosts}</p>
+            <p className="font-display arena-num text-5xl font-black text-zinc-100">{data.ghosts}</p>
             <p className="mt-1 text-sm text-zinc-400">
               {data.ghosts === 1 ? "ghost" : "ghosts"} grinding in the last 15 minutes
             </p>

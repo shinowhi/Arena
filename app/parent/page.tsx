@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Stat from "@/components/ui/Stat";
 
 interface Stats {
   scans: number;
@@ -16,12 +17,7 @@ type Report =
   | { role: "none"; stats: Stats };
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-center">
-      <p className="text-2xl font-extrabold text-amber-300">{value}</p>
-      <p className="text-xs text-zinc-400">{label}</p>
-    </div>
-  );
+  return <Stat label={label} value={value} />;
 }
 
 export default function ParentPage() {
@@ -104,7 +100,7 @@ export default function ParentPage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
       <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-200">← Back</Link>
-      <h1 className="mt-2 text-3xl font-extrabold text-zinc-100">Parent report</h1>
+      <h1 className="font-display mt-2 text-3xl font-extrabold text-zinc-100">Parent report</h1>
       <p className="mt-1 text-sm text-zinc-400">
         Link a parent device with a one-time code — no accounts, no emails. The parent only ever
         sees progress numbers, never answers.

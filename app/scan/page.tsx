@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import katex from "katex";
 import { skillName } from "@/lib/graph/skills";
 import TimePortalCard from "@/components/TimePortalCard";
+import PageHeader from "@/components/ui/PageHeader";
 
 type ScanResult = {
   items: Array<{ cau_hoi: string; dap_an_sinh_vien: string; skill_tag: string[] }>;
@@ -189,13 +190,11 @@ export default function ScanPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
-      <div className="arena-enter">
-        <p className="text-xs font-bold tracking-widest text-red-400 uppercase">Step 01 — Scan</p>
-        <h1 className="mt-1 text-3xl font-black tracking-tight">
-          Show us <span className="arena-title">your work</span>
-        </h1>
-        <p className="mt-1 text-sm text-zinc-400">One photo. We find the weak skill and its root cause.</p>
-      </div>
+      <PageHeader
+        kicker="Step 01 — Scan"
+        title={<>Show us <span className="arena-title">your work</span></>}
+        sub="One photo. We find the weak skill and its root cause."
+      />
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -207,35 +206,44 @@ export default function ScanPage() {
           setDragging(false);
           pick(e.dataTransfer.files[0]);
         }}
-        className={`arena-enter arena-d1 arena-card flex flex-col items-center gap-3 rounded-2xl border-dashed p-6 text-center transition-all ${dragging ? "scale-[1.01] border-red-500 shadow-[0_0_32px_rgba(239,68,68,0.35)]" : ""}`}
+        className={`arena-enter arena-d1 arena-card flex flex-col items-center gap-4 rounded-2xl border-dashed p-8 text-center transition-all ${dragging ? "scale-[1.01] border-red-500 shadow-[0_0_32px_rgba(239,68,68,0.35)]" : ""}`}
       >
         {preview ? (
-          <div className="relative overflow-hidden rounded-xl">
+          <div className="relative overflow-hidden rounded-xl ring-1 ring-zinc-700">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={preview} alt="upload preview" className="max-h-64 rounded-xl" />
             {loading ? <div className="arena-scanline" /> : null}
           </div>
         ) : (
-          <p className="py-6 text-zinc-500">Drag and drop a photo here, or pick a file.</p>
+          <div className="flex flex-col items-center gap-2 py-4">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-zinc-600" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="3" />
+              <circle cx="9" cy="9" r="1.6" />
+              <path d="M21 15.5c-1.5-1.5-3.5-1.5-5 0L7 20.5" />
+              <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" />
+            </svg>
+            <p className="text-sm text-zinc-500">Drag a photo here, or choose one below.</p>
+          </div>
         )}
         <label className="arena-btn-ghost cursor-pointer rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
-          Choose photo
+          {preview ? "Choose another" : "Choose photo"}
           <input type="file" accept="image/*" className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
         </label>
-        <div className="flex flex-wrap justify-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="text-xs text-zinc-600">No homework handy?</span>
           {SAMPLES.map((s) => (
             <button
               key={s.path}
               type="button"
               onClick={() => loadSample(s.path, s.file)}
-              className="rounded-full border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-800"
+              className="rounded-full border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:border-zinc-500 hover:bg-zinc-800"
             >
               {s.label}
             </button>
           ))}
         </div>
       </div>
-      <div className="flex justify-center gap-2" role="tablist" aria-label="Scan mode">
+      <div className="mx-auto flex gap-1 rounded-full border border-zinc-800 bg-zinc-900/60 p-1" role="tablist" aria-label="Scan mode">
         {(["exam", "life"] as const).map((m) => (
           <button
             key={m}
@@ -243,8 +251,8 @@ export default function ScanPage() {
             role="tab"
             aria-selected={mode === m}
             onClick={() => switchMode(m)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              mode === m ? "bg-zinc-100 text-zinc-900" : "border border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+            className={`rounded-full px-5 py-1.5 text-sm font-medium transition-colors ${
+              mode === m ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
             {m === "exam" ? "Exam work" : "Real life"}
@@ -254,7 +262,7 @@ export default function ScanPage() {
       <button
         onClick={mode === "exam" ? analyze : analyzeLife}
         disabled={!file || loading}
-        className={`arena-enter arena-d2 arena-btn-primary rounded-full px-5 py-3 font-semibold text-white disabled:opacity-40 disabled:shadow-none ${loading ? "animate-pulse" : ""}`}
+        className={`arena-enter arena-d2 arena-btn-primary font-display rounded-full px-5 py-3.5 text-lg font-bold text-white disabled:opacity-40 disabled:shadow-none ${loading ? "animate-pulse" : ""}`}
       >
         {loading ? (mode === "exam" ? STAGES[stage % STAGES.length] : LIFE_STAGES[stage]) : mode === "exam" ? "Analyze" : "Find math in this"}
       </button>
@@ -288,22 +296,27 @@ export default function ScanPage() {
         <section className="flex flex-col gap-3">
           <div className="arena-pop arena-card rounded-2xl p-5">
             <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Diagnosis</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <span
                 title={result.weak_skill}
-                className="rounded-full border border-red-500/60 bg-red-950/60 px-3 py-1 text-sm font-semibold text-red-200"
+                className="rounded-xl border border-red-500/60 bg-red-950/60 px-4 py-2 text-base font-bold text-red-200"
               >
                 Weak: {skillName(result.weak_skill)}
               </span>
-              <span className="text-zinc-500">← rooted in</span>
+              <span className="text-sm text-zinc-500">← rooted in</span>
               <span
                 title={result.root_cause}
-                className="rounded-full border border-amber-500/60 bg-amber-950/60 px-3 py-1 text-sm font-semibold text-amber-200"
+                className="rounded-xl border border-amber-500/60 bg-amber-950/60 px-4 py-2 text-base font-bold text-amber-200"
               >
                 {skillName(result.root_cause)}
               </span>
             </div>
-            <p className="mt-2 text-sm text-zinc-400">Confidence: {Math.round(result.confidence * 100)}%</p>
+            <div className="mt-3 flex items-center gap-2">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-800" role="progressbar" aria-valuenow={Math.round(result.confidence * 100)} aria-valuemin={0} aria-valuemax={100} aria-label="Diagnosis confidence">
+                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.round(result.confidence * 100)}%` }} />
+              </div>
+              <span className="arena-num text-xs font-semibold text-zinc-400">{Math.round(result.confidence * 100)}%</span>
+            </div>
             <div className="mt-3 border-t border-zinc-800 pt-3">
               <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Your patch plan</p>
               <ol className="mt-2 flex flex-col gap-2">
@@ -333,9 +346,9 @@ export default function ScanPage() {
                 <button
                   onClick={summon}
                   disabled={summoning}
-                  className="arena-btn-primary rounded-full px-5 py-2 text-sm font-semibold text-white disabled:opacity-40 disabled:shadow-none"
+                  className="arena-btn-primary font-display rounded-full px-6 py-2.5 text-base font-bold text-white disabled:opacity-40 disabled:shadow-none"
                 >
-                  {summoning ? "Forging 5 questions, verifying answers…" : "Summon boss"}
+                  {summoning ? "Forging 5 questions, verifying answers…" : "⚔ Summon boss"}
                 </button>
               ) : (
                 <p className="text-sm text-zinc-500">Low confidence — retake a clearer photo.</p>

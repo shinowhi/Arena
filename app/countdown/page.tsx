@@ -82,7 +82,7 @@ export default function CountdownPage() {
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <div>
         <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Exam countdown</p>
-        <h1 className="text-2xl font-bold text-zinc-100">Ready before the bell rings</h1>
+        <h1 className="font-display text-3xl font-extrabold text-zinc-100">Ready before the bell rings</h1>
       </div>
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       <div className="arena-card flex flex-wrap items-center gap-3 rounded-2xl p-4">
@@ -108,7 +108,7 @@ export default function CountdownPage() {
           <div className="arena-card rounded-2xl p-4">
             <div className="flex items-baseline justify-between">
               <p className="text-sm text-zinc-400">Readiness</p>
-              <p className="text-2xl font-black text-emerald-300">{plan.readiness}%</p>
+              <p className="font-display arena-num text-2xl font-black text-emerald-300">{plan.readiness}%</p>
             </div>
             <div className="mt-2 h-3 overflow-hidden rounded-full bg-zinc-800">
               <div className="h-full bg-emerald-500 transition-all" style={{ width: `${plan.readiness}%` }} />
