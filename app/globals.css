@@ -131,42 +131,46 @@ body {
 .arena-scrollx::-webkit-scrollbar { height: 6px; }
 .arena-scrollx::-webkit-scrollbar-thumb { background: #52525b; border-radius: 9999px; }
 
-/* Gold glitter in drifting wave patches: sparse amber specks, visible only inside
-   three soft mask blobs that swim across the screen on a slow loop. */
+/* Gold glitter in wave patches. Perf design: the mask is STATIC and only
+   transform/opacity animate (GPU-composited, no per-frame noise repaint).
+   Two speck layers drift opposite ways under one mask, so patches crawl. */
 .arena-glitter {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 0.68 0 0 0 0 0.28 0.9 0.9 0.9 0 -1.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
-  background-size: 220px 220px;
   -webkit-mask-image:
     radial-gradient(46% 38% at 22% 30%, black 0%, transparent 80%),
     radial-gradient(48% 40% at 76% 60%, black 0%, transparent 80%),
     radial-gradient(38% 34% at 52% 88%, black 0%, transparent 80%);
-  -webkit-mask-size: 170% 170%, 190% 190%, 160% 160%;
   mask-image:
     radial-gradient(46% 38% at 22% 30%, black 0%, transparent 80%),
     radial-gradient(48% 40% at 76% 60%, black 0%, transparent 80%),
     radial-gradient(38% 34% at 52% 88%, black 0%, transparent 80%);
-  mask-size: 170% 170%, 190% 190%, 160% 160%;
-  animation:
-    arena-glitter-drift 18s linear infinite,
-    arena-glitter-waves 26s ease-in-out infinite alternate,
-    arena-glitter-twinkle 4.5s ease-in-out infinite;
+  animation: arena-glitter-twinkle 5s ease-in-out infinite;
 }
-@keyframes arena-glitter-drift {
-  0% { background-position: 0 0; }
-  100% { background-position: 220px 110px; }
+.arena-glitter-inner {
+  position: absolute;
+  inset: -240px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 0.68 0 0 0 0 0.28 0.9 0.9 0.9 0 -1.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+  will-change: transform;
+  animation: arena-glitter-drift-a 18s linear infinite;
 }
-@keyframes arena-glitter-waves {
-  0% {
-    -webkit-mask-position: 0% 0%, 100% 100%, 50% 100%;
-    mask-position: 0% 0%, 100% 100%, 50% 100%;
-  }
-  100% {
-    -webkit-mask-position: 100% 100%, 0% 0%, 50% 0%;
-    mask-position: 100% 100%, 0% 0%, 50% 0%;
-  }
+.arena-glitter-inner-b {
+  background-size: 340px 340px;
+  background-position: 120px 60px;
+  opacity: 0.6;
+  animation: arena-glitter-drift-b 26s linear infinite;
+}
+@keyframes arena-glitter-drift-a {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(220px, 220px, 0); }
+}
+@keyframes arena-glitter-drift-b {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-340px, 340px, 0); }
 }
 @keyframes arena-glitter-twinkle {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 0.8; }
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.7; }
 }
-@media (prefers-reduced-motion: reduce) { .arena-glitter { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .arena-glitter, .arena-glitter-inner { animation: none; }
+}
