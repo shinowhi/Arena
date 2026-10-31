@@ -1,6 +1,12 @@
 import graph from "../graph/skill-graph.json" with { type: "json" };
 
-export type SkillNode = { id: string; name: string; description: string; prereqs: string[]; grade: number; gradeLabel: string };
+export type SkillNode = { id: string; name: string; description: string; prereqs: string[]; grade: number; gradeLabel: string; subject?: string };
+
+export type Subject = "calculus" | "mechanics";
+
+export function skillSubject(id: string): Subject {
+  return byId.get(id)?.subject === "mechanics" ? "mechanics" : "calculus";
+}
 
 const skills = (graph as { skills: SkillNode[] }).skills;
 const byId = new Map(skills.map((s) => [s.id, s]));

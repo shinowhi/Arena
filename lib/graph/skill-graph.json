@@ -374,6 +374,132 @@
       ],
       "grade": 12,
       "gradeLabel": "Grade 12"
+    },
+    {
+      "id": "stress_strain_concepts",
+      "name": "Stress and strain basics",
+      "description": "Normal and shear stress, strain, units (Pa, MPa), Hooke's law.",
+      "prereqs": ["algebraic_manipulation"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
+    },
+    {
+      "id": "axial_loading",
+      "name": "Axial loading and deformation",
+      "description": "Axial stress sigma = F/A and deformation delta = F*L/(A*E).",
+      "prereqs": ["stress_strain_concepts"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
+    },
+    {
+      "id": "indeterminate_axial",
+      "name": "Statically indeterminate axial bars",
+      "description": "Compatibility of deformation plus equilibrium for axial bars.",
+      "prereqs": ["axial_loading"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
+    },
+    {
+      "id": "thermal_stress",
+      "name": "Thermal stress",
+      "description": "Constrained thermal expansion: sigma = E*alpha*deltaT.",
+      "prereqs": ["axial_loading"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
+    },
+    {
+      "id": "torsion_stress",
+      "name": "Torsion shear stress",
+      "description": "Shear stress in shafts: tau = T*r/J.",
+      "prereqs": ["stress_strain_concepts"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
+    },
+    {
+      "id": "torsion_twist",
+      "name": "Angle of twist",
+      "description": "Twist of shafts: phi = T*L/(G*J).",
+      "prereqs": ["torsion_stress"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
+    },
+    {
+      "id": "shear_moment_diagrams",
+      "name": "Shear and moment values",
+      "description": "Shear force and bending moment values at beam sections.",
+      "prereqs": ["algebraic_manipulation", "trig_functions"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
+    },
+    {
+      "id": "bending_stress",
+      "name": "Bending normal stress",
+      "description": "Flexure formula: sigma = M*y/I.",
+      "prereqs": ["shear_moment_diagrams"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
+    },
+    {
+      "id": "transverse_shear_stress",
+      "name": "Transverse shear stress",
+      "description": "Shear stress in beams: tau = V*Q/(I*t).",
+      "prereqs": ["shear_moment_diagrams"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
+    },
+    {
+      "id": "beam_deflection",
+      "name": "Beam deflection",
+      "description": "Standard load-case deflection formulas for beams.",
+      "prereqs": ["bending_stress"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
+    },
+    {
+      "id": "stress_transformation",
+      "name": "Stress transformation",
+      "description": "Normal and shear stress on an inclined plane.",
+      "prereqs": ["bending_stress", "trig_functions"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
+    },
+    {
+      "id": "principal_stress_mohr",
+      "name": "Principal stresses and Mohr circle",
+      "description": "Principal values, max shear, Mohr circle radius.",
+      "prereqs": ["stress_transformation"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
+    },
+    {
+      "id": "buckling_columns",
+      "name": "Column buckling",
+      "description": "Euler critical load Pcr = pi^2*E*I/(K*L)^2.",
+      "prereqs": ["axial_loading"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
+    },
+    {
+      "id": "pressure_vessels",
+      "name": "Thin pressure vessels",
+      "description": "Hoop and longitudinal stress: sigma = p*r/t.",
+      "prereqs": ["stress_strain_concepts"],
+      "grade": 14,
+      "gradeLabel": "University",
+      "subject": "mechanics"
     }
   ]
 }

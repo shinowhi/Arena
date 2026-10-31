@@ -1,7 +1,7 @@
 "use client";
 import { useSearchParams } from "next/navigation";
 import graph from "@/lib/graph/skill-graph.json";
-import { skillName } from "@/lib/graph/skills";
+import { SKILL_IDS, skillName } from "@/lib/graph/skills";
 
 type Node = { id: string; name: string; description: string; prereqs: string[] };
 
@@ -40,7 +40,7 @@ export default function GraphView() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-4 py-8">
       <div className="arena-enter">
-        <p className="arena-kicker">36 skills · foundations left</p>
+        <p className="arena-kicker">{SKILL_IDS.length} skills · foundations left</p>
         <h1 className="font-display mt-1 text-3xl font-black tracking-tight">
           Skill <span className="arena-title">graph</span>
         </h1>

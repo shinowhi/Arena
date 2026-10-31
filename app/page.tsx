@@ -2,7 +2,7 @@ import StreakBadge from "@/components/StreakBadge";
 
 const STEPS = [
   { n: "01", t: "Scan", d: "Snap a photo of your math work. Vision AI reads the handwriting directly — no OCR." },
-  { n: "02", t: "Diagnose", d: "Your mistake is mapped onto a 36-skill graph and traced to its root cause." },
+  { n: "02", t: "Diagnose", d: "Your mistake is mapped onto the skill graph — calculus to mechanics — and traced to its root cause." },
   { n: "03", t: "Slay", d: "Fight a boss of 5 isomorphic questions. Every answer is recomputed by a math engine." },
 ];
 

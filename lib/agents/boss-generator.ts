@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { chatJson, MetaLLMError } from "../llm/meta";
-import { isValidSkill, skillName } from "../graph/skills";
+import { isValidSkill, skillName, skillSubject } from "../graph/skills";
 import { verifyAnswer } from "../verify/math-verifier";
 
 const CheckSpecSchema = z.union([
@@ -35,8 +35,20 @@ Reply JSON only: {"questions": [{"level": 1, "prompt_latex": "...", "answer_nume
 - expr uses mathjs syntax: x^2, sin(x), exp(x), sqrt(x). Keep expressions smooth near the probe point except for genuine limit questions.
 - tolerance 0.001 unless the answer scale demands otherwise.` + "\n- Plain ASCII words only outside math: write L'Hospital's rule with no accents or backslash escapes (never H\\^opital)."
 
+const MECHANICS_SYSTEM = `You write 5 isomorphic Mechanics of Materials practice questions (same shape, different numbers, strictly rising difficulty) for ONE skill. Every question MUST reduce to ONE numeric computation a machine can recompute with plain arithmetic.
+Reply JSON only: {"questions": [{"level": 1, "prompt_latex": "...", "answer_numeric": 1.234, "tolerance": 0.01, "hint": "...", "check": {...}}]}
+- Exactly one question per level 1..5.
+- prompt_latex: LaTeX problem statement shown to the student. State ALL given values with units (N, mm, MPa, GPa, kN, m) and name the wanted unit, e.g. "Give the axial stress in MPa."
+- The wanted answer is ALWAYS a raw number (units live in the prompt only, never in answer_numeric).
+- check: ALWAYS {"kind": "numeric", "prompt_expr": "<full mathjs expression>"} where prompt_expr computes the answer from the givens in ONE expression. Example: F = 12 kN on A = 150 mm^2, wanted stress in MPa -> prompt_expr "12000/150" (= 80, since 1 N/mm^2 = 1 MPa). Do ALL unit conversions inside prompt_expr with plain numbers (1 kN = 1000 N, 1 MPa = 1 N/mm^2, 1 GPa = 1000 MPa, use pi for 3.14159...).
+- One formula per question: sigma=F/A, delta=F*L/(A*E), tau=T*r/J, phi=T*L/(G*J), sigma=M*y/I, tau=V*Q/(I*t), Pcr=pi^2*E*I/(K*L)^2, sigma=p*r/t, Mohr/transform trig. Multi-step stories are BANNED — bake intermediate values into the givens.
+- Length-unit trap: NEVER mix mm and m in one expression. Convert everything to ONE unit first: 1 m = 1000 mm, 1 m^2 = 1e6 mm^2, 1 m^3 = 1e9 mm^3, 1 m^4 = 1e12 mm^4. State the chosen unit in the prompt (e.g. "Use E = 200000 MPa, L = 2400 mm").
+- Tolerance: 0.1% of the answer magnitude, at least 0.001 (e.g. answer 80 -> tolerance 0.08).
+- Plain ASCII words only outside math.`;
+
 export async function generateBossQuestions(skill_tag: string): Promise<BossOutput> {
   if (!isValidSkill(skill_tag)) throw new MetaLLMError(`Invalid skill_tag: ${skill_tag}`);
+  const system = skillSubject(skill_tag) === "mechanics" ? MECHANICS_SYSTEM : SYSTEM;
   let failed: BossQuestion[] = [];
   for (let round = 0; round < 3; round++) {
     const extra =
@@ -44,7 +56,7 @@ export async function generateBossQuestions(skill_tag: string): Promise<BossOutp
         ? `\nThese drafts FAILED machine verification, return a fresh set of 5 with corrected variants: ${JSON.stringify(failed)}`
         : "";
     const out = await chatJson(BossOutput, [
-      { role: "system", content: SYSTEM },
+      { role: "system", content: system },
       { role: "user", content: `Skill: ${skill_tag} (${skillName(skill_tag)}).${extra}` },
     ]);
     failed = out.questions.filter((q) => !verifyAnswer(q.check, q.answer_numeric, q.tolerance));

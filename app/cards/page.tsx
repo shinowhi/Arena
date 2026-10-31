@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import katex from "katex";
-import { skillName } from "@/lib/graph/skills";
+import { SKILL_IDS, skillName } from "@/lib/graph/skills";
 import { FORMULAS } from "@/lib/game/formulas";
 
 type Entry = { skill: string; patched: boolean };
@@ -131,7 +131,7 @@ export default function CardsPage() {
           {unlocked.length > 0 ? (
             <div>
               <p className="mb-2 text-sm font-semibold text-zinc-300">
-                Collection ({unlocked.length}/36)
+                Collection ({unlocked.length}/{SKILL_IDS.length})
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {unlocked.map((s) => {
