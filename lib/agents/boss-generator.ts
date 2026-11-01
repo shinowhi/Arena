@@ -36,7 +36,7 @@ Reply JSON only: {"questions": [{"level": 1, "prompt_latex": "...", "answer_nume
 - tolerance 0.001 unless the answer scale demands otherwise.` + "\n- Plain ASCII words only outside math: write L'Hospital's rule with no accents or backslash escapes (never H\\^opital)."
 
 const MECHANICS_SYSTEM = `You write 5 isomorphic Mechanics of Materials practice questions (same shape, different numbers, strictly rising difficulty) for ONE skill. Every question MUST reduce to ONE numeric computation a machine can recompute with plain arithmetic.
-Reply JSON only: {"questions": [{"level": 1, "prompt_latex": "...", "answer_numeric": 1.234, "tolerance": 0.01, "hint": "...", "check": {...}}]}
+Reply JSON only: {"questions": [{"level": 1, "prompt_latex": "...", "answer_numeric": 80, "tolerance": 0.08, "hint": "...", "check": {...}}]}
 - Exactly one question per level 1..5.
 - prompt_latex: LaTeX problem statement shown to the student. State ALL given values with units (N, mm, MPa, GPa, kN, m) and name the wanted unit, e.g. "Give the axial stress in MPa."
 - The wanted answer is ALWAYS a raw number (units live in the prompt only, never in answer_numeric).

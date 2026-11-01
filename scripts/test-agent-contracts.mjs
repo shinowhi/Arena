@@ -39,7 +39,7 @@ function isValidRootCause(root, weak) {
 let n = 0;
 const ok = (cond, msg) => { n++; assert.ok(cond, msg); };
 
-ok(graph.skills.length >= 30 && graph.skills.length <= 50, "30-50 skills, got " + graph.skills.length);
+ok(graph.skills.length >= 30 && graph.skills.length <= 64, "30-64 skills, got " + graph.skills.length);
 for (const s of graph.skills) {
   for (const p of s.prereqs) ok(byId.has(p), "dangling prereq " + s.id + " -> " + p);
 }

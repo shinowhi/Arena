@@ -1,6 +1,6 @@
 import graph from "../graph/skill-graph.json" with { type: "json" };
 
-export type SkillNode = { id: string; name: string; description: string; prereqs: string[]; grade: number; gradeLabel: string; subject?: string };
+export type SkillNode = { id: string; name: string; description: string; prereqs: string[]; grade: number; gradeLabel: string; subject?: Subject };
 
 export type Subject = "calculus" | "mechanics";
 

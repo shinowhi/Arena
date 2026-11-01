@@ -1,9 +1,10 @@
 "use client";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import graph from "@/lib/graph/skill-graph.json";
 import { SKILL_IDS, skillName } from "@/lib/graph/skills";
 
-type Node = { id: string; name: string; description: string; prereqs: string[] };
+type Node = { id: string; name: string; description: string; prereqs: string[]; subject?: string };
 
 // Group nodes by depth (longest prereq chain) so the graph reads left to right.
 function levels(nodes: Node[]): Node[][] {
@@ -28,6 +29,7 @@ export default function GraphView() {
   const params = useSearchParams();
   const weak = params.get("weak") ?? "";
   const root = params.get("root") ?? "";
+  const [subject, setSubject] = useState<"all" | "calculus" | "mechanics">("all");
   const nodes = (graph as { skills: Node[] }).skills;
   const cols = levels(nodes);
   const ring = (id: string) =>
@@ -36,6 +38,12 @@ export default function GraphView() {
       : id === root
         ? "border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.4)]"
         : "border-zinc-800";
+  const dot = (s?: string) =>
+    (s ?? "calculus") === "mechanics"
+      ? "bg-sky-400 shadow-[0_0_8px_#38bdf8]"
+      : "bg-emerald-400 shadow-[0_0_8px_#34d399]";
+  const dim = (s?: string) =>
+    subject === "all" ? "" : (s ?? "calculus") === subject ? "" : "opacity-40";
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-4 py-8">
@@ -58,14 +66,35 @@ export default function GraphView() {
             </span>
           ) : null}
         </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+          {(["all", "calculus", "mechanics"] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSubject(s)}
+              className={`rounded-full px-3 py-1 font-semibold capitalize transition-colors ${subject === s ? "bg-zinc-100 text-zinc-900" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
+            >
+              {s}
+            </button>
+          ))}
+          <span className="ml-2 text-zinc-500">
+            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />
+            calc
+            <span className="mr-1 ml-3 inline-block h-2 w-2 rounded-full bg-sky-400" />
+            mech
+          </span>
+        </div>
       </div>
       <div className="arena-enter arena-d1 arena-scrollx flex gap-3 overflow-x-auto pb-4">
         {cols.map((col, d) => (
           <div key={d} className="flex w-56 shrink-0 flex-col gap-2">
             <p className="arena-num text-xs font-bold tracking-widest text-zinc-500 uppercase">Level {d}</p>
             {col.map((n) => (
-              <div key={n.id} className={`arena-card rounded-xl border p-2.5 transition-transform hover:-translate-y-0.5 ${ring(n.id)}`}>
-                <p className="text-sm font-semibold text-zinc-100">{n.name}</p>
+              <div key={n.id} className={`arena-card rounded-xl border p-2.5 transition-transform hover:-translate-y-0.5 ${ring(n.id)} ${dim(n.subject)}`}>
+                <p className="text-sm font-semibold text-zinc-100">
+                  <span className={`mr-1.5 inline-block h-2 w-2 rounded-full ${dot(n.subject)}`} />
+                  {n.name}
+                </p>
                 <p className="text-xs text-zinc-500">
                   <code>{n.id}</code>
                 </p>

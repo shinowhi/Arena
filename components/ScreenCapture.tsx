@@ -56,18 +56,34 @@ export default function ScreenCapture({
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
       streamRef.current = stream;
       setStage("live");
-      // Attach after paint so the video element exists.
-      requestAnimationFrame(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          void videoRef.current.play().catch(() => {});
-        }
-      });
+      attach(stream);
     } catch {
       setError("Screen permission was denied. Allow it and try again.");
     } finally {
       setBusy(false);
     }
+  }
+
+  function attach(stream: MediaStream) {
+    // Attach after paint so the video element exists.
+    requestAnimationFrame(() => {
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        void videoRef.current.play().catch(() => {});
+      }
+    });
+  }
+
+  function retake() {
+    const stream = streamRef.current;
+    if (!stream) {
+      setStage(null);
+      return;
+    }
+    setError("");
+    setFrame("");
+    setStage("live");
+    attach(stream);
   }
 
   function freeze() {
@@ -76,16 +92,17 @@ export default function ScreenCapture({
       setError("Video not ready yet — wait a second and retry.");
       return;
     }
+    const scale = Math.min(1, 1920 / Math.max(video.videoWidth, video.videoHeight));
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+    canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       setError("Could not grab the frame.");
       return;
     }
-    ctx.drawImage(video, 0, 0);
-    stopStream();
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // Keep the stream alive through crop so Retake needs no re-pick; stopped on crop/close/unmount.
     setFrame(canvas.toDataURL("image/png"));
     setRect({ x: 0.1, y: 0.1, w: 0.8, h: 0.8 });
     setStage("crop");
@@ -114,6 +131,7 @@ export default function ScreenCapture({
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("crop failed");
       ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+      stopStream();
       canvas.toBlob((blob) => {
         setBusy(false);
         if (!blob) {
@@ -204,7 +222,11 @@ export default function ScreenCapture({
               startRef.current = null;
               setDragging(false);
             }}
-            role="application"
+            onPointerCancel={() => {
+              startRef.current = null;
+              setDragging(false);
+            }}
+            role="group"
             aria-label="Drag to select the scan region"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -228,6 +250,14 @@ export default function ScreenCapture({
               className="arena-btn-primary rounded-full px-5 py-2 text-sm font-semibold text-white disabled:opacity-40"
             >
               {busy ? "Cropping…" : "Scan this region"}
+            </button>
+            <button
+              type="button"
+              onClick={retake}
+              disabled={busy}
+              className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200 disabled:opacity-40"
+            >
+              Retake
             </button>
             <button
               type="button"

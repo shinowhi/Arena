@@ -460,7 +460,7 @@
       "id": "beam_deflection",
       "name": "Beam deflection",
       "description": "Standard load-case deflection formulas for beams.",
-      "prereqs": ["bending_stress"],
+      "prereqs": ["bending_stress", "axial_loading"],
       "grade": 14,
       "gradeLabel": "University",
       "subject": "mechanics"
@@ -469,7 +469,7 @@
       "id": "stress_transformation",
       "name": "Stress transformation",
       "description": "Normal and shear stress on an inclined plane.",
-      "prereqs": ["bending_stress", "trig_functions"],
+      "prereqs": ["bending_stress", "trig_functions", "transverse_shear_stress"],
       "grade": 14,
       "gradeLabel": "University",
       "subject": "mechanics"
