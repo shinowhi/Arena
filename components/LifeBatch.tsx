@@ -1,7 +1,11 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import MathText from "@/components/MathText";
 import { skillName } from "@/lib/graph/skills";
+
+// Client-only: three.js stays out of the server bundle and initial JS.
+const Problem3D = dynamic(() => import("@/components/Problem3D"), { ssr: false });
 
 export type LifeJobResult = { boss_id: string; skill_tag: string; problem_latex: string };
 
@@ -92,7 +96,8 @@ export default function LifeBatch({
                   <span className="truncate text-zinc-500">{j.file.name}</span>
                 </p>
                 {j.status === "done" && j.result ? (
-                  <div className="mt-1.5">
+                  <div className="mt-1.5 flex flex-col gap-2">
+                    <Problem3D skill={j.result.skill_tag} />
                     <MathText text={j.result.problem_latex} className="text-sm text-zinc-200" />
                     <p className="mt-1.5 flex flex-wrap items-center gap-2">
                       <span className="rounded-full border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[11px] text-zinc-400">
