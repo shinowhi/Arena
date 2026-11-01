@@ -1,15 +1,16 @@
 import StreakBadge from "@/components/StreakBadge";
+import ScanHistory from "@/components/ScanHistory";
 
 const STEPS = [
-  { n: "01", t: "Scan", d: "Snap a photo of your math work. Vision AI reads the handwriting directly — no OCR." },
+  { n: "01", t: "Scan", d: "Snap your exam, screenshot, or real life. Vision AI reads it directly — no OCR." },
   { n: "02", t: "Diagnose", d: "Your mistake is mapped onto the skill graph — calculus to mechanics — and traced to its root cause." },
   { n: "03", t: "Slay", d: "Fight a boss of 5 isomorphic questions. Every answer is recomputed by a math engine." },
 ];
 
 const SPOTLIGHT = [
-  { e: "⚔️", t: "Boss fight", d: "Your weakest skill, alive. Five questions stand between you and the kill.", href: "/arena", cta: "Enter arena", dl: "arena-d1", accent: "hover:border-red-500/70 hover:shadow-[0_0_36px_rgba(239,68,68,0.35)]", glow: "text-red-400" },
-  { e: "📸", t: "Scan", d: "Snap your work. Vision AI reads handwriting directly — no OCR.", href: "/scan", cta: "Scan now", dl: "arena-d2", accent: "hover:border-cyan-400/70 hover:shadow-[0_0_36px_rgba(34,211,238,0.3)]", glow: "text-cyan-300" },
-  { e: "🌍", t: "Real life", d: "Snap anything around you — get a solvable problem from the scene.", href: "/scan", cta: "Try it", dl: "arena-d3", accent: "hover:border-emerald-400/70 hover:shadow-[0_0_36px_rgba(52,211,153,0.3)]", glow: "text-emerald-300" },
+  { e: "📸", t: "Scan", d: "Exam, screenshot, or real life. Vision AI reads it directly — no OCR.", href: "/scan", cta: "Scan now", dl: "arena-d1", accent: "hover:border-cyan-400/70 hover:shadow-[0_0_36px_rgba(34,211,238,0.3)]", glow: "text-cyan-300" },
+  { e: "⚔️", t: "Boss fight", d: "Your weakest skill, alive. Five questions stand between you and the kill.", href: "/arena", cta: "Enter arena", dl: "arena-d2", accent: "hover:border-red-500/70 hover:shadow-[0_0_36px_rgba(239,68,68,0.35)]", glow: "text-red-400" },
+  { e: "🌍", t: "Real life", d: "Snap anything around you — get a solvable problem from the scene.", href: "/scan?mode=life", cta: "Try it", dl: "arena-d3", accent: "hover:border-emerald-400/70 hover:shadow-[0_0_36px_rgba(52,211,153,0.3)]", glow: "text-emerald-300" },
   { e: "👻", t: "Ghost classroom", d: "Anonymous hunters grinding beside you tonight. Never study alone.", href: "/ghosts", cta: "Join them", dl: "arena-d4", accent: "hover:border-violet-400/70 hover:shadow-[0_0_36px_rgba(167,139,250,0.3)]", glow: "text-violet-300" },
 ];
 
@@ -31,30 +32,33 @@ export default function Home() {
         <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
         <span className="font-bold tracking-wide">ARENA</span>
         <nav className="ml-auto flex gap-4 text-zinc-400">
+          <a href="/scan" className="font-semibold text-white transition-colors hover:text-cyan-300">Scan</a>
           <a href="/arena" className="transition-colors hover:text-white">Arena</a>
-          <a href="/scan" className="transition-colors hover:text-white">Scan</a>
           <a href="/graph" className="transition-colors hover:text-white">Skills</a>
         </nav>
       </header>
       <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center">
         <p className="arena-enter rounded-full border border-zinc-700 bg-zinc-900/70 px-4 py-1 text-xs font-medium tracking-widest text-zinc-300 uppercase">
-          Find the hole · Patch it with a game
+          Snap anything · Slay the boss inside
         </p>
         <h1 className="arena-enter arena-d1 font-display text-5xl font-black tracking-tight text-balance sm:text-6xl">
-          Scan your work.
+          Scan anything.
           <br />
           <span className="arena-title">Slay the boss.</span>
         </h1>
         <p className="arena-enter arena-d2 max-w-xl text-zinc-400">
-          Arena finds the weak skill hiding behind your wrong answers — and its root cause two chapters
+          Snap your exam, a screenshot, or anything around you. Arena finds the weak skill hiding behind it — and its root cause two chapters
           back — then spawns a boss to patch it for good.
         </p>
         <nav className="arena-enter arena-d3 flex flex-wrap justify-center gap-3 text-sm">
           <a href="/scan" className="arena-btn-primary rounded-full px-7 py-3 font-semibold text-white">
             Scan your work
           </a>
-          <a href="/arena" className="arena-btn-ghost rounded-full px-7 py-3 font-semibold text-zinc-200">
-            Enter arena
+          <a href="/scan?capture=screen" className="arena-btn-ghost rounded-full px-7 py-3 font-semibold text-zinc-200">
+            Capture screen
+          </a>
+          <a href="/scan?mode=life" className="arena-btn-ghost rounded-full px-7 py-3 font-semibold text-zinc-200">
+            Snap real life
           </a>
         </nav>
         <div className="grid w-full gap-3 pt-6 text-left sm:grid-cols-3">
@@ -66,6 +70,7 @@ export default function Home() {
             </div>
           ))}
         </div>
+        <ScanHistory />
         <div className="w-full pt-10 text-left">
           <p className="arena-kicker">04</p>
           <p className="font-display mt-1 text-2xl font-extrabold">Pick your battle</p>

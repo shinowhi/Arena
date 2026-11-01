@@ -1,11 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import katex from "katex";
-import { skillName } from "@/lib/graph/skills";
 import PageHeader from "@/components/ui/PageHeader";
 import DiagnosisReveal from "@/components/DiagnosisReveal";
 import ScreenCapture from "@/components/ScreenCapture";
+import LifeBatch, { type LifeJob } from "@/components/LifeBatch";
+import { recordRecentScan, makeThumb } from "@/lib/game/recent-scans";
 
 type ScanResult = {
   items: Array<{ cau_hoi: string; dap_an_sinh_vien: string; skill_tag: string[] }>;
@@ -23,48 +23,24 @@ const STAGES = [
 const ANALYZE_TIMEOUT_MS = 120000;
 const SUMMON_TIMEOUT_MS = 180000;
 const LIFE_TIMEOUT_MS = 180000;
-
-const LIFE_STAGES = [
-  "Spotting math in your photo…",
-  "Writing the problem…",
-  "Verifying the answer…",
-  "Forging your boss…",
-];
-
-type LifeResult = { boss_id: string; skill_tag: string; problem_latex: string };
+const BATCH_MAX = 3;
 
 const SAMPLES = [
   { label: "Sample: area integral", path: "/samples/area-integral.png", file: "area-integral.png" },
   { label: "Sample: implicit diff", path: "/samples/implicit-diff.png", file: "implicit-diff.png" },
 ];
 
-// Agent 1 returns LaTeX "when it contains math", plain text otherwise.
-// Only KaTeX-render strings that actually contain a LaTeX command.
-const LATEX_HINT =
-  /\\(frac|int|sum|sqrt|lim|sin|cos|tan|log|ln|exp|vec|times|div|pm|infty|alpha|beta|gamma|theta|pi|partial|left|right|begin|text)\b/;
-
-function ProblemText({ text }: { text: string }) {
-  let html: string | null = null;
-  if (LATEX_HINT.test(text)) {
-    try {
-      html = katex.renderToString(text, { throwOnError: false });
-    } catch {
-      html = null;
-    }
-  }
-  if (html) return <div className="text-sm text-zinc-200" dangerouslySetInnerHTML={{ __html: html }} />;
-  return <pre className="whitespace-pre-wrap text-sm text-zinc-200">{text}</pre>;
-}
-
 export default function ScanPage() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
+  const [thumb, setThumb] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState(0);
   const [summoning, setSummoning] = useState(false);
   const [mode, setMode] = useState<"exam" | "life">("exam");
-  const [lifeResult, setLifeResult] = useState<LifeResult | null>(null);
+  const [jobs, setJobs] = useState<LifeJob[]>([]);
+  const [forging, setForging] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -74,25 +50,47 @@ export default function ScanPage() {
     if (!f) return;
     setFile(f);
     setPreview(URL.createObjectURL(f));
+    setThumb("");
+    void makeThumb(f).then((t) => setThumb(t));
     setResult(null);
-    setLifeResult(null);
     setError("");
   }
 
   function switchMode(m: "exam" | "life") {
     setMode(m);
     setResult(null);
-    setLifeResult(null);
     setError("");
   }
 
   function resetAll() {
+    for (const j of jobs) URL.revokeObjectURL(j.url);
     setFile(null);
     setPreview("");
+    setThumb("");
+    setJobs([]);
     setResult(null);
-    setLifeResult(null);
     setError("");
   }
+
+  // Deep links from home hero (A's S1): ?mode=life preselects Real-life mode,
+  // ?capture=screen auto-opens the screen picker. Microtask keeps the
+  // no-sync-setState lint rule happy; effect-only so prerender stays safe.
+  useEffect(() => {
+    let alive = true;
+    queueMicrotask(() => {
+      if (!alive) return;
+      try {
+        const q = new URLSearchParams(window.location.search);
+        if (q.get("mode") === "life") setMode("life");
+        if (q.get("capture") === "screen") setScreenOpen(true);
+      } catch {
+        // Non-browser or malformed query: defaults stand.
+      }
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   async function loadSample(path: string, name: string) {
     setError("");
@@ -104,6 +102,42 @@ export default function ScanPage() {
     } catch {
       setError("Sample failed to load. Pick a photo instead.");
     }
+  }
+
+  function addJobs(files: File[]) {
+    const room = BATCH_MAX - jobs.length;
+    if (room <= 0) {
+      setError("Batch is full — 3 photos max. Remove one to add more.");
+      return;
+    }
+    const take = files.filter((f) => f.type.startsWith("image/")).slice(0, room);
+    if (take.length === 0) {
+      setError("Only image files can join the batch.");
+      return;
+    }
+    if (take.length < files.length) setError("Only images, 3 max — extras skipped.");
+    else setError("");
+    const fresh: LifeJob[] = take.map((f) => ({
+      key: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      file: f,
+      url: URL.createObjectURL(f),
+      thumb: "",
+      status: "queued",
+    }));
+    setJobs((prev) => [...prev, ...fresh].slice(0, BATCH_MAX));
+    for (const job of fresh) {
+      void makeThumb(job.file).then((t) => {
+        setJobs((prev) => prev.map((j) => (j.key === job.key ? { ...j, thumb: t } : j)));
+      });
+    }
+  }
+
+  function removeJob(key: string) {
+    setJobs((prev) => {
+      const gone = prev.find((j) => j.key === key);
+      if (gone) URL.revokeObjectURL(gone.url);
+      return prev.filter((j) => j.key !== key);
+    });
   }
 
   async function analyze() {
@@ -137,35 +171,42 @@ export default function ScanPage() {
     }
   }
 
-  async function analyzeLife() {
-    if (!file || loading) return;
-    setLoading(true);
-    setStage(0);
-    setError("");
-    setLifeResult(null);
-    const ticker = setInterval(() => setStage((s) => (s + 1) % LIFE_STAGES.length), 4000);
+  async function forgeOne(job: LifeJob): Promise<void> {
+    setJobs((prev) => prev.map((j) => (j.key === job.key ? { ...j, status: "forging", error: undefined } : j)));
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), LIFE_TIMEOUT_MS);
     try {
       const form = new FormData();
-      form.append("image", file);
+      form.append("image", job.file);
       const res = await fetch("/api/photo-problem", { method: "POST", body: form, signal: ctrl.signal });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Photo scan failed.");
-      setLifeResult(data as LifeResult);
+      const r = data as { boss_id: string; skill_tag: string; problem_latex: string };
+      recordRecentScan({ ts: Date.now(), mode: "life", skill: r.skill_tag, bossId: r.boss_id, thumb: job.thumb });
+      setJobs((prev) => prev.map((j) => (j.key === job.key ? { ...j, status: "done", result: r } : j)));
     } catch (e) {
-      setError(
+      const msg =
         e instanceof DOMException && e.name === "AbortError"
-          ? "Photo scan timed out. Try again with a clearer photo."
+          ? "Timed out — tap Forge to retry this one."
           : e instanceof Error
             ? e.message
-            : "Photo scan failed.",
-      );
+            : "Forge failed.";
+      setJobs((prev) => prev.map((j) => (j.key === job.key ? { ...j, status: "failed", error: msg } : j)));
     } finally {
-      clearInterval(ticker);
       clearTimeout(timer);
-      setLoading(false);
     }
+  }
+
+  async function forgeAll() {
+    if (forging) return;
+    const todo = jobs.filter((j) => j.status === "queued" || j.status === "failed");
+    if (todo.length === 0) return;
+    setForging(true);
+    setError("");
+    for (const job of todo) {
+      await forgeOne(job);
+    }
+    setForging(false);
   }
 
   async function summon() {
@@ -183,7 +224,9 @@ export default function ScanPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Summon failed.");
-      router.push("/boss/" + data.boss_id + "?root=" + result.root_cause);
+      const bossId = (data as { boss_id: string }).boss_id;
+      recordRecentScan({ ts: Date.now(), mode: "exam", skill: result.weak_skill, bossId, thumb });
+      router.push("/boss/" + bossId + "?root=" + result.root_cause);
     } catch (e) {
       setError(
         e instanceof DOMException && e.name === "AbortError"
@@ -203,15 +246,45 @@ export default function ScanPage() {
       <PageHeader
         kicker="Step 01 — Scan"
         title={<>Show us <span className="arena-title">your work</span></>}
-        sub="One photo. We find the weak skill and its root cause."
+        sub="Exam sheets, screenshots, or real life. We find the weak skill and its root cause."
       />
+      <div className="mx-auto flex gap-1 rounded-full border border-zinc-800 bg-zinc-900/60 p-1" role="tablist" aria-label="Scan mode">
+        {(["exam", "life"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            role="tab"
+            aria-selected={mode === m}
+            onClick={() => switchMode(m)}
+            className={`rounded-full px-5 py-1.5 text-sm font-medium transition-colors ${
+              mode === m ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            {m === "exam" ? "Exam work" : "Real life"}
+          </button>
+        ))}
+      </div>
+
       {screenOpen ? (
         <ScreenCapture
+          multi={mode === "life"}
           onCapture={(f) => {
-            pick(f);
-            setScreenOpen(false);
+            if (mode === "life") addJobs([f]);
+            else {
+              pick(f);
+              setScreenOpen(false);
+            }
           }}
           onClose={() => setScreenOpen(false)}
+        />
+      ) : mode === "life" ? (
+        <LifeBatch
+          jobs={jobs}
+          forging={forging}
+          onAdd={addJobs}
+          onRemove={removeJob}
+          onForge={() => void forgeAll()}
+          onScreen={() => setScreenOpen(true)}
         />
       ) : (
       <div
@@ -247,7 +320,7 @@ export default function ScanPage() {
         <div className="flex flex-wrap justify-center gap-2">
           <label className="arena-btn-ghost cursor-pointer rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
             {preview ? "Choose another" : "Choose photo"}
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
+            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
           </label>
           <button
             type="button"
@@ -272,62 +345,25 @@ export default function ScanPage() {
         </div>
       </div>
       )}
-      <div className="mx-auto flex gap-1 rounded-full border border-zinc-800 bg-zinc-900/60 p-1" role="tablist" aria-label="Scan mode">
-        {(["exam", "life"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            role="tab"
-            aria-selected={mode === m}
-            onClick={() => switchMode(m)}
-            className={`rounded-full px-5 py-1.5 text-sm font-medium transition-colors ${
-              mode === m ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            {m === "exam" ? "Exam work" : "Real life"}
-          </button>
-        ))}
-      </div>
-      <button
-        onClick={mode === "exam" ? analyze : analyzeLife}
-        disabled={!file || loading}
-        className={`arena-enter arena-d2 arena-btn-primary font-display rounded-full px-5 py-3.5 text-lg font-bold text-white disabled:opacity-40 disabled:shadow-none ${loading ? "animate-pulse" : ""}`}
-      >
-        {loading ? (mode === "exam" ? STAGES[stage % STAGES.length] : LIFE_STAGES[stage]) : mode === "exam" ? "Analyze" : "Find math in this"}
-      </button>
-      {mode === "exam" ? null : (
-        <p className="-mt-2 text-center text-xs text-zinc-500">
-          Snap anything — pizza, stairs, bills — AI turns it into a boss fight.
-        </p>
-      )}
-      {(file || result || lifeResult) && !loading ? (
+
+      {mode === "exam" ? (
+        <button
+          onClick={analyze}
+          disabled={!file || loading}
+          className={`arena-enter arena-d2 arena-btn-primary font-display rounded-full px-5 py-3.5 text-lg font-bold text-white disabled:opacity-40 disabled:shadow-none ${loading ? "animate-pulse" : ""}`}
+        >
+          {loading ? STAGES[stage % STAGES.length] : "Analyze"}
+        </button>
+      ) : null}
+
+      {(file || result || jobs.length > 0) && !loading && !forging ? (
         <button
           type="button"
           onClick={resetAll}
           className="-mt-2 text-center text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
         >
-          Start over with a new photo
+          Start over
         </button>
-      ) : null}
-      {lifeResult ? (
-        <section className="arena-enter arena-card flex flex-col gap-2 rounded-2xl p-4">
-          <h2 className="font-semibold text-zinc-100">Found it in your photo</h2>
-          <ProblemText text={lifeResult.problem_latex} />
-          <p>
-            <span className="rounded-full border border-zinc-700 bg-zinc-900/70 px-2 py-0.5 text-xs text-zinc-400">
-              {skillName(lifeResult.skill_tag)}
-            </span>
-          </p>
-          <div>
-            <button
-              type="button"
-              onClick={() => router.push("/boss/" + lifeResult.boss_id)}
-              className="arena-btn-primary mt-1 rounded-full px-5 py-2 text-sm font-semibold text-white"
-            >
-              Fight this boss
-            </button>
-          </div>
-        </section>
       ) : null}
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {result ? (

@@ -12,9 +12,11 @@ type Rect = { x: number; y: number; w: number; h: number }; // normalized 0..1
 export default function ScreenCapture({
   onCapture,
   onClose,
+  multi,
 }: {
   onCapture: (file: File) => void;
   onClose: () => void;
+  multi?: boolean;
 }) {
   const [stage, setStage] = useState<Stage | null>(null);
   const [frame, setFrame] = useState("");
@@ -22,6 +24,7 @@ export default function ScreenCapture({
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [added, setAdded] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -138,7 +141,12 @@ export default function ScreenCapture({
           setError("Could not crop the image.");
           return;
         }
-        onCapture(new File([blob], "screen-crop.png", { type: "image/png" }));
+        onCapture(new File([blob], `screen-crop-${Date.now()}.png`, { type: "image/png" }));
+        if (multi) {
+          // Region loop: stay on the same frame for the next region.
+          setAdded((a) => a + 1);
+          setRect({ x: 0.1, y: 0.1, w: 0.8, h: 0.8 });
+        }
       }, "image/png");
     } catch {
       setBusy(false);
@@ -242,6 +250,11 @@ export default function ScreenCapture({
             />
           </div>
           <p className="text-xs text-zinc-500">Drag to adjust — the green box is what gets scanned.</p>
+          {multi && added > 0 ? (
+            <p className="text-xs font-semibold text-emerald-300">
+              {added} region{added === 1 ? "" : "s"} added — select another or press Done.
+            </p>
+          ) : null}
           <div className="flex gap-2">
             <button
               type="button"
@@ -259,6 +272,16 @@ export default function ScreenCapture({
             >
               Retake
             </button>
+            {multi ? (
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={busy}
+                className="arena-btn-primary rounded-full px-5 py-2 text-sm font-semibold text-white disabled:opacity-40"
+              >
+                Done{added > 0 ? ` (${added})` : ""}
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={close}

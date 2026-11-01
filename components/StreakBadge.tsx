@@ -22,7 +22,7 @@ export default function StreakBadge() {
     <a
       href="/streak"
       aria-label="Open healing streak"
-      className="arena-float fixed top-3 right-3 z-50 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-3 py-2 text-xs font-black tracking-widest text-white tabular-nums shadow-[0_0_24px_rgba(245,158,11,0.6)] hover:brightness-110"
+      className="arena-float fixed top-3 right-3 z-50 flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2.5 text-sm font-black tracking-widest text-white tabular-nums shadow-[0_0_24px_rgba(245,158,11,0.6)] hover:brightness-110"
     >
       <span aria-hidden="true">🔥</span>
       {count}

@@ -7,6 +7,7 @@ import HpBar from "@/components/HpBar";
 import BossAvatar from "@/components/BossAvatar";
 import BossIntro from "@/components/BossIntro";
 import RaidFeed from "@/components/RaidFeed";
+import ShareCard from "@/components/ShareCard";
 import Hero3D from "@/components/Hero3D";
 import { DEFAULT_AVATAR, loadAvatar, skillOf, type AvatarSpec } from "@/lib/game/avatar";
 
@@ -350,8 +351,17 @@ function BossInner() {
                 onClick={copyWin}
                 className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200"
               >
-                {copiedWin ? "Copied!" : "Share victory"}
+                {copiedWin ? "Copied!" : "Copy result"}
               </button>
+              <ShareCard
+                kicker="Arena victory"
+                title={`${skillName(boss.skill_tag)} boss slain`}
+                stats={[
+                  `${boss.questions.length} questions conquered`,
+                  t0 > 0 ? `Slain in ${fmt(now - t0)}` : "Victory",
+                  "Answers machine-verified",
+                ]}
+              />
             </nav>
           </div>
         </div>

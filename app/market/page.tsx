@@ -286,6 +286,7 @@ export default function MarketPage() {
                   onChange={(e) => setTries((t) => ({ ...t, [p.id]: e.target.value }))}
                   inputMode="decimal"
                   placeholder="Your answer"
+                  aria-label={`Your answer for ${p.skill_name} bounty`}
                   className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
                 />
                 <button
