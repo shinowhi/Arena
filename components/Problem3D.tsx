@@ -263,7 +263,7 @@ function buildElement(): Rig {
 }
 
 // Calculus fallback: Riemann slices stacking under a curve.
-function buildSlices(): Rig {
+export function buildSlices(): Rig {
   const disposables: Rig["disposables"] = [];
   const group = new THREE.Group();
   const bars: THREE.Mesh[] = [];
@@ -295,21 +295,37 @@ function buildSlices(): Rig {
   return { group, update, disposables };
 }
 
-const MODEL_FOR_SKILL: Record<string, () => Rig> = {
-  bending_stress: buildBeam,
-  shear_moment_diagrams: buildBeam,
-  beam_deflection: buildBeam,
-  transverse_shear_stress: buildBeam,
-  torsion_stress: buildShaft,
-  torsion_twist: buildShaft,
-  buckling_columns: buildColumn,
-  axial_loading: buildColumn,
-  indeterminate_axial: buildColumn,
-  thermal_stress: buildColumn,
-  stress_strain_concepts: buildColumn,
-  pressure_vessels: buildTank,
-  stress_transformation: buildElement,
-  principal_stress_mohr: buildElement,
+type ModelDef = { build: () => Rig; cam: [number, number, number]; look: [number, number, number] };
+
+// Per-model framing: the column is ~4 units tall and needs a higher target,
+// everything else fits the default close-up.
+const DEFAULT_CAM: [number, number, number] = [3.6, 2.6, 4.8];
+const DEFAULT_LOOK: [number, number, number] = [0, 1.0, 0];
+const TALL_CAM: [number, number, number] = [4.0, 2.8, 5.4];
+const TALL_LOOK: [number, number, number] = [0, 1.7, 0];
+
+export function def(build: () => Rig, tall = false): ModelDef {
+  return tall
+    ? { build, cam: TALL_CAM, look: TALL_LOOK }
+    : { build, cam: DEFAULT_CAM, look: DEFAULT_LOOK };
+}
+
+// Exported for the headless framing check (scripts/check-3d-framing.mjs).
+export const MODEL_FOR_SKILL: Record<string, ModelDef> = {
+  bending_stress: def(buildBeam),
+  shear_moment_diagrams: def(buildBeam),
+  beam_deflection: def(buildBeam),
+  transverse_shear_stress: def(buildBeam),
+  torsion_stress: def(buildShaft),
+  torsion_twist: def(buildShaft),
+  buckling_columns: def(buildColumn, true),
+  axial_loading: def(buildColumn, true),
+  indeterminate_axial: def(buildColumn, true),
+  thermal_stress: def(buildColumn, true),
+  stress_strain_concepts: def(buildColumn, true),
+  pressure_vessels: def(buildTank, true),
+  stress_transformation: def(buildElement),
+  principal_stress_mohr: def(buildElement),
 };
 
 export default function Problem3D({ skill }: { skill: string }) {
@@ -337,8 +353,9 @@ export default function Problem3D({ skill }: { skill: string }) {
       host.appendChild(renderer.domElement);
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
-      camera.position.set(3.6, 2.6, 4.8);
-      camera.lookAt(0, 1.0, 0);
+      const model = MODEL_FOR_SKILL[skill] ?? def(buildSlices);
+      camera.position.set(...model.cam);
+      camera.lookAt(...model.look);
       scene.add(new THREE.AmbientLight(0xffffff, 0.75));
       const dir = new THREE.DirectionalLight(0xffffff, 1.6);
       dir.position.set(4, 6, 4);
@@ -346,7 +363,7 @@ export default function Problem3D({ skill }: { skill: string }) {
       const glow = new THREE.PointLight(0xef4444, 12, 24);
       glow.position.set(-4, 2, 3);
       scene.add(glow);
-      rig = (MODEL_FOR_SKILL[skill] ?? buildSlices)();
+      rig = model.build();
       scene.add(rig.group);
       const clock = new THREE.Clock();
       const render = () => {
