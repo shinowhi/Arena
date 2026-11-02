@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import PageHeader from "@/components/ui/PageHeader";
 
 type Weak = { tag: string; name: string; misses: number; healed: boolean };
 type Plan = { weak: Weak[]; totalWeak: number; healedWeak: number; readiness: number };
@@ -80,10 +82,11 @@ export default function CountdownPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
-      <div>
-        <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Exam countdown</p>
-        <h1 className="font-display text-3xl font-extrabold text-zinc-100">Ready before the bell rings</h1>
-      </div>
+      <PageHeader
+        kicker="Exam countdown"
+        title="Ready before the bell rings"
+        sub="One weak skill a day until exam day."
+      />
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       <div className="arena-card flex flex-wrap items-center gap-3 rounded-2xl p-4">
         <label className="text-sm text-zinc-300">
@@ -149,9 +152,9 @@ export default function CountdownPage() {
                       {key} · missed {w.misses}×
                     </p>
                   </div>
-                  <a href="/scan" className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-xs text-zinc-200">
+                  <Link href="/scan" className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-xs text-zinc-200">
                     Practice
-                  </a>
+                  </Link>
                 </li>
               );
             })}

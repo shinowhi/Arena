@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import PageHeader from "@/components/ui/PageHeader";
 
 type StreakData = {
   streak: number;
@@ -30,10 +32,11 @@ export default function StreakPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
-      <div>
-        <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Healing streak</p>
-        <h1 className="font-display text-3xl font-extrabold text-zinc-100">Patch a little every day</h1>
-      </div>
+      <PageHeader
+        kicker="Healing streak"
+        title="Patch a little every day"
+        sub="Consistency beats cramming — every active day counts."
+      />
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {!data && !error ? <p className="text-zinc-500">Loading your streak…</p> : null}
       {data ? (
@@ -64,15 +67,15 @@ export default function StreakPage() {
             </div>
           </div>
           <nav className="flex gap-4 text-sm">
-            <a href="/diary" className="underline text-zinc-300">
+            <Link href="/diary" className="underline text-zinc-300">
               Root diary
-            </a>
-            <a href="/scan" className="underline text-zinc-300">
+            </Link>
+            <Link href="/scan" className="underline text-zinc-300">
               Scan to keep the streak
-            </a>
-            <a href="/arena" className="underline text-zinc-300">
+            </Link>
+            <Link href="/arena" className="underline text-zinc-300">
               Back to arena
-            </a>
+            </Link>
           </nav>
         </>
       ) : null}

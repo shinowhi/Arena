@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import katex from "katex";
 import { SKILL_IDS, skillName } from "@/lib/graph/skills";
 import { FORMULAS } from "@/lib/game/formulas";
+import PageHeader from "@/components/ui/PageHeader";
 
 type Entry = { skill: string; patched: boolean };
 
@@ -74,10 +76,11 @@ export default function CardsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
-      <div>
-        <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Smart card box</p>
-        <h1 className="font-display text-3xl font-extrabold text-zinc-100">Flip before you forget</h1>
-      </div>
+      <PageHeader
+        kicker="Smart card box"
+        title="Flip before you forget"
+        sub="Spaced repetition for every formula you've unlocked."
+      />
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {(unlocked === null || nowMs === 0) && !error ? <p className="text-zinc-500">Opening your card box…</p> : null}
       {unlocked !== null && nowMs > 0 ? (
@@ -155,12 +158,12 @@ export default function CardsPage() {
             </div>
           ) : null}
           <nav className="flex gap-4 text-sm">
-            <a href="/diary" className="underline text-zinc-300">
+            <Link href="/diary" className="underline text-zinc-300">
               Root diary
-            </a>
-            <a href="/arena" className="underline text-zinc-300">
+            </Link>
+            <Link href="/arena" className="underline text-zinc-300">
               Back to arena
-            </a>
+            </Link>
           </nav>
         </>
       ) : null}

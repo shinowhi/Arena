@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import graph from "@/lib/graph/skill-graph.json";
 import EmptyState from "@/components/ui/EmptyState";
+import PageHeader from "@/components/ui/PageHeader";
 
 type Week = { week: string; skills: Record<string, "red" | "green"> };
 type Timeline = { ready: boolean; timeline?: Week[] };
@@ -57,7 +58,7 @@ export default function ProgressPage() {
 
   if (failed)
     return (
-      <main className="mx-auto max-w-3xl p-6 text-center">
+      <main className="mx-auto max-w-2xl p-6 text-center">
         <p className="arena-kicker">Progress</p>
         <h1 className="font-display mt-1 text-2xl font-extrabold">Your healing story</h1>
         <p className="mt-4 text-zinc-400">Could not load progress. Try again later.</p>
@@ -65,7 +66,7 @@ export default function ProgressPage() {
     );
   if (!data)
     return (
-      <main className="mx-auto max-w-3xl p-6 text-center">
+      <main className="mx-auto max-w-2xl p-6 text-center">
         <p className="arena-kicker">Progress</p>
         <h1 className="font-display mt-1 text-2xl font-extrabold">Your healing story</h1>
         <div className="mx-auto mt-6 grid max-w-md grid-cols-9 gap-2" aria-label="Loading your time-lapse">
@@ -77,11 +78,12 @@ export default function ProgressPage() {
     );
   if (!data.ready || !data.timeline?.length)
     return (
-      <main className="mx-auto max-w-3xl p-6">
-        <div className="text-center">
-          <p className="arena-kicker">Progress</p>
-          <h1 className="font-display mt-1 text-2xl font-extrabold">Your healing story</h1>
-        </div>
+      <main className="mx-auto max-w-2xl p-6">
+        <PageHeader
+          kicker="Progress"
+          title="Your healing story"
+          sub="Every scan adds a week to your time-lapse."
+        />
         <div className="mt-6">
           <EmptyState
             title="Your story starts here."
@@ -96,12 +98,12 @@ export default function ProgressPage() {
   const weeks = data.timeline;
   const cur = weeks[Math.min(idx, weeks.length - 1)];
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      <p className="arena-kicker text-center">Progress</p>
-      <h1 className="font-display mt-1 text-center text-2xl font-extrabold">Your healing story</h1>
-      <p className="arena-num mt-1 text-center text-sm text-zinc-400">
-        Week of {cur.week} · {idx + 1} of {weeks.length}
-      </p>
+    <main className="mx-auto max-w-2xl p-6">
+      <PageHeader
+        kicker="Progress"
+        title="Your healing story"
+        sub={`Week of ${cur.week} · ${idx + 1} of ${weeks.length}`}
+      />
       <div className="arena-card mt-4 flex items-center gap-3 rounded-2xl p-3">
         <button
           onClick={() => {

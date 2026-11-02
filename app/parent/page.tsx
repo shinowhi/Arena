@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import Stat from "@/components/ui/Stat";
+import PageHeader from "@/components/ui/PageHeader";
 
 interface Stats {
   scans: number;
@@ -99,12 +99,11 @@ export default function ParentPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
-      <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-200">← Back</Link>
-      <h1 className="font-display mt-2 text-3xl font-extrabold text-zinc-100">Parent report</h1>
-      <p className="mt-1 text-sm text-zinc-400">
-        Link a parent device with a one-time code — no accounts, no emails. The parent only ever
-        sees progress numbers, never answers.
-      </p>
+      <PageHeader
+        kicker="For parents"
+        title="Parent report"
+        sub="Link a parent device with a one-time code — no accounts, no emails. The parent only ever sees progress numbers, never answers."
+      />
 
       {needsMigration && (
         <div className="mt-4 rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">

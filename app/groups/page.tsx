@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import PageHeader from "@/components/ui/PageHeader";
 import { CHAT_POLL_MS, GROUP_NAME_MAX, MESSAGE_MAX_LEN, displayTime } from "@/lib/social/rules";
 
 interface Room {
@@ -215,12 +215,12 @@ export default function GroupsPage() {
   const roomNameShown = rooms.find((r) => r.id === room)?.name ?? "";
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
-      <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-200">← Back</Link>
-      <h1 className="mt-2 text-3xl font-extrabold text-zinc-100">Groups</h1>
-      <p className="mt-1 text-sm text-zinc-400">
-        Study rooms for you and your friends — create one, invite friends, chat together.
-      </p>
+    <main className="mx-auto max-w-2xl px-4 py-10">
+      <PageHeader
+        kicker="Study rooms"
+        title="Groups"
+        sub="Study rooms for you and your friends — create one, invite friends, chat together."
+      />
 
       {needsMigration && (
         <div className="mt-4 rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">

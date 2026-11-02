@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CHAT_POLL_MS, MESSAGE_MAX_LEN, displayTime } from "@/lib/social/rules";
+import PageHeader from "@/components/ui/PageHeader";
 
 interface Peer {
   id: string;
@@ -128,12 +129,12 @@ function ChatInner() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
-      <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-200">← Back</Link>
-      <h1 className="mt-2 text-3xl font-extrabold text-zinc-100">Chat</h1>
-      <p className="mt-1 text-sm text-zinc-400">
-        Private messages with friends only — strangers cannot reach you here.
-      </p>
+    <main className="mx-auto max-w-2xl px-4 py-10">
+      <PageHeader
+        kicker="Direct messages"
+        title="Chat"
+        sub="Private messages with friends only — strangers cannot reach you here."
+      />
 
       {needsMigration && (
         <div className="mt-4 rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
@@ -222,7 +223,7 @@ function ChatInner() {
 export default function ChatPage() {
   return (
     <Suspense
-      fallback={<main className="mx-auto max-w-3xl px-4 py-10 text-sm text-zinc-400">Loading chat…</main>}
+      fallback={<main className="mx-auto max-w-2xl px-4 py-10 text-sm text-zinc-400">Loading chat…</main>}
     >
       <ChatInner />
     </Suspense>

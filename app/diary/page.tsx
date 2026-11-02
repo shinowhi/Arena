@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import PageHeader from "@/components/ui/PageHeader";
 
 type Entry = {
   skill: string;
@@ -33,10 +35,11 @@ export default function DiaryPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
-      <div>
-        <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Root diary</p>
-        <h1 className="font-display text-3xl font-extrabold text-zinc-100">Every root you patched</h1>
-      </div>
+      <PageHeader
+        kicker="Root diary"
+        title="Every root you patched"
+        sub="Your battle history, skill by skill."
+      />
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {!entries && !error ? <p className="text-zinc-500">Opening your diary…</p> : null}
       {entries && entries.length === 0 ? (
@@ -68,12 +71,12 @@ export default function DiaryPage() {
         </ol>
       ) : null}
       <nav className="flex gap-4 text-sm">
-        <a href="/streak" className="underline text-zinc-300">
+        <Link href="/streak" className="underline text-zinc-300">
           Your streak
-        </a>
-        <a href="/scan" className="underline text-zinc-300">
+        </Link>
+        <Link href="/scan" className="underline text-zinc-300">
           Scan new work
-        </a>
+        </Link>
       </nav>
     </main>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import PageHeader from "@/components/ui/PageHeader";
 
 interface WeakEntry {
   tag: string;
@@ -114,13 +115,12 @@ export default function RoadmapPage() {
   const todayDone = checks.has(todayKey);
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10">
-      <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-200">← Back</Link>
-      <h1 className="font-display mt-2 text-3xl font-extrabold text-zinc-100">30-day roadmap</h1>
-      <p className="mt-1 text-sm text-zinc-400">
-        Built from your scan history, weakest skill first. Fight one focus a day, check it off, and
-        watch the list shrink.
-      </p>
+    <main className="mx-auto max-w-2xl px-4 py-10">
+      <PageHeader
+        kicker="30-day plan"
+        title="Roadmap"
+        sub="Built from your scan history, weakest skill first. Fight one focus a day, check it off, and watch the list shrink."
+      />
 
       {loaded && focusList.length === 0 && !error && (
         <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 text-center">
@@ -148,7 +148,7 @@ export default function RoadmapPage() {
             </span>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {days.map((d, i) => {
               const done = checks.has(d.key);
               const isToday = d.key === todayKey;
