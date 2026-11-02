@@ -4,6 +4,9 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { displayTime } from "@/lib/social/rules";
+import { skillName } from "@/lib/graph/skills";
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface Peer {
   id: string;
@@ -47,6 +50,25 @@ interface ApiError {
   needsMigration?: boolean;
 }
 
+interface BossOpt {
+  id: string;
+  skill_tag: string;
+  current_hp: number;
+  max_hp: number;
+  status: string;
+  is_world: boolean;
+}
+
+const TABS = [
+  { id: "friends", label: "Friends" },
+  { id: "duels", label: "Duels" },
+  { id: "board", label: "Ranks" },
+  { id: "gifts", label: "Gifts" },
+  { id: "safety", label: "Safety" },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
+
 function errMsg(data: ApiError | null, fallback: string): string {
   if (data?.needsMigration) return "__migration__";
   return typeof data?.error === "string" ? data.error : fallback;
@@ -72,6 +94,10 @@ function FriendsInner() {
   const [msg, setMsg] = useState("");
   const [bump, setBump] = useState(0);
   const [busy, setBusy] = useState("");
+  const [tab, setTab] = useState<TabId>("friends");
+  const [codeState, setCodeState] = useState<"loading" | "ready" | "error">("loading");
+  const [bosses, setBosses] = useState<BossOpt[] | null>(null);
+  const [bossesError, setBossesError] = useState("");
 
   const [addCode, setAddCode] = useState(() => (params.get("code") ?? "").trim().toUpperCase());
   const [duelTo, setDuelTo] = useState("");
@@ -87,12 +113,13 @@ function FriendsInner() {
     let alive = true;
     async function load() {
       try {
-        const [codeRes, frRes, chRes, lbRes, gRes] = await Promise.all([
+        const [codeRes, frRes, chRes, lbRes, gRes, abRes] = await Promise.all([
           api("/api/social/code"),
           api("/api/social/friends"),
           api("/api/social/challenges"),
           api("/api/social/leaderboard"),
           api("/api/social/gifts"),
+          api("/api/arena/active-bosses"),
         ]);
         if (!alive) return;
         const all = [codeRes, frRes, chRes, lbRes, gRes] as ApiError[];
@@ -101,6 +128,7 @@ function FriendsInner() {
           return;
         }
         if (typeof codeRes.code === "string") setCode(codeRes.code);
+        setCodeState("ready");
         setFriends(Array.isArray(frRes.friends) ? (frRes.friends as Peer[]) : []);
         setIncoming(Array.isArray(frRes.incoming) ? (frRes.incoming as Peer[]) : []);
         setOutgoing(Array.isArray(frRes.outgoing) ? (frRes.outgoing as Peer[]) : []);
@@ -109,8 +137,12 @@ function FriendsInner() {
         setBoard(Array.isArray(lbRes.rows) ? (lbRes.rows as BoardRow[]) : []);
         setSent(Array.isArray(gRes.sent) ? (gRes.sent as Gift[]) : []);
         setReceived(Array.isArray(gRes.received) ? (gRes.received as Gift[]) : []);
+        setBosses(Array.isArray(abRes.bosses) ? (abRes.bosses as BossOpt[]) : []);
       } catch {
-        if (alive) setMsg("Could not load friends. Reload to retry.");
+        if (!alive) return;
+        setMsg("Could not load friends. Reload to retry.");
+        setCodeState("error");
+        setBossesError("Could not load live bosses.");
       }
     }
     void load();
@@ -166,13 +198,12 @@ function FriendsInner() {
   ].filter((p, i, arr) => arr.findIndex((q) => q.id === p.id) === i);
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
-      <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-200">← Back</Link>
-      <h1 className="mt-2 text-3xl font-extrabold text-zinc-100">Friends</h1>
-      <p className="mt-1 text-sm text-zinc-400">
-        Add friends by code, duel their bosses, and compare progress. Strangers can only send you a
-        friend request — never messages.
-      </p>
+    <main className="mx-auto max-w-2xl px-4 py-10">
+      <PageHeader
+        kicker="Squad up"
+        title="Friends"
+        sub="Add friends by code, duel their bosses, and compare progress. Strangers can only send you a friend request — never messages."
+      />
 
       {needsMigration && (
         <div className="mt-4 rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
@@ -184,16 +215,56 @@ function FriendsInner() {
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <p className="text-sm font-semibold text-zinc-200">Your friend code</p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <code className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-lg font-bold tracking-widest text-amber-300">
-            {code || "…"}
-          </code>
-          <button
-            onClick={() => void copyInvite()}
-            disabled={!code || needsMigration}
-            className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
-          >
-            Copy invite link
-          </button>
+          {codeState === "loading" ? (
+            <code
+              role="status"
+              aria-label="Loading your friend code"
+              className="animate-pulse rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-lg font-bold tracking-widest text-zinc-500"
+            >
+              ……
+            </code>
+          ) : codeState === "error" ? (
+            <p className="text-sm text-red-400" role="alert">
+              Could not load your code.{" "}
+              <button
+                onClick={() => {
+                  setCodeState("loading");
+                  setBossesError("");
+                  setBump((b) => b + 1);
+                }}
+                className="font-bold underline hover:text-red-300"
+              >
+                Retry
+              </button>
+            </p>
+          ) : code ? (
+            <>
+              <code className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-lg font-bold tracking-widest text-amber-300">
+                {code}
+              </code>
+              <button
+                onClick={() => void copyInvite()}
+                disabled={!code || needsMigration}
+                className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
+              >
+                Copy invite link
+              </button>
+            </>
+          ) : (
+            <p className="text-sm text-zinc-500">
+              No code yet —{" "}
+              <button
+                onClick={() => {
+                  setCodeState("loading");
+                  setBump((b) => b + 1);
+                }}
+                className="font-bold text-amber-300 underline"
+              >
+                reload to mint one
+              </button>
+              .
+            </p>
+          )}
         </div>
         <div className="mt-4 flex gap-2">
           <input
@@ -216,6 +287,24 @@ function FriendsInner() {
 
       {msg && <p className="mt-3 text-sm text-amber-300">{msg}</p>}
 
+      <div className="mt-6 flex gap-1 overflow-x-auto rounded-full border border-zinc-800 bg-zinc-900/60 p-1" role="tablist" aria-label="Friends sections">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+            className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              tab === t.id ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "friends" && (
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <p className="text-sm font-semibold text-zinc-200">My friends ({friends.length})</p>
         {friends.length === 0 && (
@@ -280,7 +369,9 @@ function FriendsInner() {
           </p>
         )}
       </section>
+      )}
 
+      {tab === "duels" && (
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <p className="text-sm font-semibold text-zinc-200">Boss duels</p>
         <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -297,15 +388,43 @@ function FriendsInner() {
               ))}
             </select>
           </label>
-          <label className="block text-xs text-zinc-400">
-            Boss id (from the boss page URL)
-            <input
-              value={duelBoss}
-              onChange={(e) => setDuelBoss(e.target.value.trim())}
-              placeholder="xxxxxxxx-xxxx-…"
-              className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100"
-            />
-          </label>
+          <div className="text-xs text-zinc-400">
+            <label htmlFor="duel-boss" className="block">
+              Boss (live from the arena)
+            </label>
+            {bosses === null ? (
+              bossesError ? (
+                <p role="alert" className="mt-1 rounded-lg border border-red-800 bg-red-950/40 px-3 py-2 text-sm text-red-300">
+                  {bossesError}{" "}
+                  <button onClick={() => { setBossesError(""); setBump((b) => b + 1); }} className="font-bold underline">
+                    Retry
+                  </button>
+                </p>
+              ) : (
+                <p role="status" className="mt-1 animate-pulse rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-500">
+                  Loading live bosses…
+                </p>
+              )
+            ) : bosses.length === 0 ? (
+              <p className="mt-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-500">
+                No live bosses — <Link href="/scan" className="font-bold text-amber-300 underline">scan to summon one</Link>.
+              </p>
+            ) : (
+              <select
+                id="duel-boss"
+                value={duelBoss}
+                onChange={(e) => setDuelBoss(e.target.value)}
+                className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+              >
+                <option value="">Pick a live boss…</option>
+                {bosses.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {skillName(b.skill_tag)} · HP {b.current_hp}/{b.max_hp}{b.is_world ? " · world" : ""} · {b.status}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
         <button
           onClick={() => {
@@ -366,9 +485,21 @@ function FriendsInner() {
           </ul>
         )}
       </section>
+      )}
 
+      {tab === "board" && (
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <p className="text-sm font-semibold text-zinc-200">Friends leaderboard</p>
+        {board.length === 0 ? (
+          <div className="mt-3">
+            <EmptyState
+              title="No rankings yet."
+              body="Slay bosses and add friends — your circle's rankings land here."
+              actionLabel="Enter the arena"
+              actionHref="/arena"
+            />
+          </div>
+        ) : (
         <div className="mt-2 overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
@@ -391,8 +522,11 @@ function FriendsInner() {
             </tbody>
           </table>
         </div>
+        )}
       </section>
+      )}
 
+      {tab === "gifts" && (
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <p className="text-sm font-semibold text-zinc-200">Send a gift</p>
         <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -462,7 +596,9 @@ function FriendsInner() {
           </ul>
         )}
       </section>
+      )}
 
+      {tab === "safety" && (
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <p className="text-sm font-semibold text-zinc-200">Safety</p>
         <p className="mt-1 text-xs text-zinc-500">
@@ -513,6 +649,7 @@ function FriendsInner() {
           {busy === "report" ? "…" : "Send report"}
         </button>
       </section>
+      )}
     </main>
   );
 }
@@ -520,7 +657,7 @@ function FriendsInner() {
 export default function FriendsPage() {
   return (
     <Suspense
-      fallback={<main className="mx-auto max-w-3xl px-4 py-10 text-sm text-zinc-400">Loading friends…</main>}
+      fallback={<main className="mx-auto max-w-2xl px-4 py-10 text-sm text-zinc-400">Loading friends…</main>}
     >
       <FriendsInner />
     </Suspense>

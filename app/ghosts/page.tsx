@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import PageHeader from "@/components/ui/PageHeader";
 
 type Ghosts = {
   ghosts: number;
@@ -41,10 +43,11 @@ export default function GhostsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
-      <div>
-        <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Ghost classroom</p>
-        <h1 className="font-display text-3xl font-extrabold text-zinc-100">You never grind alone</h1>
-      </div>
+      <PageHeader
+        kicker="Ghost classroom"
+        title="You never grind alone"
+        sub="Anonymous hunters grinding beside you tonight."
+      />
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {!data && !error ? <p className="text-zinc-500">Sensing nearby ghosts…</p> : null}
       {data ? (
@@ -84,10 +87,13 @@ export default function GhostsPage() {
               </div>
             )}
           </div>
-          <nav className="flex gap-4 text-sm">
-            <a href="/arena" className="underline text-zinc-300">
+          <nav className="flex flex-wrap gap-3 text-sm" aria-label="Keep grinding">
+            <Link href="/arena" className="arena-btn-primary rounded-full px-5 py-2 font-semibold text-white">
               Join the grind
-            </a>
+            </Link>
+            <Link href="/scan" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
+              Scan your work
+            </Link>
           </nav>
         </>
       ) : null}

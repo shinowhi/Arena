@@ -1,5 +1,7 @@
+import Link from "next/link";
 import StreakBadge from "@/components/StreakBadge";
 import ScanHistory from "@/components/ScanHistory";
+import PageHeader from "@/components/ui/PageHeader";
 
 const STEPS = [
   { n: "01", t: "Scan", d: "Snap your exam, screenshot, or real life. Vision AI reads it directly — no OCR." },
@@ -31,10 +33,11 @@ export default function Home() {
       <header className="mx-auto flex w-full max-w-5xl items-center gap-2 py-4 pl-4 pr-14 text-sm sm:pr-32">
         <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
         <span className="font-bold tracking-wide">ARENA</span>
-        <nav className="ml-auto flex gap-4 text-zinc-400">
-          <a href="/scan" className="font-semibold text-white transition-colors hover:text-cyan-300">Scan</a>
-          <a href="/arena" className="transition-colors hover:text-white">Arena</a>
-          <a href="/graph" className="transition-colors hover:text-white">Skills</a>
+        <nav className="ml-auto flex gap-4 text-zinc-400" aria-label="Primary">
+          <Link href="/scan" className="font-semibold text-white transition-colors hover:text-cyan-300">Scan</Link>
+          <Link href="/arena" className="transition-colors hover:text-white">Arena</Link>
+          <Link href="/graph" className="transition-colors hover:text-white">Skills</Link>
+          <Link href="/friends" className="transition-colors hover:text-white">Friends</Link>
         </nav>
       </header>
       <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center">
@@ -50,16 +53,16 @@ export default function Home() {
           Snap your exam, a screenshot, or anything around you. Arena finds the weak skill hiding behind it — and its root cause two chapters
           back — then spawns a boss to patch it for good.
         </p>
-        <nav className="arena-enter arena-d3 flex flex-wrap justify-center gap-3 text-sm">
-          <a href="/scan" className="arena-btn-primary rounded-full px-7 py-3 font-semibold text-white">
+        <nav className="arena-enter arena-d3 flex w-full flex-col gap-3 text-sm sm:w-auto sm:flex-row sm:flex-wrap sm:justify-center" aria-label="Get started">
+          <Link href="/scan" className="arena-btn-primary rounded-full px-7 py-3 text-center font-semibold text-white">
             Scan your work
-          </a>
-          <a href="/scan?capture=screen" className="arena-btn-ghost rounded-full px-7 py-3 font-semibold text-zinc-200">
+          </Link>
+          <Link href="/scan?capture=screen" className="arena-btn-ghost rounded-full px-7 py-3 text-center font-semibold text-zinc-200">
             Capture screen
-          </a>
-          <a href="/scan?mode=life" className="arena-btn-ghost rounded-full px-7 py-3 font-semibold text-zinc-200">
+          </Link>
+          <Link href="/scan?mode=life" className="arena-btn-ghost rounded-full px-7 py-3 text-center font-semibold text-zinc-200">
             Snap real life
-          </a>
+          </Link>
         </nav>
         <div className="grid w-full gap-3 pt-6 text-left sm:grid-cols-3">
           {STEPS.map((s, i) => (
@@ -72,42 +75,40 @@ export default function Home() {
         </div>
         <ScanHistory />
         <div className="w-full pt-10 text-left">
-          <p className="arena-kicker">04</p>
-          <p className="font-display mt-1 text-2xl font-extrabold">Pick your battle</p>
+          <PageHeader kicker="Spotlight" title="Pick your battle" sub="Four doors, no wrong choice." />
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {SPOTLIGHT.map((f, i) => (
-              <a
+            {SPOTLIGHT.map((f) => (
+              <Link
                 key={f.t}
                 href={f.href}
                 className={
                   "arena-enter arena-card group block rounded-2xl p-5 transition-all hover:-translate-y-1 " +
                   f.dl +
                   " " +
-                  f.accent +
-                  (i === 0 ? " sm:col-span-2 sm:flex sm:items-center sm:gap-6" : "")
+                  f.accent
                 }
               >
-                <span className={"block text-4xl " + (i === 0 ? "arena-float sm:text-5xl" : "")} aria-hidden="true">
+                <span className="block text-4xl" aria-hidden="true">
                   {f.e}
                 </span>
-                <span className={i === 0 ? "mt-3 block sm:mt-0" : "mt-3 block"}>
+                <span className="mt-3 block">
                   <span className="font-display block text-xl font-black">{f.t}</span>
                   <span className="mt-1 block text-sm text-zinc-400">{f.d}</span>
                   <span className={"mt-2 block text-sm font-bold " + f.glow}>{f.cta} →</span>
                 </span>
-              </a>
+              </Link>
             ))}
           </div>
           <p className="mt-8 text-xs font-bold tracking-widest text-zinc-500">MORE ARSENAL</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {MORE.map((m) => (
-              <a
+              <Link
                 key={m.href}
                 href={m.href}
                 className="arena-btn-ghost rounded-full px-4 py-2 text-sm font-medium text-zinc-300 transition-transform hover:-translate-y-0.5"
               >
                 {m.t} →
-              </a>
+              </Link>
             ))}
           </div>
         </div>

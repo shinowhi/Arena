@@ -1,7 +1,9 @@
 "use client";
 import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import MathText from "@/components/MathText";
+import PageHeader from "@/components/ui/PageHeader";
 import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
 import BossAvatar from "@/components/BossAvatar";
@@ -258,15 +260,15 @@ function BossInner() {
       {intro && boss.status === "ALIVE" ? (
         <BossIntro name={skillName(boss.skill_tag)} onSkip={() => setIntro(false)} />
       ) : null}
-      <div className="arena-enter flex items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-bold tracking-widest text-red-400 uppercase">Boss fight</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">{skillName(boss.skill_tag)}</h1>
-        </div>
-        <span className={`shrink-0 font-mono text-sm tabular-nums ${urgent ? "arena-urgent font-bold" : "text-zinc-400"}`}>
-          {fmt(left)}
-        </span>
-      </div>
+      <PageHeader
+        kicker="Boss fight"
+        title={skillName(boss.skill_tag)}
+        right={
+          <span className={`shrink-0 font-mono text-sm tabular-nums ${urgent ? "arena-urgent font-bold" : "text-zinc-400"}`}>
+            {fmt(left)}
+          </span>
+        }
+      />
       <div className="arena-enter arena-d1 arena-battleground relative overflow-hidden rounded-2xl border border-zinc-800 px-4 pt-4 pb-6">
         <div className="flex items-end justify-between gap-2">
           <div className={flash ? "arena-lunge" : "arena-float"}>
@@ -339,13 +341,13 @@ function BossInner() {
             <p className="arena-title font-display mt-2 text-3xl font-black">Boss slain.</p>
             <p className="mt-1 text-sm text-zinc-400">Skill patched. The root cause is closed.</p>
             {t0 > 0 ? <p className="mt-1 text-sm text-zinc-500">Slain in {fmt(now - t0)}</p> : null}
-            <nav className="mt-4 flex justify-center gap-3 text-sm">
-              <a href="/arena" className="arena-btn-primary rounded-full px-5 py-2 font-semibold text-white">
+            <nav className="mt-4 flex flex-wrap justify-center gap-3 text-sm">
+              <Link href="/arena" className="arena-btn-primary rounded-full px-5 py-2 font-semibold text-white">
                 Back to arena
-              </a>
-              <a href="/scan" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
+              </Link>
+              <Link href="/scan" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
                 Scan another work
-              </a>
+              </Link>
               <button
                 type="button"
                 onClick={copyWin}
@@ -368,9 +370,9 @@ function BossInner() {
       ) : boss.status !== "ALIVE" ? (
         <div className="arena-card rounded-2xl p-6 text-center">
           <p className="text-lg font-bold">This boss has expired.</p>
-          <a href="/scan" className="arena-btn-ghost mt-3 inline-block rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
+          <Link href="/scan" className="arena-btn-ghost mt-3 inline-block rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
             Scan your work to summon a fresh one
-          </a>
+          </Link>
         </div>
       ) : (
         <div className={`arena-enter arena-d2 arena-card flex flex-col gap-3 rounded-2xl p-5 ${miss ? "arena-shake border-red-800" : ""}`}>
@@ -435,7 +437,7 @@ function BossInner() {
 }
 export default function BossPage() {
   return (
-    <Suspense fallback={<main><p>Loading boss...</p></main>}>
+    <Suspense fallback={<main className="mx-auto w-full max-w-2xl px-4 py-8"><p className="text-zinc-500">Loading boss…</p></main>}>
       <BossInner />
     </Suspense>
   );

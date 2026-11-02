@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import katex from "katex";
 import { SKILL_IDS, skillName } from "@/lib/graph/skills";
+import PageHeader from "@/components/ui/PageHeader";
 
 interface Post {
   id: string;
@@ -43,6 +43,7 @@ export default function MarketPage() {
   const [bounty, setBounty] = useState(10);
   const [posting, setPosting] = useState(false);
   const [assisting, setAssisting] = useState(false);
+  const [photoName, setPhotoName] = useState("");
   // claim inputs per post
   const [tries, setTries] = useState<Record<string, string>>({});
   const [claiming, setClaiming] = useState("");
@@ -75,6 +76,7 @@ export default function MarketPage() {
   async function assist(file: File | undefined) {
     if (!file || assisting) return;
     setAssisting(true);
+    setPhotoName(file.name);
     setMsg("");
     try {
       const form = new FormData();
@@ -164,20 +166,17 @@ export default function MarketPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
-      <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-200">← Back</Link>
-      <div className="mt-2 flex items-end justify-between">
-        <div>
-          <h1 className="text-3xl font-extrabold text-zinc-100">Night market</h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            Post a problem with an XP bounty, or solve other hunters&apos; bounties. First correct
-            answer wins — your escrow is locked until someone earns it.
+    <main className="mx-auto max-w-2xl px-4 py-10">
+      <PageHeader
+        kicker="Night market"
+        title="Bounties for hunters"
+        sub="Post a problem with an XP bounty, or solve other hunters' bounties. First correct answer wins — your escrow is locked until someone earns it."
+        right={
+          <p className="arena-num font-display shrink-0 rounded-lg border border-amber-700 bg-amber-950/40 px-3 py-1 text-base font-extrabold text-amber-300">
+            {xp} XP
           </p>
-        </div>
-        <p className="arena-num font-display shrink-0 rounded-lg border border-amber-700 bg-amber-950/40 px-3 py-1 text-base font-extrabold text-amber-300">
-          {xp} XP
-        </p>
-      </div>
+        }
+      />
 
       {needsMigration && (
         <div className="mt-4 rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
@@ -188,16 +187,27 @@ export default function MarketPage() {
 
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <p className="text-sm font-semibold text-zinc-200">Post a bounty</p>
-        <label className="mt-3 block text-xs text-zinc-400">
-          Photo assist (optional)
-          <input
-            type="file"
-            accept="image/*"
-            disabled={assisting || needsMigration}
-            onChange={(e) => void assist(e.target.files?.[0])}
-            className="mt-1 block w-full text-sm text-zinc-300"
-          />
-        </label>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-zinc-400">Photo assist (optional)</span>
+          <label
+            className={`arena-btn-ghost cursor-pointer rounded-full px-4 py-1.5 text-xs font-semibold text-zinc-200 ${
+              assisting || needsMigration ? "pointer-events-none opacity-40" : ""
+            }`}
+          >
+            {assisting ? "Reading photo…" : photoName ? "↻ Choose another photo" : "📷 Choose a photo"}
+            <input
+              type="file"
+              accept="image/*"
+              disabled={assisting || needsMigration}
+              onChange={(e) => void assist(e.target.files?.[0])}
+              aria-label="Photo assist: upload a problem photo"
+              className="hidden"
+            />
+          </label>
+          {photoName && !assisting ? (
+            <span className="max-w-full truncate text-xs text-zinc-500">{photoName}</span>
+          ) : null}
+        </div>
         <textarea
           value={latex}
           onChange={(e) => setLatex(e.target.value)}
@@ -240,8 +250,9 @@ export default function MarketPage() {
               min={5}
               max={50}
               value={bounty}
+              aria-label={`Bounty: ${bounty} XP`}
               onChange={(e) => setBounty(Number(e.target.value))}
-              className="mt-2 block w-full"
+              className="arena-range mt-2 block w-full"
             />
           </label>
         </div>

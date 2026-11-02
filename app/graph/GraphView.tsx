@@ -1,8 +1,10 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import graph from "@/lib/graph/skill-graph.json";
 import { SKILL_IDS, skillName } from "@/lib/graph/skills";
+import PageHeader from "@/components/ui/PageHeader";
 
 type Node = { id: string; name: string; description: string; prereqs: string[]; subject?: string };
 
@@ -46,12 +48,17 @@ export default function GraphView() {
     subject === "all" ? "" : (s ?? "calculus") === subject ? "" : "opacity-40";
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-4 py-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-4 py-8">
       <div className="arena-enter">
-        <p className="arena-kicker">{SKILL_IDS.length} skills · foundations left</p>
-        <h1 className="font-display mt-1 text-3xl font-black tracking-tight">
-          Skill <span className="arena-title">graph</span>
-        </h1>
+        <PageHeader
+          kicker={`${SKILL_IDS.length} skills · foundations left`}
+          title={
+            <>
+              Skill <span className="arena-title">graph</span>
+            </>
+          }
+          sub="Weak skills glow red, root causes glow gold. Scroll sideways to walk the chain."
+        />
         <div className="mt-2 flex gap-4 text-xs text-zinc-400">
           {weak ? (
             <span>
@@ -85,7 +92,15 @@ export default function GraphView() {
           </span>
         </div>
       </div>
-      <div className="arena-enter arena-d1 arena-scrollx flex gap-3 overflow-x-auto pb-4">
+      <p className="text-xs text-zinc-500 md:hidden" aria-hidden="true">
+        ← Swipe sideways to explore every level →
+      </p>
+      <div
+        role="region"
+        aria-label="Skill levels, scroll sideways"
+        tabIndex={0}
+        className="arena-enter arena-d1 arena-scrollx flex gap-3 overflow-x-auto pb-4"
+      >
         {cols.map((col, d) => (
           <div key={d} className="flex w-56 shrink-0 flex-col gap-2">
             <p className="arena-num text-xs font-bold tracking-widest text-zinc-500 uppercase">Level {d}</p>
@@ -109,12 +124,12 @@ export default function GraphView() {
         ))}
       </div>
       <nav className="flex gap-4 text-sm text-zinc-400">
-        <a href="/scan" className="transition-colors hover:text-white">
+        <Link href="/scan" className="transition-colors hover:text-white">
           ← Back to scan
-        </a>
-        <a href="/arena" className="transition-colors hover:text-white">
+        </Link>
+        <Link href="/arena" className="transition-colors hover:text-white">
           Enter arena
-        </a>
+        </Link>
       </nav>
     </main>
   );

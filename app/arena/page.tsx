@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
 import EmptyState from "@/components/ui/EmptyState";
+import PageHeader from "@/components/ui/PageHeader";
 import HeroAvatar from "@/components/HeroAvatar";
 import AvatarBuilder from "@/components/AvatarBuilder";
 import BossAvatar from "@/components/BossAvatar";
@@ -136,54 +138,77 @@ export default function ArenaPage() {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  // Seed/test leaderboard rows (names like "seed-demo") never reach the UI.
+  const hunters = (leaders ?? []).filter((l) => !/^seed/i.test(l.name.trim()));
+
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
-      <div className="arena-enter flex items-end justify-between gap-3">
-        <div>
-          <button
-            onClick={() => setBuilderOpen(true)}
-            title="Create your hero"
-            className="mb-1 block rounded-full ring-2 ring-zinc-700 transition hover:ring-red-400"
-          >
-            <HeroAvatar spec={avatar} size={48} />
-          </button>
-          <p className="arena-kicker">Live battlefield</p>
-          <h1 className="font-display mt-1 text-3xl font-black tracking-tight">
-            The <span className="arena-title">Arena</span>
-          </h1>
-          {playerId ? (
-            <p className="arena-num mt-1 inline-block rounded-full border border-zinc-700 bg-zinc-900/70 px-3 py-0.5 text-xs font-semibold text-zinc-300">
-              Lv {Math.floor(xp / 100) + 1} · {xp} XP
-            </p>
-          ) : null}
-        </div>
-        <div className="flex shrink-0 gap-2">
-          <button
-            onClick={copyInvite}
-            disabled={!playerId}
-            title="Both of you get +50 XP"
-            className="arena-btn-ghost rounded-full px-4 py-2 text-sm font-medium text-zinc-200 disabled:opacity-40"
-          >
-            {copied ? "Link copied!" : "Invite friends"}
-          </button>
-          <a href="/scan" className="arena-btn-ghost rounded-full px-4 py-2 text-sm font-medium text-zinc-200">
-            + Scan
-          </a>
-        </div>
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-4 py-8">
+      <div className="arena-enter flex items-center gap-3">
+        <button
+          onClick={() => setBuilderOpen(true)}
+          title="Create your hero"
+          aria-label="Create your hero"
+          className="block rounded-full ring-2 ring-zinc-700 transition hover:ring-red-400"
+        >
+          <HeroAvatar spec={avatar} size={48} />
+        </button>
+        {playerId ? (
+          <p className="arena-num inline-block rounded-full border border-zinc-700 bg-zinc-900/70 px-3 py-0.5 text-xs font-semibold text-zinc-300">
+            Lv {Math.floor(xp / 100) + 1} · {xp} XP
+          </p>
+        ) : null}
       </div>
+      <PageHeader
+        kicker="Live battlefield"
+        title={
+          <>
+            The <span className="arena-title">Arena</span>
+          </>
+        }
+        sub="Live bosses, the daily rush, and tonight's top hunters."
+        right={
+          <div className="flex shrink-0 gap-2">
+            <button
+              onClick={copyInvite}
+              disabled={!playerId}
+              title="Both of you get +50 XP"
+              className="arena-btn-ghost rounded-full px-4 py-2 text-sm font-medium text-zinc-200 disabled:opacity-40"
+            >
+              {copied ? "Link copied!" : "Invite friends"}
+            </button>
+            <Link href="/scan" className="arena-btn-ghost rounded-full px-4 py-2 text-sm font-medium text-zinc-200">
+              + Scan
+            </Link>
+          </div>
+        }
+      />
+      <nav className="flex gap-2 text-xs font-semibold" aria-label="Arena sections">
+        <a href="#daily-rush" className="rounded-full border border-cyan-800 bg-cyan-950/40 px-3 py-1 text-cyan-200 transition-colors hover:bg-cyan-900/40">
+          ⚡ Daily Rush
+        </a>
+        <a href="#bosses" className="rounded-full border border-zinc-700 bg-zinc-900/60 px-3 py-1 text-zinc-300 transition-colors hover:bg-zinc-800">
+          Bosses
+        </a>
+        <a href="#hunters" className="rounded-full border border-zinc-700 bg-zinc-900/60 px-3 py-1 text-zinc-300 transition-colors hover:bg-zinc-800">
+          Top hunters
+        </a>
+      </nav>
       {inviteMsg ? (
         <p className="arena-pop rounded-xl border border-emerald-700 bg-emerald-950/60 px-4 py-2 text-sm font-medium text-emerald-200">
           {inviteMsg}
         </p>
       ) : null}
       {rush ? (
-        <a
+        <Link
+          id="daily-rush"
           href={"/boss/" + rush.boss.id}
-          className="arena-enter arena-card group flex flex-col gap-3 rounded-2xl border-cyan-800 p-5 shadow-[0_0_32px_rgba(34,211,238,0.2)] transition-all hover:-translate-y-0.5"
+          className="arena-enter arena-card group flex scroll-mt-4 flex-col gap-3 rounded-2xl border-cyan-700 bg-gradient-to-br from-cyan-950/60 via-transparent to-transparent p-5 shadow-[0_0_32px_rgba(34,211,238,0.2)] transition-all hover:-translate-y-0.5"
         >
           <div className="flex items-start justify-between gap-3">
             <p className="font-bold">
-              <span className="mr-2 text-xs font-bold tracking-widest text-cyan-300 uppercase">Daily Rush</span>
+              <span className="mr-2 inline-block rounded-full bg-cyan-500/20 px-2 py-0.5 text-xs font-bold tracking-widest text-cyan-300 uppercase">
+                ⚡ Daily Rush · everyone fights this one
+              </span>
               {skillName(rush.boss.skill_tag)}
             </p>
             <span className="shrink-0 font-mono text-sm text-zinc-400 tabular-nums">
@@ -209,12 +234,23 @@ export default function ArenaPage() {
               ))}
             </ol>
           ) : null}
-        </a>
+        </Link>
       ) : null}
       {bosses === null ? (
-        <div className="flex flex-col gap-3">
-          <div className="arena-shimmer h-28 rounded-2xl" />
-          <div className="arena-shimmer h-28 rounded-2xl" />
+        <div className="flex flex-col gap-3" role="status" aria-busy="true" aria-label="Loading arena bosses">
+          {[0, 1].map((k) => (
+            <div key={k} className="arena-card flex flex-col gap-3 rounded-2xl p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="arena-shimmer h-10 w-10 rounded-full" />
+                  <div className="arena-shimmer h-5 w-40 rounded-lg" />
+                </div>
+                <div className="arena-shimmer h-5 w-16 rounded-lg" />
+              </div>
+              <div className="arena-shimmer h-3 rounded-full" />
+              <div className="arena-shimmer h-4 w-48 rounded-lg" />
+            </div>
+          ))}
           <p className="text-sm text-zinc-500">Loading arena — first visit summons today&apos;s World Boss (~30s)…</p>
         </div>
       ) : bosses.length === 0 ? (
@@ -225,14 +261,15 @@ export default function ArenaPage() {
           actionHref="/scan"
         />
       ) : (
-        bosses.map((b, i) => {
+        <div id="bosses" className="grid scroll-mt-4 gap-3 sm:grid-cols-2">
+        {bosses.map((b, i) => {
           const left = new Date(b.despawn_at).getTime() - now;
           const urgent = left < 60000 && b.status === "ALIVE";
           return (
-            <a
+            <Link
               key={b.id}
               href={"/boss/" + b.id}
-              className={`arena-enter arena-card group flex flex-col gap-3 rounded-2xl p-5 transition-all hover:-translate-y-0.5 ${i === 1 ? "arena-d1" : i === 2 ? "arena-d2" : ""} ${b.is_world ? "border-red-900 shadow-[0_0_32px_rgba(239,68,68,0.25)] hover:shadow-[0_0_44px_rgba(239,68,68,0.4)]" : "hover:border-zinc-600"}`}
+              className={`arena-enter arena-card group flex flex-col gap-3 rounded-2xl p-5 transition-all hover:-translate-y-0.5 ${i === 1 ? "arena-d1" : i === 2 ? "arena-d2" : ""} ${b.is_world ? "border-red-800 bg-gradient-to-br from-red-950/50 via-transparent to-transparent shadow-[0_0_32px_rgba(239,68,68,0.25)] hover:shadow-[0_0_44px_rgba(239,68,68,0.4)]" : "hover:border-zinc-600"}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <p className="flex flex-wrap items-center gap-2 font-bold">
@@ -260,23 +297,33 @@ export default function ArenaPage() {
                 HP {b.current_hp}/{b.max_hp} — {b.status}
                 <span className="ml-2 text-zinc-600 transition-colors group-hover:text-red-400">Fight →</span>
               </p>
-            </a>
+            </Link>
           );
-        })
+        })}
+        </div>
       )}
-      <div className="arena-card rounded-2xl p-5">
+      <div className="sticky bottom-20 z-10 flex justify-center md:bottom-6">
+        <Link href="/scan" className="arena-btn-primary rounded-full px-6 py-2.5 text-sm font-bold text-white">
+          + Scan new work
+        </Link>
+      </div>
+      <div id="hunters" className="arena-card scroll-mt-4 rounded-2xl p-5">
         <p className="font-display text-lg font-extrabold text-zinc-100">Top hunters</p>
         {leaders === null ? (
-          <div className="mt-3 flex flex-col gap-2" aria-label="Loading leaderboard">
-            <div className="arena-shimmer h-10 rounded-xl" />
-            <div className="arena-shimmer h-10 rounded-xl" />
-            <div className="arena-shimmer h-10 rounded-xl" />
+          <div className="mt-3 flex flex-col gap-2" role="status" aria-busy="true" aria-label="Loading leaderboard">
+            {[0, 1, 2].map((k) => (
+              <div key={k} className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/50 px-3 py-2">
+                <div className="arena-shimmer h-7 w-7 shrink-0 rounded-full" />
+                <div className="arena-shimmer h-4 flex-1 rounded-lg" />
+                <div className="arena-shimmer h-4 w-16 rounded-lg" />
+              </div>
+            ))}
           </div>
-        ) : leaders.length === 0 ? (
+        ) : hunters.length === 0 ? (
           <p className="mt-2 text-sm text-zinc-500">No hunters yet - slay a boss to top the board.</p>
         ) : (
           <ol className="mt-3 flex flex-col gap-2">
-            {leaders.map((l, i) => (
+            {hunters.map((l, i) => (
               <li
                 key={l.id}
                 className={`flex items-center gap-3 rounded-xl border px-3 py-2 text-sm ${l.id === playerId ? "border-emerald-700 bg-emerald-950/40" : "border-zinc-800 bg-zinc-900/50"}`}
