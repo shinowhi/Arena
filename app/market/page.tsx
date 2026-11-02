@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import katex from "katex";
 import { SKILL_IDS, skillName } from "@/lib/graph/skills";
 import PageHeader from "@/components/ui/PageHeader";
+import { prepareUploadImage, readApiError, readApiJson } from "@/lib/scan/image-prep";
 
 interface Post {
   id: string;
@@ -78,14 +79,22 @@ export default function MarketPage() {
     setAssisting(true);
     setPhotoName(file.name);
     setMsg("");
+    let upload = file;
+    try {
+      upload = (await prepareUploadImage(file)).file;
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "That photo can't be read — try a JPG or PNG.");
+      setAssisting(false);
+      return;
+    }
     try {
       const form = new FormData();
-      form.append("image", file);
+      form.append("image", upload);
       const res = await fetch("/api/market/assist", { method: "POST", body: form });
-      const data = (await res.json()) as {
+      if (!res.ok) throw new Error(await readApiError(res, "Photo assist failed."));
+      const data = await readApiJson<{
         problem_latex?: string; skill_tag?: string; error?: string; more?: number;
-      };
-      if (!res.ok) throw new Error(data.error ?? "Photo assist failed.");
+      }>(res, "Photo assist failed.");
       if (data.problem_latex) setLatex(data.problem_latex);
       if (data.skill_tag) setSkill(data.skill_tag);
       setMsg(data.more && data.more > 0 ? `Photo read — ${data.more} more problem(s) on it were skipped.` : "Photo read — check the preview, then set the answer and bounty.");

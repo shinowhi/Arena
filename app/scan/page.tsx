@@ -6,6 +6,7 @@ import DiagnosisReveal from "@/components/DiagnosisReveal";
 import ScreenCapture from "@/components/ScreenCapture";
 import LifeBatch, { type LifeJob } from "@/components/LifeBatch";
 import { recordRecentScan, makeThumb } from "@/lib/game/recent-scans";
+import { prepareUploadImage, readApiError, readApiJson } from "@/lib/scan/image-prep";
 
 type ScanResult = {
   items: Array<{ cau_hoi: string; dap_an_sinh_vien: string; skill_tag: string[] }>;
@@ -77,6 +78,10 @@ export default function ScanPage() {
   // no-sync-setState lint rule happy; effect-only so prerender stays safe.
   useEffect(() => {
     let alive = true;
+    // Zero-risk perceived speed: warm the arena JS bundle while the user
+    // picks a photo. No data fetch and no LLM cost (an API prefetch here
+    // could speculatively spawn a world boss, so we prefetch the route only).
+    router.prefetch("/arena");
     queueMicrotask(() => {
       if (!alive) return;
       try {
@@ -90,7 +95,7 @@ export default function ScanPage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [router]);
 
   async function loadSample(path: string, name: string) {
     setError("");
@@ -146,16 +151,23 @@ export default function ScanPage() {
     setStage(0);
     setError("");
     setResult(null);
+    let upload = file;
+    try {
+      upload = (await prepareUploadImage(file)).file;
+    } catch (e) {
+      setLoading(false);
+      setError(e instanceof Error ? e.message : "That photo can't be read — try a JPG or PNG.");
+      return;
+    }
     const ticker = setInterval(() => setStage((s) => (s + 1) % STAGES.length), 4000);
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), ANALYZE_TIMEOUT_MS);
     try {
       const form = new FormData();
-      form.append("image", file);
+      form.append("image", upload);
       const res = await fetch("/api/scan", { method: "POST", body: form, signal: ctrl.signal });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Analysis failed.");
-      setResult(data as ScanResult);
+      if (!res.ok) throw new Error(await readApiError(res, "Analysis failed."));
+      setResult(await readApiJson<ScanResult>(res, "Analysis failed."));
     } catch (e) {
       setError(
         e instanceof DOMException && e.name === "AbortError"
@@ -173,15 +185,22 @@ export default function ScanPage() {
 
   async function forgeOne(job: LifeJob): Promise<void> {
     setJobs((prev) => prev.map((j) => (j.key === job.key ? { ...j, status: "forging", error: undefined } : j)));
+    let upload = job.file;
+    try {
+      upload = (await prepareUploadImage(job.file)).file;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "That photo can't be read — try a JPG or PNG.";
+      setJobs((prev) => prev.map((j) => (j.key === job.key ? { ...j, status: "failed", error: msg } : j)));
+      return;
+    }
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), LIFE_TIMEOUT_MS);
     try {
       const form = new FormData();
-      form.append("image", job.file);
+      form.append("image", upload);
       const res = await fetch("/api/photo-problem", { method: "POST", body: form, signal: ctrl.signal });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Photo scan failed.");
-      const r = data as { boss_id: string; skill_tag: string; problem_latex: string };
+      if (!res.ok) throw new Error(await readApiError(res, "Photo scan failed."));
+      const r = await readApiJson<{ boss_id: string; skill_tag: string; problem_latex: string }>(res, "Photo scan failed.");
       recordRecentScan({ ts: Date.now(), mode: "life", skill: r.skill_tag, bossId: r.boss_id, thumb: job.thumb });
       setJobs((prev) => prev.map((j) => (j.key === job.key ? { ...j, status: "done", result: r } : j)));
     } catch (e) {
@@ -203,9 +222,8 @@ export default function ScanPage() {
     if (todo.length === 0) return;
     setForging(true);
     setError("");
-    for (const job of todo) {
-      await forgeOne(job);
-    }
+    // Jobs are independent (own file, own fetch, isolated state): forge concurrently.
+    await Promise.all(todo.map((job) => forgeOne(job)));
     setForging(false);
   }
 
@@ -222,9 +240,8 @@ export default function ScanPage() {
         body: JSON.stringify({ skill_tag: result.weak_skill }),
         signal: ctrl.signal,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Summon failed.");
-      const bossId = (data as { boss_id: string }).boss_id;
+      if (!res.ok) throw new Error(await readApiError(res, "Summon failed."));
+      const bossId = (await readApiJson<{ boss_id: string }>(res, "Summon failed.")).boss_id;
       recordRecentScan({ ts: Date.now(), mode: "exam", skill: result.weak_skill, bossId, thumb });
       router.push("/boss/" + bossId + "?root=" + result.root_cause);
     } catch (e) {
