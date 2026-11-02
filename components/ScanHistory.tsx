@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { skillName } from "@/lib/graph/skills";
 
 // M1: recent scans, rendered on home. Written by the scan page (B's M2)
@@ -52,7 +53,7 @@ export default function ScanHistory() {
       <p className="font-display mt-1 text-2xl font-extrabold">Jump back in</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {items.map((e, i) => (
-          <a
+          <Link
             key={e.bossId + e.ts}
             href={"/boss/" + e.bossId}
             className={"arena-enter arena-card group flex items-center gap-3 rounded-2xl p-3 transition-all hover:-translate-y-0.5 " + STAGGER[i % 4]}
@@ -72,7 +73,7 @@ export default function ScanHistory() {
               </span>
             </span>
             <span aria-hidden="true" className="ml-auto text-zinc-600 transition-transform group-hover:translate-x-1">→</span>
-          </a>
+          </Link>
         ))}
       </div>
     </div>

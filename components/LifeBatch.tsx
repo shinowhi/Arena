@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import MathText from "@/components/MathText";
 import { skillName } from "@/lib/graph/skills";
 
@@ -103,12 +104,12 @@ export default function LifeBatch({
                       <span className="rounded-full border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[11px] text-zinc-400">
                         {skillName(j.result.skill_tag)}
                       </span>
-                      <a
+                      <Link
                         href={"/boss/" + j.result.boss_id}
                         className="arena-btn-primary rounded-full px-4 py-1 text-xs font-bold text-white"
                       >
                         ⚔ Fight
-                      </a>
+                      </Link>
                     </p>
                   </div>
                 ) : null}

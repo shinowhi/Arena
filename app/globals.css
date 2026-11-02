@@ -198,3 +198,49 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .arena-glitter, .arena-glitter-inner { animation: none; }
 }
+
+/* Mobile bottom tab bar: respect the home-indicator safe area. */
+.arena-tabbar {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* On-theme range slider (amber thumb, zinc track). */
+.arena-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: #27272a;
+  outline-offset: 4px;
+}
+.arena-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: #fbbf24;
+  border: 2px solid #78350f;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+  cursor: pointer;
+}
+.arena-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #fbbf24;
+  border: 2px solid #78350f;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+  cursor: pointer;
+}
+.arena-range::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: #27272a;
+}
+.arena-range:disabled::-webkit-slider-thumb,
+.arena-range:disabled::-moz-range-thumb {
+  background: #52525b;
+  box-shadow: none;
+  cursor: not-allowed;
+}

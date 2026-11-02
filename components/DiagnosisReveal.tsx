@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { skillName } from "@/lib/graph/skills";
 import MathText from "@/components/MathText";
 import TimePortalCard from "@/components/TimePortalCard";
@@ -184,18 +185,18 @@ export default function DiagnosisReveal({
             ) : (
               <p className="text-sm text-zinc-500">Low confidence — retake a clearer photo.</p>
             )}
-            <a
+            <Link
               href={"/graph?weak=" + result.weak_skill + "&root=" + result.root_cause}
               className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
             >
               View on skill graph
-            </a>
-            <a
+            </Link>
+            <Link
               href="/streak"
               className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
             >
               View your streak
-            </a>
+            </Link>
           </div>
         </div>
       </div>

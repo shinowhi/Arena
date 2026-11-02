@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import ArenaBackdrop from "@/components/ArenaBackdrop";
+import { SiteHeader, TabBar } from "@/components/SiteNav";
 import "katex/dist/katex.min.css";
 
 const display = Bricolage_Grotesque({
@@ -26,7 +27,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <div className="arena-glitter-inner" aria-hidden="true" />
           <div className="arena-glitter-inner arena-glitter-inner-b" aria-hidden="true" />
         </div>
+        <Suspense>
+          <SiteHeader />
+        </Suspense>
         {children}
+        <Suspense>
+          <TabBar />
+        </Suspense>
       </body>
     </html>
   );
