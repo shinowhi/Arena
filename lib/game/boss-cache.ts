@@ -1,4 +1,5 @@
-import { BossOutput, generateBossQuestions, type BossQuestion } from "@/lib/agents/boss-generator";
+import { z } from "zod";
+import { BossQuestion, generateBossQuestions } from "@/lib/agents/boss-generator";
 import { verifyAnswer } from "@/lib/verify/math-verifier";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,10 +20,13 @@ const STALE_MAX_MS = 7 * 24 * 3600 * 1000;
 // Coalesce concurrent misses per skill: N waiters cause one LLM generation.
 const inflight = new Map<string, Promise<BossQuestion[]>>();
 
+const CachedShape = z.array(BossQuestion).length(5);
+
 function validQuestions(raw: unknown): BossQuestion[] | null {
-  const parsed = BossOutput.safeParse(raw);
+  // Stored rows hold the bare questions array (see writeRow), not BossOutput.
+  const parsed = CachedShape.safeParse(raw);
   if (!parsed.success) return null;
-  const qs = parsed.data.questions;
+  const qs = parsed.data;
   for (const q of qs) {
     if (!verifyAnswer(q.check, q.answer_numeric, q.tolerance)) return null;
   }
