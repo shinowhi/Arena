@@ -21,10 +21,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Could not read upload." }, { status: 400 });
   }
   try {
+    // Player lookup overlaps the LLM chain (independent); the decompose ->
+    // gap chain stays sequential (dependent). The settled wrapper attaches a
+    // handler NOW so a fast DB failure can't surface as an unhandled
+    // rejection while the LLM calls run. DB save stays best-effort.
+    const playerSettled = getOrCreatePlayerId().then<string | null, string | null>(
+      (id) => id,
+      () => null,
+    );
     const decomp = await decomposeImage(imageDataUrl);
     const gap = await findGap(decomp);
     try {
-      const playerId = await getOrCreatePlayerId();
+      const playerId = await playerSettled;
+      if (!playerId) throw new Error("player lookup failed");
       const supabase = await createClient();
       await supabase.from("scans").insert({
         player_id: playerId,

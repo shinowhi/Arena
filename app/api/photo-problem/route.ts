@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { photoToProblem } from "@/lib/agents/photo-problem";
-import { generateBossQuestions } from "@/lib/agents/boss-generator";
+import { getBossQuestionsCached } from "@/lib/game/boss-cache";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
 import { PRIVATE_BOSS_HP, bossTtlSeconds } from "@/lib/game/boss-rules";
@@ -23,8 +23,16 @@ export async function POST(req: Request) {
   if (file.size > MAX_BYTES) return NextResponse.json({ error: "Image too large (max 5MB)." }, { status: 400 });
   const dataUrl = `data:${file.type};base64,${Buffer.from(await file.arrayBuffer()).toString("base64")}`;
   try {
+    // Player lookup overlaps the LLM chain (independent). The settled wrapper
+    // attaches a handler NOW so a fast DB failure can't surface as an
+    // unhandled rejection while the LLM calls run; it still throws below.
+    // The photo problem stays sequential: the cached set depends on its skill_tag.
+    const playerSettled = getOrCreatePlayerId().then<string | null, string | null>(
+      (id) => id,
+      () => null,
+    );
     const photo = await photoToProblem(dataUrl);
-    const generated = await generateBossQuestions(photo.skill_tag);
+    const generated = await getBossQuestionsCached(photo.skill_tag);
     const questions = [
       {
         level: 1,
@@ -41,7 +49,8 @@ export async function POST(req: Request) {
         hint: q.hint,
       })),
     ];
-    const playerId = await getOrCreatePlayerId();
+    const playerId = await playerSettled;
+    if (!playerId) throw new Error("Could not create player.");
     const supabase = await createClient();
     const ttl = bossTtlSeconds();
     const { data, error } = await supabase

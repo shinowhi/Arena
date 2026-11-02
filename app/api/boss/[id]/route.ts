@@ -19,8 +19,12 @@ type BossRow = {
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const supabase = await createClient();
-  const playerId = await getOrCreatePlayerId();
-  const { data } = await supabase.from("bosses").select("*").eq("id", id).single();
+  // Player lookup and boss fetch are independent: overlap them.
+  const [playerId, bossRes] = await Promise.all([
+    getOrCreatePlayerId(),
+    supabase.from("bosses").select("*").eq("id", id).single(),
+  ]);
+  const { data } = bossRes;
   if (!data) return NextResponse.json({ error: "Boss not found." }, { status: 404 });
   const b = data as BossRow;
   if (b.owner_player_id && b.owner_player_id !== playerId) {
