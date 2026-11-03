@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ArenaIcon, ChatIcon, FriendsIcon, HomeIcon, ScanIcon } from "@/components/icons";
 
 // Shared navigation (F1): desktop header nav + mobile bottom tab bar.
 // Rendered once in app/layout.tsx so every page has navigation —
 // new players reach Friends without a home round-trip.
 const TABS = [
-  { href: "/", label: "Home", icon: "🏠" },
-  { href: "/scan", label: "Scan", icon: "📸" },
-  { href: "/arena", label: "Arena", icon: "⚔️" },
-  { href: "/friends", label: "Friends", icon: "🧑‍🤝‍🧑" },
-  { href: "/chat", label: "Chat", icon: "💬" },
+  { href: "/", label: "Home", Icon: HomeIcon },
+  { href: "/scan", label: "Scan", Icon: ScanIcon },
+  { href: "/arena", label: "Arena", Icon: ArenaIcon },
+  { href: "/friends", label: "Friends", Icon: FriendsIcon },
+  { href: "/chat", label: "Chat", Icon: ChatIcon },
 ];
 
 const NAV = [
@@ -34,15 +35,15 @@ export function SiteHeader() {
   const path = usePathname();
   if (path === "/") return null; // Home renders its own hero header.
   return (
-    <header className="mx-auto flex w-full max-w-5xl items-center gap-2 px-4 py-4 text-sm">
-      <Link href="/" className="flex items-center gap-2" aria-label="Arena home">
+    <header className="mx-auto flex w-full max-w-5xl items-center gap-2 px-4 py-4 text-base">
+      <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="Arena home">
         <span
           aria-hidden="true"
           className="inline-block h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]"
         />
-        <span className="font-bold tracking-wide">ARENA</span>
+        <span className="text-lg font-black tracking-wide">ARENA</span>
       </Link>
-      <nav className="ml-auto hidden gap-4 text-zinc-400 md:flex" aria-label="Primary">
+      <nav className="ml-auto hidden gap-5 whitespace-nowrap text-zinc-400 md:flex" aria-label="Primary">
         {NAV.map((n) => {
           const active = isActive(path, n.href);
           return (
@@ -89,9 +90,7 @@ export function TabBar() {
                     active ? "text-white" : "text-zinc-500 hover:text-zinc-200"
                   }`}
                 >
-                  <span aria-hidden="true" className="text-lg leading-none">
-                    {t.icon}
-                  </span>
+                  <t.Icon className="h-6 w-6" />
                   <span className="text-[11px] font-semibold">{t.label}</span>
                 </Link>
               </li>

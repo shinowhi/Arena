@@ -1,7 +1,21 @@
 import Link from "next/link";
 import StreakBadge from "@/components/StreakBadge";
 import ScanHistory from "@/components/ScanHistory";
+import TonightStrip from "@/components/TonightStrip";
 import PageHeader from "@/components/ui/PageHeader";
+import {
+  BookIcon,
+  CameraIcon,
+  CardsIcon,
+  FlameIcon,
+  GhostIcon,
+  GlobeIcon,
+  MapIcon,
+  ReportIcon,
+  StoreIcon,
+  SwordsIcon,
+  TimerIcon,
+} from "@/components/icons";
 
 const STEPS = [
   { n: "01", t: "Scan", d: "Snap your exam, screenshot, or real life. Vision AI reads it directly — no OCR." },
@@ -10,30 +24,30 @@ const STEPS = [
 ];
 
 const SPOTLIGHT = [
-  { e: "📸", t: "Scan", d: "Exam, screenshot, or real life. Vision AI reads it directly — no OCR.", href: "/scan", cta: "Scan now", dl: "arena-d1", accent: "hover:border-cyan-400/70 hover:shadow-[0_0_36px_rgba(34,211,238,0.3)]", glow: "text-cyan-300" },
-  { e: "⚔️", t: "Boss fight", d: "Your weakest skill, alive. Five questions stand between you and the kill.", href: "/arena", cta: "Enter arena", dl: "arena-d2", accent: "hover:border-red-500/70 hover:shadow-[0_0_36px_rgba(239,68,68,0.35)]", glow: "text-red-400" },
-  { e: "🌍", t: "Real life", d: "Snap anything around you — get a solvable problem from the scene.", href: "/scan?mode=life", cta: "Try it", dl: "arena-d3", accent: "hover:border-emerald-400/70 hover:shadow-[0_0_36px_rgba(52,211,153,0.3)]", glow: "text-emerald-300" },
-  { e: "👻", t: "Ghost classroom", d: "Anonymous hunters grinding beside you tonight. Never study alone.", href: "/ghosts", cta: "Join them", dl: "arena-d4", accent: "hover:border-violet-400/70 hover:shadow-[0_0_36px_rgba(167,139,250,0.3)]", glow: "text-violet-300" },
+  { Icon: CameraIcon, t: "Scan", d: "Exam, screenshot, or real life. Vision AI reads it directly — no OCR.", href: "/scan", cta: "Scan now", dl: "arena-d1", accent: "hover:border-cyan-400/70 hover:shadow-[0_0_36px_rgba(34,211,238,0.3)]", glow: "text-cyan-300" },
+  { Icon: SwordsIcon, t: "Boss fight", d: "Your weakest skill, alive. Five questions stand between you and the kill.", href: "/arena", cta: "Enter arena", dl: "arena-d2", accent: "hover:border-red-500/70 hover:shadow-[0_0_36px_rgba(239,68,68,0.35)]", glow: "text-red-400" },
+  { Icon: GlobeIcon, t: "Real life", d: "Snap anything around you — get a solvable problem from the scene.", href: "/scan?mode=life", cta: "Try it", dl: "arena-d3", accent: "hover:border-emerald-400/70 hover:shadow-[0_0_36px_rgba(52,211,153,0.3)]", glow: "text-emerald-300" },
+  { Icon: GhostIcon, t: "Ghost classroom", d: "Anonymous hunters grinding beside you tonight. Never study alone.", href: "/ghosts", cta: "Join them", dl: "arena-d4", accent: "hover:border-violet-400/70 hover:shadow-[0_0_36px_rgba(167,139,250,0.3)]", glow: "text-violet-300" },
 ];
 
 const MORE = [
-  { t: "Healing streak", href: "/streak" },
-  { t: "Root diary", href: "/diary" },
-  { t: "Exam countdown", href: "/countdown" },
-  { t: "Formula cards", href: "/cards" },
-  { t: "30-day roadmap", href: "/roadmap" },
-  { t: "Night market", href: "/market" },
-  { t: "Parent report", href: "/parent" },
+  { Icon: FlameIcon, t: "Healing streak", href: "/streak" },
+  { Icon: BookIcon, t: "Root diary", href: "/diary" },
+  { Icon: TimerIcon, t: "Exam countdown", href: "/countdown" },
+  { Icon: CardsIcon, t: "Formula cards", href: "/cards" },
+  { Icon: MapIcon, t: "30-day roadmap", href: "/roadmap" },
+  { Icon: StoreIcon, t: "Night market", href: "/market" },
+  { Icon: ReportIcon, t: "Parent report", href: "/parent" },
 ];
 
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col">
       <StreakBadge />
-      <header className="mx-auto flex w-full max-w-5xl items-center gap-2 py-4 pl-4 pr-14 text-sm sm:pr-32">
-        <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
-        <span className="font-bold tracking-wide">ARENA</span>
-        <nav className="ml-auto flex gap-4 text-zinc-400" aria-label="Primary">
+      <header className="mx-auto flex w-full max-w-5xl items-center gap-2 py-4 pl-4 pr-16 text-base sm:pr-32">
+        <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
+        <span className="shrink-0 text-lg font-black tracking-wide">ARENA</span>
+        <nav className="ml-auto hidden gap-3 whitespace-nowrap text-zinc-400 sm:flex sm:gap-5" aria-label="Primary">
           <Link href="/scan" className="font-semibold text-white transition-colors hover:text-cyan-300">Scan</Link>
           <Link href="/arena" className="transition-colors hover:text-white">Arena</Link>
           <Link href="/graph" className="transition-colors hover:text-white">Skills</Link>
@@ -64,6 +78,7 @@ export default function Home() {
             Snap real life
           </Link>
         </nav>
+        <TonightStrip />
         <div className="grid w-full gap-3 pt-6 text-left sm:grid-cols-3">
           {STEPS.map((s, i) => (
             <div key={s.n} className={`arena-enter arena-card rounded-2xl p-5 ${i === 1 ? "arena-d2" : i === 2 ? "arena-d3" : "arena-d1"}`}>
@@ -88,8 +103,8 @@ export default function Home() {
                   f.accent
                 }
               >
-                <span className="block text-4xl" aria-hidden="true">
-                  {f.e}
+                <span className={"block " + f.glow} aria-hidden="true">
+                  <f.Icon className="h-10 w-10" />
                 </span>
                 <span className="mt-3 block">
                   <span className="font-display block text-xl font-black">{f.t}</span>
@@ -100,17 +115,30 @@ export default function Home() {
             ))}
           </div>
           <p className="mt-8 text-xs font-bold tracking-widest text-zinc-500">MORE ARSENAL</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {MORE.map((m) => (
-              <Link
-                key={m.href}
-                href={m.href}
-                className="arena-btn-ghost rounded-full px-4 py-2 text-sm font-medium text-zinc-300 transition-transform hover:-translate-y-0.5"
-              >
-                {m.t} →
-              </Link>
-            ))}
-          </div>
+          <nav className="relative mt-3" aria-label="More arsenal">
+            <ul
+              role="list"
+              tabIndex={0}
+              aria-label="More arsenal, scrollable"
+              className="arena-scrollx flex snap-x gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible"
+            >
+              {MORE.map((m) => (
+                <li key={m.href} className="shrink-0 snap-start">
+                  <Link
+                    href={m.href}
+                    className="arena-btn-ghost flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium whitespace-nowrap text-zinc-300 transition-transform hover:-translate-y-0.5"
+                  >
+                    <m.Icon className="h-5 w-5 text-zinc-400" />
+                    {m.t}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#08080f] to-transparent sm:hidden"
+            />
+          </nav>
         </div>
       </section>
       <footer className="mx-auto w-full max-w-5xl px-4 pb-6 text-center text-xs text-zinc-600">
