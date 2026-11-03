@@ -19,6 +19,26 @@ type BossRow = {
   status: string;
 };
 
+// Vercel Hobby kills functions at 60s; never let one Meta-API blip hang
+// every arena visitor. On timeout the existing catch below returns the
+// list without a world boss (fail-soft, retried on next visit).
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  return new Promise<T>((resolve, reject) => {
+    timer = setTimeout(() => reject(new Error("World boss spawn timed out.")), ms);
+    p.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
 function pub(b: BossRow) {
   return {
     id: b.id,
@@ -61,7 +81,7 @@ export async function GET() {
       }
       const top = [...freq.entries()].sort((a, b) => b[1] - a[1])[0];
       if (top) skill = top[0];
-      const boss = await generateBossQuestions(skill);
+      const boss = await withTimeout(generateBossQuestions(skill), 50000);
       const ttl = bossTtlSeconds();
       const hp = worldBossHp();
       const { data: row } = await supabase
