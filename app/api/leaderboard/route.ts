@@ -57,10 +57,7 @@ export async function GET(req: Request) {
     await getOrCreatePlayerId();
     const supabase = await createClient();
     // shortcut: in-JS aggregation capped at 1000 rows; move to a SQL RPC when attacks grow.
-    const [{ data: attacks }, { data: players }] = await Promise.all([
-      supabase.from("attacks").select("player_id, boss_id, bosses(status)").eq("correct", true).limit(1000),
-      supabase.from("players").select("id, display_name, xp").limit(200),
-    ]);
+    const { data: attacks } = await supabase.from("attacks").select("player_id, boss_id, bosses(status)").eq("correct", true).limit(1000);
     const slain = new Map<string, Set<string>>();
     for (const a of ((attacks as AttackRow[] | null) ?? [])) {
       if (a.bosses?.status !== "DEAD") continue;
@@ -68,7 +65,19 @@ export async function GET(req: Request) {
       set.add(a.boss_id);
       slain.set(a.player_id, set);
     }
-    const leaders = ((players as PlayerRow[] | null) ?? [])
+    // Players table outgrew the old limit(200): fetch every slayer by id plus
+    // top XP for the zero-slain fill, so no hunter is ever cut from the board.
+    const slayerIds = [...slain.keys()];
+    const [byIds, byXp] = await Promise.all([
+      slayerIds.length
+        ? supabase.from("players").select("id, display_name, xp").in("id", slayerIds)
+        : Promise.resolve({ data: [] as PlayerRow[] }),
+      supabase.from("players").select("id, display_name, xp").order("xp", { ascending: false }).limit(50),
+    ]);
+    const merged = new Map<string, PlayerRow>();
+    for (const p of ((byIds.data as PlayerRow[] | null) ?? [])) merged.set(p.id, p);
+    for (const p of ((byXp.data as PlayerRow[] | null) ?? [])) merged.set(p.id, p);
+    const leaders = [...merged.values()]
       .map((p) => ({
         id: p.id,
         name: p.display_name ?? "Hunter #" + p.id.slice(0, 4),
