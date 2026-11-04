@@ -22,11 +22,13 @@ export default function DiagnosisReveal({
   preview,
   summoning,
   onSummon,
+  sample,
 }: {
   result: Diagnosis;
   preview: string;
   summoning: boolean;
   onSummon: () => void;
+  sample?: boolean;
 }) {
   const [shown, setShown] = useState(false);
   const [pct, setPct] = useState(0);
@@ -132,6 +134,11 @@ export default function DiagnosisReveal({
             </div>
           </div>
 
+          {sample ? (
+            <p className="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-950/30 px-4 py-2 text-center text-xs font-bold tracking-widest text-emerald-300 uppercase">
+              Cached sample — no AI wait
+            </p>
+          ) : (
           <div className="mt-4 flex items-center gap-2">
             <div
               className="h-2.5 flex-1 overflow-hidden rounded-full bg-zinc-800"
@@ -148,6 +155,7 @@ export default function DiagnosisReveal({
             </div>
             <span className="arena-num font-display text-xl font-extrabold text-emerald-300">{pct}%</span>
           </div>
+          )}
 
           <div className="mt-4 border-t border-zinc-800 pt-3">
             <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Your patch plan</p>

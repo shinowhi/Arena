@@ -14,6 +14,7 @@ type ScanResult = {
   root_cause: string;
   confidence: number;
   can_summon: boolean;
+  sample?: boolean;
 };
 
 const STAGES = [
@@ -27,8 +28,8 @@ const LIFE_TIMEOUT_MS = 180000;
 const BATCH_MAX = 3;
 
 const SAMPLES = [
-  { label: "Sample: area integral", path: "/samples/area-integral.png", file: "area-integral.png" },
-  { label: "Sample: implicit diff", path: "/samples/implicit-diff.png", file: "implicit-diff.png" },
+  { id: "area-integral", label: "Area integral", path: "/samples/area-integral.png", file: "area-integral.png" },
+  { id: "implicit-diff", label: "Implicit diff", path: "/samples/implicit-diff.png", file: "implicit-diff.png" },
 ];
 
 export default function ScanPage() {
@@ -36,6 +37,7 @@ export default function ScanPage() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [thumb, setThumb] = useState<string>("");
+  const [sampleId, setSampleId] = useState("");
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState(0);
   const [summoning, setSummoning] = useState(false);
@@ -47,8 +49,9 @@ export default function ScanPage() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [screenOpen, setScreenOpen] = useState(false);
 
-  function pick(f: File | undefined) {
+  function pick(f: File | undefined, sample = "") {
     if (!f) return;
+    setSampleId(sample);
     setFile(f);
     setPreview(URL.createObjectURL(f));
     setThumb("");
@@ -61,11 +64,13 @@ export default function ScanPage() {
     setMode(m);
     setResult(null);
     setError("");
+    setSampleId("");
   }
 
   function resetAll() {
     for (const j of jobs) URL.revokeObjectURL(j.url);
     setFile(null);
+    setSampleId("");
     setPreview("");
     setThumb("");
     setJobs([]);
@@ -97,13 +102,13 @@ export default function ScanPage() {
     };
   }, [router]);
 
-  async function loadSample(path: string, name: string) {
+  async function loadSample(id: string, path: string, name: string) {
     setError("");
     try {
       const res = await fetch(path);
       if (!res.ok) throw new Error("Sample failed to load.");
       const blob = await res.blob();
-      pick(new File([blob], name, { type: blob.type || "image/png" }));
+      pick(new File([blob], name, { type: blob.type || "image/png" }), id);
     } catch {
       setError("Sample failed to load. Pick a photo instead.");
     }
@@ -165,6 +170,7 @@ export default function ScanPage() {
     try {
       const form = new FormData();
       form.append("image", upload);
+      if (sampleId) form.append("sample", sampleId);
       const res = await fetch("/api/scan", { method: "POST", body: form, signal: ctrl.signal });
       if (!res.ok) throw new Error(await readApiError(res, "Analysis failed."));
       setResult(await readApiJson<ScanResult>(res, "Analysis failed."));
@@ -347,18 +353,27 @@ export default function ScanPage() {
             Capture screen
           </button>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <span className="text-xs text-zinc-600">No homework handy?</span>
-          {SAMPLES.map((s) => (
-            <button
-              key={s.path}
-              type="button"
-              onClick={() => loadSample(s.path, s.file)}
-              className="rounded-full border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:border-zinc-500 hover:bg-zinc-800"
-            >
-              {s.label}
-            </button>
-          ))}
+        <div className="flex w-full flex-col items-center gap-2">
+          <span className="text-xs font-bold tracking-widest text-zinc-500 uppercase">No homework handy? Try a sample — instant result</span>
+          <div className="flex flex-wrap justify-center gap-3">
+            {SAMPLES.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => loadSample(s.id, s.path, s.file)}
+                className={`group w-36 overflow-hidden rounded-xl border-2 text-left transition-all ${sampleId === s.id ? "border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.3)]" : "border-zinc-800 hover:border-zinc-500"}`}
+              >
+                <span className="block h-20 w-full overflow-hidden bg-black/60">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={s.path} alt={s.label} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                </span>
+                <span className="block bg-zinc-900/80 px-2.5 py-1.5">
+                  <span className="block text-xs font-bold text-zinc-200">{s.label}</span>
+                  <span className="block text-[10px] font-bold tracking-widest text-emerald-400 uppercase">Instant · cached</span>
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       )}
@@ -383,8 +398,13 @@ export default function ScanPage() {
         </button>
       ) : null}
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {result?.sample ? (
+        <p className="rounded-full border border-emerald-500/50 bg-emerald-950/40 px-4 py-1.5 text-center text-xs font-bold tracking-widest text-emerald-300 uppercase">
+          Sample · instant cached diagnosis — summon to fight it
+        </p>
+      ) : null}
       {result ? (
-        <DiagnosisReveal result={result} preview={preview} summoning={summoning} onSummon={summon} />
+        <DiagnosisReveal result={result} preview={preview} summoning={summoning} onSummon={summon} sample={result.sample} />
       ) : null}
     </main>
   );

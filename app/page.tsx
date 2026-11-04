@@ -12,7 +12,6 @@ import {
   GlobeIcon,
   MapIcon,
   ReportIcon,
-  StoreIcon,
   SwordsIcon,
   TimerIcon,
 } from "@/components/icons";
@@ -36,7 +35,6 @@ const MORE = [
   { Icon: TimerIcon, t: "Exam countdown", href: "/countdown" },
   { Icon: CardsIcon, t: "Formula cards", href: "/cards" },
   { Icon: MapIcon, t: "30-day roadmap", href: "/roadmap" },
-  { Icon: StoreIcon, t: "Night market", href: "/market" },
   { Icon: ReportIcon, t: "Parent report", href: "/parent" },
 ];
 
