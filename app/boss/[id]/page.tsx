@@ -12,6 +12,7 @@ import RaidFeed from "@/components/RaidFeed";
 import ShareCard from "@/components/ShareCard";
 import CharRig from "@/components/CharRig";
 import { DEFAULT_AVATAR, loadAvatar, skillOf, type AvatarSpec } from "@/lib/game/avatar";
+import { createClient } from "@/lib/supabase/client";
 
 type BossView = {
   id: string;
@@ -177,6 +178,37 @@ function BossInner() {
     // Client-only read after hydration; microtask keeps the no-sync-setState lint rule happy.
     queueMicrotask(() => setAvatar(loadAvatar()));
   }, []);
+
+  // Shared-HP sync: anyone's hit updates every open fight screen live
+  // (previously only the attacker's screen moved). Merges HP + status
+  // only; each player's question/answer progress stays local.
+  useEffect(() => {
+    let stop = false;
+    const supabase = createClient();
+    const ch = supabase
+      .channel("boss-hp-" + id)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "bosses", filter: `id=eq.${id}` },
+        (payload) => {
+          if (stop) return;
+          const row = payload.new as { current_hp?: unknown; status?: unknown } | undefined;
+          const hp = row?.current_hp;
+          if (typeof hp !== "number") return;
+          const status = typeof row?.status === "string" ? row.status : undefined;
+          setBoss((prev) =>
+            prev && (prev.current_hp !== hp || (status !== undefined && prev.status !== status))
+              ? { ...prev, current_hp: hp, status: status ?? prev.status }
+              : prev,
+          );
+        },
+      )
+      .subscribe();
+    return () => {
+      stop = true;
+      supabase.removeChannel(ch);
+    };
+  }, [id]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
