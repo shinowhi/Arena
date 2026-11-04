@@ -2,7 +2,7 @@
 
 Scan your math homework, find the weak skill and its **root cause**, then slay a boss of 5 machine-verified questions.
 
-Built for the **Meta Global AI Developer Hackathon** (theme: *Build for Your World*). All code in this repo was written during the contest window (first commit Oct 29, 2026). Live demo: `https://arena-shinowhi.vercel.app`
+Built for the **Meta Global AI Developer Hackathon** (theme: *Build for Your World*). All code in this repo was written during the contest window (first commit Oct 29, 2026). Live demo: `https://arena-shinowhi.vercel.app` · Demo video: https://www.youtube.com/watch?v=_5SdAHPRn3M
 
 ## How it works
 
