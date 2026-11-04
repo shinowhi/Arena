@@ -6,7 +6,7 @@ import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
 import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
-import HeroAvatar from "@/components/HeroAvatar";
+import CharRig from "@/components/CharRig";
 import AvatarBuilder from "@/components/AvatarBuilder";
 import BossAvatar from "@/components/BossAvatar";
 import { DEFAULT_AVATAR, loadAvatar, saveAvatar, type AvatarSpec } from "@/lib/game/avatar";
@@ -150,7 +150,7 @@ export default function ArenaPage() {
           aria-label="Create your hero"
           className="block rounded-full ring-2 ring-zinc-700 transition hover:ring-red-400"
         >
-          <HeroAvatar spec={avatar} size={48} />
+          <CharRig spec={avatar} size={48} />
         </button>
         {playerId ? (
           <p className="arena-num inline-block rounded-full border border-zinc-700 bg-zinc-900/70 px-3 py-0.5 text-xs font-semibold text-zinc-300">

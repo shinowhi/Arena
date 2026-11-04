@@ -23,7 +23,7 @@ export default function BossAvatar({
       width={size}
       height={size}
       draggable={false}
-      className={`object-cover object-top select-none ${dead ? "opacity-70 grayscale" : hurt ? "brightness-90 saturate-75" : ""}`}
+      className={`rounded-full object-cover object-top select-none ${dead ? "opacity-70 grayscale" : hurt ? "brightness-90 saturate-75" : ""}`}
       style={{ width: size, height: size }}
     />
   );

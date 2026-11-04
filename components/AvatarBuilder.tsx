@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { SPECIES, artOf, type AvatarSpec, type Species } from "@/lib/game/avatar";
+import CharRig from "@/components/CharRig";
+import { SPECIES, type AvatarSpec, type Species } from "@/lib/game/avatar";
 
 export default function AvatarBuilder({
   spec,
@@ -38,7 +39,9 @@ export default function AvatarBuilder({
                   active ? "border-red-400 shadow-[0_0_24px_rgba(239,68,68,0.35)]" : "border-zinc-800 hover:border-zinc-600"
                 }`}
               >
-                <img src={artOf(s.id)} alt={`${s.name} hero`} className="aspect-[4/5] w-full object-cover object-top" draggable={false} />
+                <span className="flex aspect-square w-full items-center justify-center bg-black/60">
+                  <CharRig spec={{ species: s.id }} size={168} />
+                </span>
                 <span className="block bg-zinc-900/80 px-3 py-2">
                   <span className="block font-bold">{s.name}</span>
                   <span className="block text-xs text-zinc-400">{s.skill}</span>

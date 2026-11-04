@@ -10,7 +10,7 @@ import BossAvatar from "@/components/BossAvatar";
 import BossIntro from "@/components/BossIntro";
 import RaidFeed from "@/components/RaidFeed";
 import ShareCard from "@/components/ShareCard";
-import Hero3D from "@/components/Hero3D";
+import CharRig from "@/components/CharRig";
 import { DEFAULT_AVATAR, loadAvatar, skillOf, type AvatarSpec } from "@/lib/game/avatar";
 
 type BossView = {
@@ -272,10 +272,10 @@ function BossInner() {
       <div className="arena-enter arena-d1 arena-battleground relative overflow-hidden rounded-2xl border border-zinc-800 px-4 pt-4 pb-6">
         <div className="flex items-end justify-between gap-2">
           <div className={flash ? "arena-lunge" : "arena-float"}>
-            <Hero3D spec={avatar} size={88} />
+            <CharRig spec={avatar} size={144} attacking={flash} />
           </div>
-          <div className={`rounded-full border-2 bg-zinc-900/80 p-3 transition-all ${ring} ${flash ? "arena-shake" : "arena-float"}`}>
-            <BossAvatar pct={pct} rarity={boss.rarity} size={88} />
+          <div className={`overflow-hidden rounded-full border-2 bg-zinc-900/80 p-3 transition-all ${ring} ${flash ? "arena-shake" : "arena-float"}`}>
+            <BossAvatar pct={pct} rarity={boss.rarity} size={104} />
           </div>
         </div>
         {flash ? (

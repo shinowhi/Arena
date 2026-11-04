@@ -3,10 +3,10 @@ export type Species = "fox" | "cat" | "frog" | "dragon";
 export type AvatarSpec = { species: Species };
 
 export const SPECIES: Array<{ id: Species; name: string; skill: string; bolt: string; art: string }> = [
-  { id: "fox", name: "Fox", skill: "Flame Tail", bolt: "#fb923c", art: "/art/hero-fox.png" },
-  { id: "cat", name: "Cat", skill: "Claw Slash", bolt: "#a78bfa", art: "/art/hero-cat.png" },
-  { id: "dragon", name: "Dragon", skill: "Fire Breath", bolt: "#fb7185", art: "/art/hero-dragon.png" },
-  { id: "frog", name: "Frog", skill: "Bubble Shot", bolt: "#4ade80", art: "/art/hero-frog.png" },
+  { id: "fox", name: "Fox", skill: "Flame Tail", bolt: "#fb923c", art: "/chars/fox/torso.png" },
+  { id: "cat", name: "Cat", skill: "Claw Slash", bolt: "#a78bfa", art: "/chars/cat/torso.png" },
+  { id: "dragon", name: "Dragon", skill: "Fire Breath", bolt: "#fb7185", art: "/chars/dragon/torso.png" },
+  { id: "frog", name: "Frog", skill: "Bubble Shot", bolt: "#4ade80", art: "/chars/frog/torso.png" },
 ];
 
 export const DEFAULT_AVATAR: AvatarSpec = { species: "fox" };
