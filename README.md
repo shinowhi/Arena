@@ -1,4 +1,4 @@
-# Arena (working title)
+# Arena
 
 Scan your math homework, find the weak skill and its **root cause**, then slay a boss of 5 machine-verified questions.
 
@@ -10,10 +10,10 @@ Built for the **Meta Global AI Developer Hackathon** (theme: *Build for Your Wor
 2. **Summon** — Agent 3 generates a Boss: 5 isomorphic questions (same shape, new numbers, rising difficulty), numeric answers only.
 3. **Verify** — every generated answer is recomputed with `mathjs` before it is stored. Wrong or uncomputable questions are discarded and regenerated (max 3 rounds). The LLM is never trusted for answers.
 4. **Fight** (`/boss/[id]`) — answer one question at a time; each correct answer deals 20 damage, builds a combo streak, and shows a machine-verified badge. Grading happens server-side; answers are never sent to the client. High-HP bosses loop questions until slain; the victory screen shows your clear time.
-5. **Arena** (`/arena`) — live world boss with shared HP over Supabase Realtime, countdown, lazy hourly spawn from the most-missed skills of the last 24h.
+5. **Arena** (`/arena`) — live world boss with shared HP over Supabase Realtime, countdown, lazy on-visit spawn from the most-missed skills of the last 24h.
 6. **Invite** — `/arena?invite=<playerId>` gives **+50 XP to both** players (pair-tracked, rewarded once). Header shows level + XP.
 7. **Leaderboard** — top 10 hunters on /arena by bosses slain (XP breaks ties), computed from existing tables, no extra migration.
-8. **Heroes & bosses** — click your avatar on /arena to pick 1 of 4 pre-drawn heroes (saved in browser). Bosses wear rarity bodies; your hero lunges and fires its skill on every hit.
+8. **Heroes & bosses** — click your avatar on /arena to pick 1 of 4 rigged heroes (torso + independently animated arms, saved in browser). Bosses wear rarity bodies; your hero lunges and fires its skill on every hit.
 
 ## Meta model usage
 
@@ -37,7 +37,7 @@ node scripts/seed.mjs        # optional demo data, labeled seed-demo
 npm run dev
 ```
 
-Probes (need `MODEL_API_KEY` + Supabase env): `npx -y tsx scripts/probe-scan.mjs [limit]`, `npx -y tsx scripts/probe-boss.mjs <skill>`. Offline tests: `node scripts/test-agent-contracts.mjs` (82), `node scripts/test-boss.mjs` (11), `node scripts/test-social.mjs` (44).
+Probes (need `MODEL_API_KEY` + Supabase env): `npx -y tsx scripts/probe-scan.mjs [limit]`, `npx -y tsx scripts/probe-boss.mjs <skill>`. Offline tests: `node scripts/test-agent-contracts.mjs` (82), `node scripts/test-boss.mjs` (11), `node scripts/test-social.mjs` (44), `node scripts/test-samples.mjs` (22).
 
 ## Env
 
@@ -47,8 +47,9 @@ Probes (need `MODEL_API_KEY` + Supabase env): `npx -y tsx scripts/probe-scan.mjs
 | `META_MODEL_API_BASE_URL` | Default `https://api.meta.ai/v1` |
 | `META_MODEL` | Default `muse-spark-1.3` |
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase project (publishable key only) |
-| `BOSS_TTL_SECONDS` | Boss lifetime (demo: 240) |
-| `WORLD_BOSS_HP` | World boss HP (demo: 200) |
+| `BOSS_TTL_SECONDS` | Boss lifetime in seconds (default 14400) |
+| `WORLD_BOSS_HP` | World boss HP (default 1000) |
+| `RUSH_BOSS_HP` | Daily-rush boss HP (default 2000) |
 
 ## Sample data
 
