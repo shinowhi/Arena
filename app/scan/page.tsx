@@ -15,6 +15,7 @@ type ScanResult = {
   confidence: number;
   can_summon: boolean;
   sample?: boolean;
+  batch?: { votes: number; total: number };
 };
 
 const STAGES = [
@@ -38,6 +39,7 @@ export default function ScanPage() {
   const [preview, setPreview] = useState<string>("");
   const [thumb, setThumb] = useState<string>("");
   const [sampleId, setSampleId] = useState("");
+  const [batch, setBatch] = useState<Array<{ file: File; url: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState(0);
   const [summoning, setSummoning] = useState(false);
@@ -51,6 +53,8 @@ export default function ScanPage() {
 
   function pick(f: File | undefined, sample = "") {
     if (!f) return;
+    for (const b of batch) URL.revokeObjectURL(b.url);
+    setBatch([]);
     setSampleId(sample);
     setFile(f);
     setPreview(URL.createObjectURL(f));
@@ -60,15 +64,42 @@ export default function ScanPage() {
     setError("");
   }
 
+  function addBatch(files: File[]) {
+    const imgs = files.filter((f) => f.type.startsWith("image/")).slice(0, 3);
+    if (imgs.length < 2) {
+      pick(files[0]);
+      return;
+    }
+    for (const b of batch) URL.revokeObjectURL(b.url);
+    setBatch(imgs.map((f) => ({ file: f, url: URL.createObjectURL(f) })));
+    setFile(null);
+    setPreview("");
+    setThumb("");
+    setSampleId("");
+    setResult(null);
+    setError("");
+  }
+
+  function handleFiles(list: FileList | File[] | undefined | null) {
+    const fs = Array.from(list ?? []);
+    if (fs.length === 0) return;
+    if (fs.length > 1) addBatch(fs);
+    else pick(fs[0]);
+  }
+
   function switchMode(m: "exam" | "life") {
     setMode(m);
     setResult(null);
     setError("");
     setSampleId("");
+    for (const b of batch) URL.revokeObjectURL(b.url);
+    setBatch([]);
   }
 
   function resetAll() {
     for (const j of jobs) URL.revokeObjectURL(j.url);
+    for (const b of batch) URL.revokeObjectURL(b.url);
+    setBatch([]);
     setFile(null);
     setSampleId("");
     setPreview("");
@@ -150,8 +181,62 @@ export default function ScanPage() {
     });
   }
 
+  async function analyzeBatch() {
+    setLoading(true);
+    setStage(0);
+    setError("");
+    setResult(null);
+    const uploads: File[] = [];
+    try {
+      for (const b of batch) uploads.push((await prepareUploadImage(b.file)).file);
+    } catch (e) {
+      setLoading(false);
+      setError(e instanceof Error ? e.message : "Those photos can't be read — try JPG or PNG.");
+      return;
+    }
+    const ticker = setInterval(() => setStage((s) => (s + 1) % STAGES.length), 4000);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ANALYZE_TIMEOUT_MS * 2);
+    try {
+      const form = new FormData();
+      for (const u of uploads) form.append("images", u);
+      const res = await fetch("/api/scan/batch", { method: "POST", body: form, signal: ctrl.signal });
+      if (!res.ok) throw new Error(await readApiError(res, "Batch analysis failed."));
+      const r = await readApiJson<{
+        photos: Array<ScanResult>;
+        merged: { weak_skill: string; root_cause: string; confidence: number; votes: number; total: number };
+        can_summon: boolean;
+      }>(res, "Batch analysis failed.");
+      setResult({
+        items: r.photos.flatMap((p) => p.items),
+        weak_skill: r.merged.weak_skill,
+        root_cause: r.merged.root_cause,
+        confidence: r.merged.confidence,
+        can_summon: r.can_summon,
+        batch: { votes: r.merged.votes, total: r.merged.total },
+      });
+    } catch (e) {
+      setError(
+        e instanceof DOMException && e.name === "AbortError"
+          ? "Batch timed out. Try fewer photos or clearer shots."
+          : e instanceof Error
+            ? e.message
+            : "Batch analysis failed.",
+      );
+    } finally {
+      clearInterval(ticker);
+      clearTimeout(timer);
+      setLoading(false);
+    }
+  }
+
   async function analyze() {
-    if (!file || loading) return;
+    if (loading) return;
+    if (batch.length >= 2) {
+      void analyzeBatch();
+      return;
+    }
+    if (!file) return;
     setLoading(true);
     setStage(0);
     setError("");
@@ -319,11 +404,24 @@ export default function ScanPage() {
         onDrop={(e) => {
           e.preventDefault();
           setDragging(false);
-          pick(e.dataTransfer.files[0]);
+          handleFiles(e.dataTransfer.files);
         }}
         className={`arena-enter arena-d1 arena-card flex flex-col items-center gap-4 rounded-2xl border-dashed p-8 text-center transition-all ${dragging ? "scale-[1.01] border-red-500 shadow-[0_0_32px_rgba(239,68,68,0.35)]" : ""}`}
       >
-        {preview ? (
+        {batch.length >= 2 ? (
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex gap-2">
+              {batch.map((b, i) => (
+                <span key={i} className="relative block h-24 w-20 overflow-hidden rounded-xl ring-1 ring-zinc-700">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={b.url} alt={`batch photo ${i + 1}`} className="h-full w-full object-cover" />
+                  {loading ? <span className="arena-scanline" /> : null}
+                </span>
+              ))}
+            </div>
+            <p className="text-xs font-bold tracking-widest text-cyan-300 uppercase">Batch of {batch.length} — merged verdict</p>
+          </div>
+        ) : preview ? (
           <div className="relative overflow-hidden rounded-xl ring-1 ring-zinc-700">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={preview} alt="upload preview" className="max-h-64 rounded-xl" />
@@ -343,7 +441,7 @@ export default function ScanPage() {
         <div className="flex flex-wrap justify-center gap-2">
           <label className="arena-btn-ghost cursor-pointer rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
             {preview ? "Choose another" : "Choose photo"}
-            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
+            <input type="file" accept="image/*" capture="environment" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
           </label>
           <button
             type="button"
@@ -381,7 +479,7 @@ export default function ScanPage() {
       {mode === "exam" ? (
         <button
           onClick={analyze}
-          disabled={!file || loading}
+          disabled={(!file && batch.length < 2) || loading}
           className={`arena-enter arena-d2 arena-btn-primary font-display rounded-full px-5 py-3.5 text-lg font-bold text-white disabled:opacity-40 disabled:shadow-none ${loading ? "animate-pulse" : ""}`}
         >
           {loading ? STAGES[stage % STAGES.length] : "Analyze"}
@@ -401,6 +499,11 @@ export default function ScanPage() {
       {result?.sample ? (
         <p className="rounded-full border border-emerald-500/50 bg-emerald-950/40 px-4 py-1.5 text-center text-xs font-bold tracking-widest text-emerald-300 uppercase">
           Sample · instant cached diagnosis — summon to fight it
+        </p>
+      ) : null}
+      {result?.batch ? (
+        <p className="rounded-full border border-cyan-500/50 bg-cyan-950/40 px-4 py-1.5 text-center text-xs font-bold tracking-widest text-cyan-300 uppercase">
+          Batch of {result.batch.total} · {result.batch.votes} agree — merged verdict
         </p>
       ) : null}
       {result ? (
