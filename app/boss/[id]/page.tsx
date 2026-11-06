@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import MathText from "@/components/MathText";
@@ -112,6 +112,8 @@ function BossInner() {
   const [t0, setT0] = useState(0);
   const [intro, setIntro] = useState(false);
   const [copiedWin, setCopiedWin] = useState(false);
+  const [taunt, setTaunt] = useState("");
+  const tauntKey = useRef("");
 
   async function copyWin() {
     if (!boss) return;
@@ -215,6 +217,25 @@ function BossInner() {
     return () => clearInterval(t);
   }, []);
 
+  // Boss trash-talk bubble: fetched once per fight state (load + transitions).
+  useEffect(() => {
+    if (!boss) return;
+    const key = boss.id + ":" + boss.status;
+    if (tauntKey.current === key) return;
+    tauntKey.current = key;
+    let stop = false;
+    fetch("/api/boss/taunt?id=" + id)
+      .then(async (r) => {
+        if (!r.ok) return;
+        const d = (await r.json()) as { taunt?: string };
+        if (!stop && typeof d.taunt === "string") setTaunt(d.taunt);
+      })
+      .catch(() => {});
+    return () => {
+      stop = true;
+    };
+  }, [boss, id]);
+
   async function attack() {
     if (!boss || busy || boss.status !== "ALIVE") return;
     const n = Number(answer);
@@ -301,6 +322,11 @@ function BossInner() {
           </span>
         }
       />
+      {taunt ? (
+        <p className="arena-enter rounded-2xl border border-violet-500/40 bg-violet-950/30 px-4 py-2 text-center text-sm text-violet-200 italic">
+          “{taunt}”
+        </p>
+      ) : null}
       <div className="arena-enter arena-d1 arena-battleground relative overflow-hidden rounded-2xl border border-zinc-800 px-4 pt-4 pb-6">
         <div className="flex items-end justify-between gap-2">
           <div className={flash ? "arena-lunge" : "arena-float"}>
