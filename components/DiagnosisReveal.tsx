@@ -200,6 +200,12 @@ export default function DiagnosisReveal({
               View on skill graph
             </Link>
             <Link
+              href={"/paper?skill=" + result.weak_skill}
+              className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
+            >
+              Forge practice paper
+            </Link>
+            <Link
               href="/streak"
               className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
             >
