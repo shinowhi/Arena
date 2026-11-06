@@ -33,6 +33,26 @@ export default function DiagnosisReveal({
   const [shown, setShown] = useState(false);
   const [pct, setPct] = useState(0);
   const target = Math.round(result.confidence * 100);
+  const [whyOpen, setWhyOpen] = useState(false);
+  const [whyLoading, setWhyLoading] = useState(false);
+  const [why, setWhy] = useState<{ title: string; body: string; fix_steps: string[] } | null>(null);
+
+  async function loadWhy() {
+    if (why || whyLoading) return;
+    setWhyLoading(true);
+    try {
+      const r = await fetch("/api/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weak_skill: result.weak_skill, root_cause: result.root_cause }),
+      });
+      if (r.ok) setWhy((await r.json()) as { title: string; body: string; fix_steps: string[] });
+    } catch {
+      // Silent: the expander simply stays shut on failure.
+    } finally {
+      setWhyLoading(false);
+    }
+  }
 
   useEffect(() => {
     playRevealChime();
@@ -134,6 +154,38 @@ export default function DiagnosisReveal({
             </div>
           </div>
 
+          <button
+            type="button"
+            aria-expanded={whyOpen}
+            onClick={() => {
+              setWhyOpen((o) => !o);
+              void loadWhy();
+            }}
+            className="mt-3 w-full rounded-xl border border-zinc-700 px-4 py-2 text-sm font-bold text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800"
+          >
+            {whyOpen ? "Hide: why this root?" : "Why this root?"}
+          </button>
+          {whyOpen ? (
+            <div className="mt-2 rounded-xl border border-zinc-800 bg-black/40 px-4 py-3">
+              {whyLoading ? (
+                <p className="text-sm text-zinc-500">Asking the tutor…</p>
+              ) : why ? (
+                <>
+                  <p className="text-sm font-bold text-amber-200">{why.title}</p>
+                  <p className="mt-1 text-sm text-zinc-300">{why.body}</p>
+                  <ul className="mt-2 flex list-none flex-col gap-1">
+                    {why.fix_steps.map((s, i) => (
+                      <li key={i} className="text-sm text-zinc-300">
+                        <span className="font-bold text-emerald-300">{i + 1}.</span> {s}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="text-sm text-zinc-500">Could not load the explanation. Try again.</p>
+              )}
+            </div>
+          ) : null}
           {sample ? (
             <p className="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-950/30 px-4 py-2 text-center text-xs font-bold tracking-widest text-emerald-300 uppercase">
               Cached sample — no AI wait

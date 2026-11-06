@@ -29,6 +29,37 @@ export function skillName(id: string): string {
   return byId.get(id)?.name ?? id;
 }
 
+export function skillDescription(id: string): string {
+  return byId.get(id)?.description ?? "";
+}
+
+// Shortest prerequisite chain from weak down to root (inclusive), or null.
+export function prereqChain(weak: string, root: string): string[] | null {
+  if (weak === root) return [weak];
+  const prev = new Map<string, string>();
+  const queue = [weak];
+  const seen = new Set([weak]);
+  while (queue.length > 0) {
+    const cur = queue.shift() as string;
+    for (const p of byId.get(cur)?.prereqs ?? []) {
+      if (seen.has(p)) continue;
+      seen.add(p);
+      prev.set(p, cur);
+      if (p === root) {
+        const chain = [root];
+        let at = root;
+        while (at !== weak) {
+          at = prev.get(at) as string;
+          chain.unshift(at);
+        }
+        return chain;
+      }
+      queue.push(p);
+    }
+  }
+  return null;
+}
+
 // True when `root` equals `weak` or is a transitive prerequisite of it.
 export function isValidRootCause(root: string, weak: string): boolean {
   if (root === weak) return true;
