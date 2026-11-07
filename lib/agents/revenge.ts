@@ -93,10 +93,16 @@ export async function generateRevengeQuestions(skill_tag: string, avoid: string[
       failed.length > 0
         ? `\nThese drafts FAILED machine verification, return a fresh set of 5 with corrected variants: ${JSON.stringify(failed)}`
         : "";
-    const out = await chatJson(BossOutput, [
-      { role: "system", content: system },
-      { role: "user", content: `Skill: ${skill_tag} (${skillName(skill_tag)}).${avoidBlock}${extra}` },
-    ]);
+    // 8k base like boss-generator: buckling-class mechanics prompts reason
+    // long and truncate at the 4k default.
+    const out = await chatJson(
+      BossOutput,
+      [
+        { role: "system", content: system },
+        { role: "user", content: `Skill: ${skill_tag} (${skillName(skill_tag)}).${avoidBlock}${extra}` },
+      ],
+      { maxTokens: 8000 },
+    );
     failed = out.questions.filter((q) => !verifyAnswer(q.check, q.answer_numeric, q.tolerance));
     if (failed.length === 0) return out.questions;
   }

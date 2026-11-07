@@ -3,7 +3,9 @@ import { chatJson, MetaLLMError } from "../llm/meta";
 import { isValidSkill, skillName, skillSubject } from "../graph/skills";
 import { verifyAnswer } from "../verify/math-verifier";
 
-const CheckSpecSchema = z.union([
+// Single source of truth for check specs: the grade route imports this so a
+// new check kind can never split-brain fights vs grading.
+export const CheckSpecSchema = z.union([
   z.object({ kind: z.literal("numeric"), prompt_expr: z.string().min(1) }),
   z.object({ kind: z.literal("derivative_at"), expr: z.string().min(1), variable: z.string().min(1), at: z.number() }),
   z.object({ kind: z.literal("integral_at"), expr: z.string().min(1), variable: z.string().min(1), from: z.number(), to: z.number() }),

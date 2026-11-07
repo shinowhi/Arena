@@ -1,8 +1,10 @@
 // Practice-paper generator: 10 verified questions (2 per level 1-5) for ONE
 // skill. Same machine-verification discipline as bosses: every answer is
 // recomputed with mathjs; unverifiable drafts are regenerated (max 3 rounds).
-// Answers are stripped before serving (see stripPaper); grading is stateless
-// via /api/paper/grade + verifyAnswer, so no storage or migration is needed.
+// Honesty note: stripPaper removes answer_numeric but ships the check spec,
+// which trivially recomputes the answer (mechanics prompt_expr IS the
+// computation). Acceptable for self-practice with local-only scores — but
+// never feed paper scores into badges/leaderboards without server sessions.
 import { z } from "zod";
 import { chatJson, MetaLLMError } from "../llm/meta";
 import { BossOutput, BossQuestion } from "./boss-generator";
@@ -59,10 +61,16 @@ async function genSet(skill_tag: string, system: string, avoid: string): Promise
       failed.length > 0
         ? `\nThese drafts FAILED machine verification, return a fresh set of 5 with corrected variants: ${JSON.stringify(failed)}`
         : "";
-    const out = await chatJson(BossOutput, [
-      { role: "system", content: system },
-      { role: "user", content: `Skill: ${skill_tag} (${skillName(skill_tag)}).${avoid}${extra}` },
-    ]);
+    // 8k base like boss-generator: buckling-class mechanics prompts reason
+    // long and truncate at the 4k default.
+    const out = await chatJson(
+      BossOutput,
+      [
+        { role: "system", content: system },
+        { role: "user", content: `Skill: ${skill_tag} (${skillName(skill_tag)}).${avoid}${extra}` },
+      ],
+      { maxTokens: 8000 },
+    );
     failed = out.questions.filter((q) => !verifyAnswer(q.check, q.answer_numeric, q.tolerance));
     if (failed.length === 0) return out.questions;
   }
