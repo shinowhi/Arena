@@ -102,6 +102,8 @@ function BossInner() {
   const rootParam = search.get("root") ?? "";
   const isRevenge = search.get("revenge") === "1";
   const [boss, setBoss] = useState<BossView | null>(null);
+  const isGauntlet = search.get("gauntlet") === "1" || boss?.skill_tag === "gauntlet";
+  const bossName = !boss ? "" : isGauntlet ? "Mixed Gauntlet" : skillName(boss.skill_tag);
   const [idx, setIdx] = useState(0);
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
@@ -115,13 +117,34 @@ function BossInner() {
   const [copiedWin, setCopiedWin] = useState(false);
   const [taunt, setTaunt] = useState("");
   const tauntKey = useRef("");
+  const [tutor, setTutor] = useState({ loading: false, text: "" });
+
+  async function askWhy() {
+    if (!boss || tutor.loading) return;
+    if (answer.trim() === "") return;
+    const n = Number(answer);
+    if (!Number.isFinite(n)) return;
+    setTutor({ loading: true, text: "" });
+    try {
+      const r = await fetch("/api/tutor/mistake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ boss_id: id, question_index: idx % boss.questions.length, wrong_answer: n }),
+      });
+      const d = (await r.json()) as { nudge?: string; error?: string };
+      if (!r.ok) throw new Error(d.error ?? "Tutor failed.");
+      setTutor({ loading: false, text: d.nudge ?? "" });
+    } catch {
+      setTutor({ loading: false, text: "Tutor failed — retry." });
+    }
+  }
 
   async function copyWin() {
     if (!boss) return;
     const comboBit = combo >= 2 ? ` with a x${combo} combo` : "";
     const timeBit = t0 > 0 ? ` in ${fmt(Date.now() - t0)}` : "";
     const text =
-      `I slayed the ${skillName(boss.skill_tag)} boss in Arena${comboBit}${timeBit} — ` +
+      `I slayed the ${bossName} boss in Arena${comboBit}${timeBit} — ` +
       `5 machine-verified questions down. Think you can? ${window.location.origin}`;
     try {
       await navigator.clipboard.writeText(text);
@@ -172,7 +195,7 @@ function BossInner() {
           } catch {
             m = false;
           }
-          speak(`I am ${skillName(d.skill_tag)}. Answer my five questions, if you can.`, m);
+          speak(`I am ${d.skill_tag === "gauntlet" ? "Mixed Gauntlet" : skillName(d.skill_tag)}. Answer my five questions, if you can.`, m);
         }
       })
       .catch((e) => setMsg(e instanceof Error ? e.message : "Load failed."));
@@ -251,6 +274,7 @@ function BossInner() {
     }
     setBusy(true);
     setMsg("");
+    setTutor({ loading: false, text: "" });
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), ATTACK_TIMEOUT_MS);
     try {
@@ -317,11 +341,11 @@ function BossInner() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       {intro && boss.status === "ALIVE" ? (
-        <BossIntro name={skillName(boss.skill_tag)} onSkip={() => setIntro(false)} />
+        <BossIntro name={bossName} onSkip={() => setIntro(false)} />
       ) : null}
       <PageHeader
         kicker="Boss fight"
-        title={skillName(boss.skill_tag)}
+        title={bossName}
         right={
           <span className={`shrink-0 font-mono text-sm tabular-nums ${urgent ? "arena-urgent font-bold" : "text-zinc-400"}`}>
             {fmt(left)}
@@ -338,6 +362,14 @@ function BossInner() {
           <p className="text-xs font-bold tracking-widest text-red-300 uppercase">Revenge boss</p>
           <p className="mt-1 text-sm text-zinc-300">
             Fresh questions on {skillName(boss.skill_tag)} — avoids your recent ones.
+          </p>
+        </div>
+      ) : null}
+      {isGauntlet ? (
+        <div className="arena-enter rounded-2xl bg-amber-950/40 p-4 text-center">
+          <p className="text-xs font-bold tracking-widest text-amber-300 uppercase">Gauntlet run</p>
+          <p className="mt-1 text-sm text-zinc-300">
+            Five skills, one boss — each level tests a different gap.
           </p>
         </div>
       ) : null}
@@ -426,6 +458,9 @@ function BossInner() {
               <Link href="/badges" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
                 Weekly badges
               </Link>
+              <Link href="/gauntlet" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
+                Gauntlet boss
+              </Link>
               <button
                 type="button"
                 onClick={copyWin}
@@ -435,7 +470,7 @@ function BossInner() {
               </button>
               <ShareCard
                 kicker="Arena victory"
-                title={`${skillName(boss.skill_tag)} boss slain`}
+                title={`${bossName} boss slain`}
                 stats={[
                   `${boss.questions.length} questions conquered`,
                   t0 > 0 ? `Slain in ${fmt(now - t0)}` : "Victory",
@@ -503,6 +538,21 @@ function BossInner() {
             </button>
           </div>
           {msg ? <p className={`text-sm ${msgColor}`}>{msg}</p> : null}
+          {msg.startsWith("Miss") ? (
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={askWhy}
+                disabled={tutor.loading}
+                className="arena-btn-ghost w-fit rounded-full px-4 py-1.5 text-sm font-medium text-zinc-200 disabled:opacity-40"
+              >
+                {tutor.loading ? "Thinking…" : "Why was I wrong?"}
+              </button>
+              {tutor.text ? (
+                <p className="rounded-xl bg-zinc-900/70 px-3 py-2 text-sm text-zinc-300">{tutor.text}</p>
+              ) : null}
+            </div>
+          ) : null}
           {combo >= 2 ? (
             <p key={combo} className="arena-pop font-display inline-block w-fit rounded-lg bg-amber-500/15 px-3 py-1 text-lg font-extrabold text-amber-300">
               Combo ×{combo}
