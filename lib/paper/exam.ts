@@ -2,6 +2,9 @@
 
 export const EXAM_SECONDS = 900;
 
+// Under this much time left the clock turns urgent.
+export const URGENT_MS = 60000;
+
 export function examRemainingMs(deadlineMs: number, nowMs: number): number {
   return Math.max(0, deadlineMs - nowMs);
 }

@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import MathText from "@/components/MathText";
 import { skillName } from "@/lib/graph/skills";
-import { EXAM_SECONDS, examExpired, examRemainingMs, formatExamClock } from "@/lib/paper/exam";
+import { EXAM_SECONDS, URGENT_MS, examExpired, examRemainingMs, formatExamClock } from "@/lib/paper/exam";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
 type PQ = {
@@ -16,6 +16,10 @@ type PQ = {
   check: unknown;
 };
 type Mark = "idle" | "checking" | "right" | "wrong";
+
+type StoredExam = { questions: PQ[]; answers: string[]; marks: string[]; deadline: number };
+
+const VALID_MARKS = ["idle", "checking", "right", "wrong"];
 
 // NOTE (post-judging): the forge is 2 sequential 5Q sets and can still exceed
 // Vercel Hobby's 60s function cap. Parallelize the sets or queue the job then.
@@ -28,36 +32,106 @@ function PaperInner() {
   const [marks, setMarks] = useState<Mark[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [gerr, setGerr] = useState<Record<number, string>>({});
   const [started, setStarted] = useState(false);
   const [deadline, setDeadline] = useState(0);
   const [now, setNow] = useState(0);
-
-  useEffect(() => {
-    if (!started) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [started]);
-
-  function startExam() {
-    setDeadline(Date.now() + EXAM_SECONDS * 1000);
-    setNow(Date.now());
-    setStarted(true);
-  }
+  const [retry, setRetry] = useState(0);
 
   const expired = exam && started && examExpired(deadline, now);
   const locked = expired;
   const view = (m: Mark): Mark => (locked && m !== "right" ? "wrong" : m);
   const remaining = examRemainingMs(deadline, now);
-  const urgent = exam && started && !expired && remaining < 60000;
+  const urgent = exam && started && !expired && remaining < URGENT_MS;
+
+  useEffect(() => {
+    // Stop ticking once expired: no more re-renders every second.
+    if (!started || expired) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [started, expired]);
+
+  function startExam() {
+    const t0 = Date.now();
+    setDeadline(t0 + EXAM_SECONDS * 1000);
+    setNow(t0);
+    setStarted(true);
+  }
+
+  function retryForge() {
+    try {
+      if (exam && skill) sessionStorage.removeItem(`arena_exam_v1:${skill}`);
+    } catch {
+      // Private mode: retry still works, just without clearing storage.
+    }
+    setStarted(false);
+    setDeadline(0);
+    setRetry((r) => r + 1);
+  }
+
+  // Persist exam progress so a reload resumes the same paper and clock
+  // instead of forging a fresh one. Marks are display-only here.
+  useEffect(() => {
+    if (!exam || !skill || !questions) return;
+    try {
+      sessionStorage.setItem(
+        `arena_exam_v1:${skill}`,
+        JSON.stringify({ questions, answers, marks, deadline }),
+      );
+    } catch {
+      // Quota/private mode: the exam still works, just not resumable.
+    }
+  }, [exam, skill, questions, answers, marks, deadline]);
 
   useEffect(() => {
     let alive = true;
+    // A skill change must never swap questions under a running clock.
+    if (exam && started) return;
+    if (exam && skill) {
+      try {
+        const raw = sessionStorage.getItem(`arena_exam_v1:${skill}`);
+        const d = raw ? (JSON.parse(raw) as StoredExam | null) : null;
+        const valid =
+          d &&
+          Array.isArray(d.questions) &&
+          d.questions.length > 0 &&
+          typeof d.deadline === "number" &&
+          Array.isArray(d.answers) &&
+          Array.isArray(d.marks);
+        if (valid) {
+          // Stored marks are untrusted display state: validate membership and
+          // demote orphaned "checking" (its request died with the reload).
+          const clean: Mark[] = d.questions.map(
+            (_, k) =>
+              (VALID_MARKS.includes(d.marks[k]) && d.marks[k] !== "checking"
+                ? d.marks[k]
+                : "idle") as Mark,
+          );
+          const wasStarted = d.deadline > 0;
+          queueMicrotask(() => {
+            if (!alive) return;
+            setQuestions(d.questions);
+            setAnswers(d.questions.map((_, k) => (typeof d.answers[k] === "string" ? d.answers[k] : "")));
+            setMarks(clean);
+            setDeadline(d.deadline);
+            setStarted(wasStarted);
+            setNow(Date.now());
+            setLoading(false);
+            setError("");
+          });
+          return;
+        }
+      } catch {
+        // Corrupt entry: fall through to a fresh forge.
+      }
+    }
     // Microtask keeps the no-sync-setState lint rule happy.
     queueMicrotask(() => {
       if (!alive) return;
       setLoading(true);
       setError("");
       setQuestions(null);
+      setGerr({});
     });
     fetch("/api/paper", {
       method: "POST",
@@ -83,12 +157,23 @@ function PaperInner() {
     return () => {
       alive = false;
     };
-  }, [skill]);
+  }, [skill, exam, started, retry]);
 
   async function grade(i: number) {
     const q = questions?.[i];
+    if (!q || marks[i] === "checking" || locked) return;
+    // Number("") is 0: blank input must never be graded as zero.
+    if ((answers[i] ?? "").trim() === "" || !Number.isFinite(Number(answers[i]))) {
+      setGerr((g) => ({ ...g, [i]: "Enter a number." }));
+      return;
+    }
     const n = Number(answers[i]);
-    if (!q || !Number.isFinite(n) || marks[i] === "checking" || locked) return;
+    setGerr((g) => {
+      if (!(i in g)) return g;
+      const next = { ...g };
+      delete next[i];
+      return next;
+    });
     setMarks((m) => m.map((v, k) => (k === i ? "checking" : v)));
     try {
       const r = await fetch("/api/paper/grade", {
@@ -97,9 +182,13 @@ function PaperInner() {
         body: JSON.stringify({ check: q.check, tolerance: q.tolerance, answer: n }),
       });
       const d = await readApiJson<{ correct: boolean }>(r, "Grade failed.");
+      // A grade launched before expiry must not rewrite the final score.
+      // Uses the ticking clock (same staleness budget as `locked`).
+      if (exam && started && examExpired(deadline, now)) return;
       setMarks((m) => m.map((v, k) => (k === i ? (d.correct ? "right" : "wrong") : v)));
     } catch {
       setMarks((m) => m.map((v, k) => (k === i ? "idle" : v)));
+      setGerr((g) => ({ ...g, [i]: "Grading failed — retry." }));
     }
   }
 
@@ -125,18 +214,31 @@ function PaperInner() {
         }
       />
       {loading ? (
-        <div className="flex flex-col gap-3" aria-label="Forging paper">
+        <div className="flex flex-col gap-3" role="status" aria-label="Forging paper">
           <div className="arena-shimmer h-24 rounded-2xl" />
           <p className="text-center text-sm text-zinc-500">Forging 10 questions, verifying answers…</p>
         </div>
       ) : null}
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {error ? (
+        <div className="arena-card rounded-2xl p-6 text-center">
+          <p role="alert" className="text-sm text-zinc-300">
+            {error}
+          </p>
+          <button
+            type="button"
+            onClick={retryForge}
+            className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
+          >
+            Retry forge
+          </button>
+        </div>
+      ) : null}
       {!exam && questions ? (
         <Link
           href={`/paper?skill=${encodeURIComponent(skill)}&exam=1`}
           className="arena-btn-ghost mx-auto w-fit rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
         >
-          Retake as a 15-minute timed exam
+          Take as a 15-minute timed exam
         </Link>
       ) : null}
       {exam && questions && !started ? (
@@ -171,7 +273,7 @@ function PaperInner() {
             Q{i + 1} · <span className="font-bold text-amber-300">Lv {q.level}</span>
           </p>
           <MathText text={q.prompt_latex} className="mt-1 overflow-x-auto text-lg text-zinc-100" />
-          <p className="mt-1 text-sm text-zinc-400">💡 Hint: {q.hint}</p>
+          <p className="mt-1 text-sm text-zinc-400"><span aria-hidden="true">💡</span> Hint: {q.hint}</p>
           <div className="mt-3 flex gap-2">
             <input
               type="number"
@@ -190,11 +292,27 @@ function PaperInner() {
               type="button"
               onClick={() => void grade(i)}
               disabled={locked || marks[i] === "checking" || marks[i] === "right"}
+              aria-label={
+                marks[i] === "checking"
+                  ? `Checking answer ${i + 1}`
+                  : view(marks[i]) === "right"
+                    ? `Question ${i + 1} correct`
+                    : view(marks[i]) === "wrong"
+                      ? locked
+                        ? `Question ${i + 1} incorrect, paper locked`
+                        : `Question ${i + 1} incorrect, retry`
+                      : `Check answer ${i + 1}`
+              }
               className="arena-btn-primary shrink-0 rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
             >
               {marks[i] === "checking" ? "…" : view(marks[i]) === "right" ? "✓" : view(marks[i]) === "wrong" ? (locked ? "✗" : "Retry") : "Check"}
             </button>
           </div>
+          {gerr[i] ? (
+            <p role="alert" className="text-sm text-red-400">
+              {gerr[i]}
+            </p>
+          ) : null}
         </div>
       ))}
     </main>

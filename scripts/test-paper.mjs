@@ -77,6 +77,7 @@ ok(!GradeBody.safeParse({ check: { kind: "numeric", prompt_expr: "2*3" }, tolera
 
 // Mirror of lib/paper/exam.ts (timed exam mode).
 const EXAM_SECONDS = 900;
+const URGENT_MS = 60000;
 const examRemainingMs = (deadlineMs, nowMs) => Math.max(0, deadlineMs - nowMs);
 const examExpired = (deadlineMs, nowMs) => nowMs >= deadlineMs;
 function formatExamClock(ms) {
@@ -84,6 +85,7 @@ function formatExamClock(ms) {
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 ok(EXAM_SECONDS === 900, "exam is 15 minutes");
+ok(URGENT_MS === 60000, "urgent threshold is 60s");
 ok(formatExamClock(900000) === "15:00", "clock shows 15:00");
 ok(formatExamClock(61000) === "01:01", "clock pads minutes and seconds");
 ok(formatExamClock(0) === "00:00" && formatExamClock(-500) === "00:00", "clock clamps at zero");
