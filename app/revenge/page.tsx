@@ -118,6 +118,11 @@ export default function RevengePage() {
           <p className="mt-2 text-xs text-zinc-500">Fresh verified set — avoids your recent questions.</p>
         </div>
       ) : null}
+      {target ? (
+        <Link href="/misses" className="arena-btn-ghost mx-auto w-fit rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
+          Or drill the exact questions you missed
+        </Link>
+      ) : null}
       {target === null && !error ? (
         <div className="arena-card flex flex-col items-center gap-3 rounded-2xl p-6 text-center">
           <p className="font-display text-xl font-extrabold text-zinc-100">Clean record.</p>
