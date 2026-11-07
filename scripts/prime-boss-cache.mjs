@@ -1,10 +1,14 @@
 // Prime boss_question_cache for every skill in the graph: forge verified
 // 5-question sets and upsert them as ownerless templates. No boss rows created.
-// Run from arena/: npx -y tsx scripts/prime-boss-cache.mjs [--limit N] [--dry-run]
-// Needs arena/.env.local (MODEL_API_KEY + Supabase). Mirror of the cache key
+// Run from anywhere: npx -y tsx <arena>/scripts/prime-boss-cache.mjs [--limit N] [--dry-run]
+// Needs <arena>/.env.local (MODEL_API_KEY + Supabase). Mirror of the cache key
 // in lib/game/boss-cache.ts (BOSS_SET_VERSION): bump together.
 import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { generateBossQuestions } from "../lib/agents/boss-generator.ts";
+
+const ARENA = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const SET_VERSION = 1;
 const FRESH_MS = 12 * 3600 * 1000;
@@ -16,13 +20,14 @@ const LIMIT = limitIdx >= 0 ? Number(args[limitIdx + 1]) || 0 : 0;
 const DRY_RUN = args.includes("--dry-run");
 
 function loadEnv() {
-  const env = readFileSync("arena/.env.local", "utf8");
+  const env = readFileSync(join(ARENA, ".env.local"), "utf8");
   const get = (k) => (env.match(new RegExp(`^${k}=(.+)$`, "m")) || [])[1]?.trim();
   const MODEL_API_KEY = get("MODEL_API_KEY");
   const URL = get("NEXT_PUBLIC_SUPABASE_URL");
   const ANON = get("NEXT_PUBLIC_SUPABASE_ANON_KEY");
-  if (!MODEL_API_KEY || !URL || !ANON) throw new Error("Missing keys in arena/.env.local.");
-  process.env.MODEL_API_KEY = MODEL_API_KEY;
+  // Dry-run only lists targets via Supabase; forging needs the model key.
+  if (!URL || !ANON || (!DRY_RUN && !MODEL_API_KEY)) throw new Error("Missing keys in <arena>/.env.local.");
+  if (MODEL_API_KEY) process.env.MODEL_API_KEY = MODEL_API_KEY;
   const base = env.match(/^META_MODEL_API_BASE_URL=(.+)$/m)?.[1]?.trim();
   const model = env.match(/^META_MODEL=(.+)$/m)?.[1]?.trim();
   if (base) process.env.META_MODEL_API_BASE_URL = base;
@@ -31,7 +36,7 @@ function loadEnv() {
 }
 
 const { URL, ANON } = loadEnv();
-const graph = JSON.parse(readFileSync("arena/lib/graph/skill-graph.json", "utf8"));
+const graph = JSON.parse(readFileSync(join(ARENA, "lib/graph/skill-graph.json"), "utf8"));
 const ALL = graph.skills.map((s) => s.id);
 
 async function rest(path, opts = {}) {
