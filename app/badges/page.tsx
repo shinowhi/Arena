@@ -31,6 +31,7 @@ function BadgeGlyph({ id, className }: { id: string; className: string }) {
 export default function BadgesPage() {
   const [badges, setBadges] = useState<BadgeView[] | null>(null);
   const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -54,7 +55,7 @@ export default function BadgesPage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [retry]);
 
   const earned = badges?.filter((b) => b.earned).length ?? 0;
 
@@ -63,25 +64,38 @@ export default function BadgesPage() {
       <PageHeader
         kicker="This week"
         title={<>Weekly <span className="arena-title">badges</span></>}
-        sub="Six badges reset every 7 days. Scan, hit, and slay to earn them all."
+        sub="Six badges over the trailing 7 days. Scan, hit, and slay to earn them all."
         right={
           badges ? (
-            <span className="arena-num shrink-0 text-sm text-zinc-400">
+            <span className="arena-num shrink-0 text-sm text-zinc-400" aria-label={`${earned} of ${badges.length} badges earned`}>
               <span className="font-bold text-amber-300">{earned}</span>/{badges.length}
             </span>
           ) : undefined
         }
       />
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {error ? (
+        <div className="arena-card rounded-2xl p-6 text-center">
+          <p role="alert" className="text-sm text-zinc-300">
+            {error}
+          </p>
+          <button
+            type="button"
+            onClick={() => setRetry((r) => r + 1)}
+            className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
+          >
+            Retry
+          </button>
+        </div>
+      ) : null}
       {!badges && !error ? (
-        <div className="flex flex-col gap-3" aria-label="Loading badges">
+        <div className="flex flex-col gap-3" role="status" aria-label="Loading badges">
           <div className="arena-shimmer h-24 rounded-2xl" />
         </div>
       ) : null}
       {badges ? (
         <div className="grid grid-cols-2 gap-3">
           {badges.map((b) => {
-            const pct = Math.min(100, Math.round((b.progress / b.target) * 100));
+            const pct = b.target > 0 ? Math.min(100, Math.round((b.progress / b.target) * 100)) : 0;
             return (
               <div
                 key={b.id}
@@ -94,7 +108,7 @@ export default function BadgesPage() {
                   <p className="arena-num mt-1 rounded-full bg-amber-500/15 px-3 py-0.5 text-xs font-bold text-amber-300">Earned</p>
                 ) : (
                   <div className="mt-1 w-full">
-                    <div className="h-1 overflow-hidden rounded-full bg-zinc-800" role="progressbar" aria-valuenow={b.progress} aria-valuemax={b.target} aria-label={`${b.name} progress`}>
+                    <div className="h-1 overflow-hidden rounded-full bg-zinc-800" role="progressbar" aria-valuenow={b.progress} aria-valuemax={b.target} aria-valuetext={`${b.progress} of ${b.target}`} aria-label={`${b.name} progress`}>
                       <div className="h-full rounded-full bg-amber-400/70" style={{ width: `${pct}%` }} />
                     </div>
                     <p className="arena-num mt-1 text-xs text-zinc-500">
