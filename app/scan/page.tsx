@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import DiagnosisReveal from "@/components/DiagnosisReveal";
@@ -43,6 +43,9 @@ export default function ScanPage() {
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState(0);
   const [summoning, setSummoning] = useState(false);
+  // Sync ref guard: state/disabled apply only after re-render, so a same-tick
+  // double-click would otherwise summon twin bosses.
+  const summonRef = useRef(false);
   const [mode, setMode] = useState<"exam" | "life">("exam");
   const [jobs, setJobs] = useState<LifeJob[]>([]);
   const [forging, setForging] = useState(false);
@@ -319,7 +322,8 @@ export default function ScanPage() {
   }
 
   async function summon() {
-    if (!result || summoning) return;
+    if (!result || summonRef.current) return;
+    summonRef.current = true;
     setSummoning(true);
     setError("");
     const ctrl = new AbortController();
@@ -346,6 +350,7 @@ export default function ScanPage() {
     } finally {
       clearTimeout(timer);
       setSummoning(false);
+      summonRef.current = false;
     }
   }
 

@@ -239,6 +239,11 @@ function BossInner() {
 
   async function attack() {
     if (!boss || busy || boss.status !== "ALIVE") return;
+    // Number("") is 0: blank input must never attack as zero.
+    if (answer.trim() === "") {
+      setMsg("Enter a number.");
+      return;
+    }
     const n = Number(answer);
     if (!Number.isFinite(n)) {
       setMsg("Enter a number.");
@@ -330,9 +335,9 @@ function BossInner() {
       ) : null}
       {isRevenge ? (
         <div className="arena-enter rounded-2xl bg-red-950/40 p-4 text-center">
-          <p className="text-xs font-bold tracking-widest text-red-300 uppercase">Revenge match</p>
+          <p className="text-xs font-bold tracking-widest text-red-300 uppercase">Revenge boss</p>
           <p className="mt-1 text-sm text-zinc-300">
-            Fresh questions on {skillName(boss.skill_tag)} — none of your old ones return.
+            Fresh questions on {skillName(boss.skill_tag)} — avoids your recent ones.
           </p>
         </div>
       ) : null}
@@ -404,7 +409,7 @@ function BossInner() {
             ))}
           </div>
           <div className="relative">
-            <p className="text-3xl">🏆</p>
+            <p className="text-3xl" aria-hidden="true">🏆</p>
             <p className="arena-title font-display mt-2 text-3xl font-black">Boss slain.</p>
             <p className="mt-1 text-sm text-zinc-400">Skill patched. The root cause is closed.</p>
             {t0 > 0 ? <p className="mt-1 text-sm text-zinc-500">Slain in {fmt(now - t0)}</p> : null}
@@ -413,7 +418,7 @@ function BossInner() {
                 Back to arena
               </Link>
               <Link href="/scan" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
-                Scan another work
+                Scan more work
               </Link>
               <Link href="/revenge" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
                 Challenge revenge boss
@@ -475,7 +480,7 @@ function BossInner() {
             </button>
           </div>
           <MathText text={q.prompt_latex} className="overflow-x-auto text-xl text-zinc-100" />
-          <p className="text-sm text-zinc-400">💡 Hint: {q.hint}</p>
+          <p className="text-sm text-zinc-400"><span aria-hidden="true">💡</span> Hint: {q.hint}</p>
           <div className="flex gap-2">
             <input
               type="number"
