@@ -100,6 +100,7 @@ function BossInner() {
   const { id } = useParams<{ id: string }>();
   const search = useSearchParams();
   const rootParam = search.get("root") ?? "";
+  const isRevenge = search.get("revenge") === "1";
   const [boss, setBoss] = useState<BossView | null>(null);
   const [idx, setIdx] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -327,6 +328,14 @@ function BossInner() {
           “{taunt}”
         </p>
       ) : null}
+      {isRevenge ? (
+        <div className="arena-enter rounded-2xl bg-red-950/40 p-4 text-center">
+          <p className="text-xs font-bold tracking-widest text-red-300 uppercase">Revenge match</p>
+          <p className="mt-1 text-sm text-zinc-300">
+            Fresh questions on {skillName(boss.skill_tag)} — none of your old ones return.
+          </p>
+        </div>
+      ) : null}
       <div className="arena-enter arena-d1 arena-battleground relative overflow-hidden rounded-2xl border border-zinc-800 px-4 pt-4 pb-6">
         <div className="flex items-end justify-between gap-2">
           <div className={flash ? "arena-lunge" : "arena-float"}>
@@ -405,6 +414,9 @@ function BossInner() {
               </Link>
               <Link href="/scan" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
                 Scan another work
+              </Link>
+              <Link href="/revenge" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
+                Challenge revenge boss
               </Link>
               <button
                 type="button"
