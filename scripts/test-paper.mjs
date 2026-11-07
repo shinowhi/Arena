@@ -75,4 +75,19 @@ ok(GradeBody.safeParse({ check: { kind: "numeric", prompt_expr: "2*3" }, toleran
 ok(!GradeBody.safeParse({ check: { kind: "nope" }, tolerance: 0.001, answer: 6 }).success, "bad check rejected");
 ok(!GradeBody.safeParse({ check: { kind: "numeric", prompt_expr: "2*3" }, tolerance: 0.001, answer: NaN }).success, "NaN answer rejected");
 
+// Mirror of lib/paper/exam.ts (timed exam mode).
+const EXAM_SECONDS = 900;
+const examRemainingMs = (deadlineMs, nowMs) => Math.max(0, deadlineMs - nowMs);
+const examExpired = (deadlineMs, nowMs) => nowMs >= deadlineMs;
+function formatExamClock(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+ok(EXAM_SECONDS === 900, "exam is 15 minutes");
+ok(formatExamClock(900000) === "15:00", "clock shows 15:00");
+ok(formatExamClock(61000) === "01:01", "clock pads minutes and seconds");
+ok(formatExamClock(0) === "00:00" && formatExamClock(-500) === "00:00", "clock clamps at zero");
+ok(examRemainingMs(1000, 400) === 600 && examRemainingMs(1000, 1400) === 0, "remaining clamps at zero");
+ok(examExpired(1000, 1000) === true && examExpired(1000, 999) === false, "expiry at deadline");
+
 console.log(`PAPER TESTS OK: ${n} assertions`);
