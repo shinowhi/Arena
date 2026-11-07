@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
@@ -12,6 +12,7 @@ export default function RevengePage() {
   const [target, setTarget] = useState<Target | null | undefined>(undefined);
   const [error, setError] = useState("");
   const [summoning, setSummoning] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -38,9 +39,15 @@ export default function RevengePage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [retry]);
+
+  // Sync ref guard: disabled={summoning} applies only after re-render, so a
+  // same-tick double-click would forge two bosses without this.
+  const summonRef = useRef(false);
 
   async function summon() {
+    if (summonRef.current) return;
+    summonRef.current = true;
     setSummoning(true);
     setError("");
     try {
@@ -51,6 +58,7 @@ export default function RevengePage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Revenge summon failed.");
       setSummoning(false);
+      summonRef.current = false;
     }
   }
 
@@ -59,20 +67,31 @@ export default function RevengePage() {
       <PageHeader
         kicker="Rematch"
         title={<>Revenge <span className="arena-title">boss</span></>}
-        sub="Forged from your own misses: your most-missed skill, five fresh questions, zero repeats."
+        sub="Forged from your own misses: your most-missed skill, five fresh questions that avoid your recent ones."
       />
       {target === undefined && !error ? (
-        <div className="flex flex-col gap-3" aria-label="Finding your misses">
+        <div className="flex flex-col gap-3" role="status" aria-label="Finding your misses">
           <div className="arena-shimmer h-24 rounded-2xl" />
           <p className="text-center text-sm text-zinc-500">Counting your misses…</p>
         </div>
       ) : null}
-      {error ? (
+      {error && !target ? (
         <div className="arena-card rounded-2xl p-6 text-center">
-          <p className="text-sm text-zinc-300">{error}</p>
-          <Link href="/arena" className="arena-btn-ghost mt-3 inline-block rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
-            Back to arena
-          </Link>
+          <p role="alert" className="text-sm text-zinc-300">
+            {error}
+          </p>
+          <div className="mt-3 flex justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => setRetry((r) => r + 1)}
+              className="arena-btn-primary rounded-full px-5 py-2 text-sm font-bold text-white"
+            >
+              Retry lookup
+            </button>
+            <Link href="/arena" className="arena-btn-ghost inline-block rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
+              Back to arena
+            </Link>
+          </div>
         </div>
       ) : null}
       {target ? (
@@ -91,7 +110,12 @@ export default function RevengePage() {
           >
             {summoning ? "Forging rematch…" : "Summon revenge boss"}
           </button>
-          <p className="mt-2 text-xs text-zinc-500">Fresh verified set — none of your old questions return.</p>
+          {error ? (
+            <p role="alert" className="mt-2 text-sm text-red-400">
+              {error}
+            </p>
+          ) : null}
+          <p className="mt-2 text-xs text-zinc-500">Fresh verified set — avoids your recent questions.</p>
         </div>
       ) : null}
       {target === null && !error ? (

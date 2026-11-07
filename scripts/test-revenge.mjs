@@ -91,6 +91,8 @@ const avoid = collectAvoidPrompts(bosses);
 ok(avoid.length === 3 && avoid[0] === "q1", "dedupe + skip blanks");
 ok(avoid[1].length === 300, "long prompt truncated");
 ok(collectAvoidPrompts(bosses, 2).length === 2, "limit caps output");
+const many = [{ questions: Array.from({ length: 13 }, (_, i) => ({ prompt_latex: `pq${i}` })) }];
+ok(collectAvoidPrompts(many).length === 12, "default limit caps at 12");
 ok(collectAvoidPrompts([]).length === 0, "no bosses, no avoid");
 
 // Contracts.

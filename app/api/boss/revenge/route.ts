@@ -13,7 +13,9 @@ const TargetOut = z.object({
     .nullable(),
 });
 
-async function findTarget(playerId: string) {
+type Target = { skill_tag: string; skill_name: string; wrong_count: number };
+
+async function findTarget(playerId: string): Promise<{ target: Target | null; dbError: boolean }> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("attacks")
@@ -22,7 +24,8 @@ async function findTarget(playerId: string) {
     .eq("correct", false)
     .order("created_at", { ascending: false })
     .limit(100);
-  if (error || !data) return null;
+  // DB outage must surface as 500, never masquerade as "no misses".
+  if (error || !data) return { target: null, dbError: true };
   const wrongs = (data as Array<{ created_at: string; bosses: { skill_tag: string } | Array<{ skill_tag: string }> }>)
     .map((r) => ({
       created_at: r.created_at,
@@ -30,20 +33,29 @@ async function findTarget(playerId: string) {
     }))
     .filter((w) => isValidSkill(w.skill_tag));
   const picked = pickRevengeTarget(wrongs);
-  if (!picked) return null;
-  return { skill_tag: picked.skill_tag, skill_name: skillName(picked.skill_tag), wrong_count: picked.wrong_count };
+  if (!picked) return { target: null, dbError: false };
+  return {
+    target: { skill_tag: picked.skill_tag, skill_name: skillName(picked.skill_tag), wrong_count: picked.wrong_count },
+    dbError: false,
+  };
 }
 
 export async function GET() {
-  const playerId = await getOrCreatePlayerId();
-  const target = await findTarget(playerId);
-  return NextResponse.json(TargetOut.parse({ target }));
+  try {
+    const playerId = await getOrCreatePlayerId();
+    const { target, dbError } = await findTarget(playerId);
+    if (dbError) return NextResponse.json({ error: "Revenge lookup failed — retry." }, { status: 500 });
+    return NextResponse.json(TargetOut.parse({ target }));
+  } catch {
+    return NextResponse.json({ error: "Revenge lookup failed — retry." }, { status: 500 });
+  }
 }
 
 export async function POST() {
   try {
     const playerId = await getOrCreatePlayerId();
-    const target = await findTarget(playerId);
+    const { target, dbError } = await findTarget(playerId);
+    if (dbError) return NextResponse.json({ error: "Revenge lookup failed — retry." }, { status: 500 });
     if (!target) return NextResponse.json({ error: "No misses yet — fight a boss first." }, { status: 404 });
     const supabase = await createClient();
     const { data: recent } = await supabase
@@ -71,7 +83,7 @@ export async function POST() {
       })
       .select("id")
       .single();
-    if (error || !data) throw new Error("Could not save revenge boss.");
+    if (error || !data) return NextResponse.json({ error: "Could not save revenge boss — retry." }, { status: 500 });
     return NextResponse.json({
       boss_id: (data as { id: string }).id,
       skill_tag: target.skill_tag,
@@ -80,7 +92,11 @@ export async function POST() {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Revenge summon failed.";
+    // Defense-in-depth only: findTarget pre-filters by isValidSkill.
     const isSkill = err instanceof MetaLLMError && msg.startsWith("Invalid skill_tag");
-    return NextResponse.json({ error: msg }, { status: isSkill ? 400 : 422 });
+    if (isSkill) return NextResponse.json({ error: msg }, { status: 400 });
+    // Never leak provider internals (keys, upstream bodies) to the client.
+    console.error("revenge forge failed:", msg);
+    return NextResponse.json({ error: "Revenge forge failed — retry." }, { status: 422 });
   }
 }
