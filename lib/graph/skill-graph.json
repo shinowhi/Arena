@@ -500,6 +500,285 @@
       "grade": 14,
       "gradeLabel": "University",
       "subject": "mechanics"
+    },
+    {
+      "id": "k6_fractions",
+      "name": "Fractions",
+      "description": "Add, subtract, multiply, and divide fractions and mixed numbers.",
+      "prereqs": [],
+      "grade": 6,
+      "gradeLabel": "Grade 6",
+      "subject": "k12"
+    },
+    {
+      "id": "k6_decimals_percent",
+      "name": "Decimals and percent",
+      "description": "Convert and compute with decimals and percentages.",
+      "prereqs": ["k6_fractions"],
+      "grade": 6,
+      "gradeLabel": "Grade 6",
+      "subject": "k12"
+    },
+    {
+      "id": "k6_ratio_proportion",
+      "name": "Ratios and proportion",
+      "description": "Solve direct and inverse proportion and ratio-sharing problems.",
+      "prereqs": ["k6_fractions"],
+      "grade": 6,
+      "gradeLabel": "Grade 6",
+      "subject": "k12"
+    },
+    {
+      "id": "k6_gcd_lcm",
+      "name": "GCD and LCM",
+      "description": "Find greatest common divisors and least common multiples.",
+      "prereqs": [],
+      "grade": 6,
+      "gradeLabel": "Grade 6",
+      "subject": "k12"
+    },
+    {
+      "id": "k6_area_perimeter",
+      "name": "Area and perimeter",
+      "description": "Perimeter and area of rectangles, triangles, and parallelograms.",
+      "prereqs": ["k6_fractions"],
+      "grade": 6,
+      "gradeLabel": "Grade 6",
+      "subject": "k12"
+    },
+    {
+      "id": "k7_integers",
+      "name": "Integers and absolute value",
+      "description": "Operate on negative integers and evaluate absolute values.",
+      "prereqs": [],
+      "grade": 7,
+      "gradeLabel": "Grade 7",
+      "subject": "k12"
+    },
+    {
+      "id": "k7_powers_roots",
+      "name": "Powers and square roots",
+      "description": "Integer powers and square roots of perfect squares.",
+      "prereqs": ["k7_integers"],
+      "grade": 7,
+      "gradeLabel": "Grade 7",
+      "subject": "k12"
+    },
+    {
+      "id": "k7_linear_expressions",
+      "name": "Linear expressions",
+      "description": "Simplify and evaluate linear expressions in one variable.",
+      "prereqs": ["k7_integers"],
+      "grade": 7,
+      "gradeLabel": "Grade 7",
+      "subject": "k12"
+    },
+    {
+      "id": "k7_mean_stats",
+      "name": "Mean and averages",
+      "description": "Mean, median, and mode of small datasets.",
+      "prereqs": ["k6_fractions"],
+      "grade": 7,
+      "gradeLabel": "Grade 7",
+      "subject": "k12"
+    },
+    {
+      "id": "k7_angles_triangles",
+      "name": "Angles and triangles",
+      "description": "Angle sums and unknown angles in triangles.",
+      "prereqs": [],
+      "grade": 7,
+      "gradeLabel": "Grade 7",
+      "subject": "k12"
+    },
+    {
+      "id": "k8_factor_polynomials",
+      "name": "Factoring quadratics",
+      "description": "Factor quadratic polynomials and evaluate them at points.",
+      "prereqs": ["k7_linear_expressions"],
+      "grade": 8,
+      "gradeLabel": "Grade 8",
+      "subject": "k12"
+    },
+    {
+      "id": "k8_linear_equations",
+      "name": "Linear equations",
+      "description": "Solve first-degree equations in one variable.",
+      "prereqs": ["k7_linear_expressions"],
+      "grade": 8,
+      "gradeLabel": "Grade 8",
+      "subject": "k12"
+    },
+    {
+      "id": "k8_inequalities",
+      "name": "Linear inequalities",
+      "description": "Solve first-degree inequalities; report boundary integers.",
+      "prereqs": ["k8_linear_equations"],
+      "grade": 8,
+      "gradeLabel": "Grade 8",
+      "subject": "k12"
+    },
+    {
+      "id": "k8_pythagorean",
+      "name": "Pythagorean theorem",
+      "description": "Find missing sides of right triangles.",
+      "prereqs": ["k7_powers_roots"],
+      "grade": 8,
+      "gradeLabel": "Grade 8",
+      "subject": "k12"
+    },
+    {
+      "id": "k8_volume_prisms",
+      "name": "Volume of prisms",
+      "description": "Volume and surface area of prisms and cylinders.",
+      "prereqs": ["k6_area_perimeter"],
+      "grade": 8,
+      "gradeLabel": "Grade 8",
+      "subject": "k12"
+    },
+    {
+      "id": "k9_quadratic_equations",
+      "name": "Quadratic equations",
+      "description": "Solve second-degree equations; report the larger root.",
+      "prereqs": ["k8_factor_polynomials"],
+      "grade": 9,
+      "gradeLabel": "Grade 9",
+      "subject": "k12"
+    },
+    {
+      "id": "k9_vieta",
+      "name": "Vieta formulas",
+      "description": "Sum and product of quadratic roots without solving.",
+      "prereqs": ["k9_quadratic_equations"],
+      "grade": 9,
+      "gradeLabel": "Grade 9",
+      "subject": "k12"
+    },
+    {
+      "id": "k9_systems_2eq",
+      "name": "Systems of two equations",
+      "description": "Solve 2x2 linear systems; report the x value.",
+      "prereqs": ["k8_linear_equations"],
+      "grade": 9,
+      "gradeLabel": "Grade 9",
+      "subject": "k12"
+    },
+    {
+      "id": "k9_radicals",
+      "name": "Radicals",
+      "description": "Simplify and evaluate square-root expressions to a number.",
+      "prereqs": ["k7_powers_roots"],
+      "grade": 9,
+      "gradeLabel": "Grade 9",
+      "subject": "k12"
+    },
+    {
+      "id": "k9_trig_ratios",
+      "name": "Trigonometric ratios",
+      "description": "Sine, cosine, tangent in right triangles and special angles.",
+      "prereqs": ["k8_pythagorean"],
+      "grade": 9,
+      "gradeLabel": "Grade 9",
+      "subject": "k12"
+    },
+    {
+      "id": "k10_quadratic_functions",
+      "name": "Quadratic functions",
+      "description": "Vertex and extremum values of parabolas.",
+      "prereqs": ["k9_quadratic_equations"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "k12"
+    },
+    {
+      "id": "k10_vectors_2d",
+      "name": "2D vectors",
+      "description": "Magnitude and dot product of plane vectors.",
+      "prereqs": ["k8_pythagorean"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "k12"
+    },
+    {
+      "id": "k10_counting",
+      "name": "Counting methods",
+      "description": "Permutations and combinations counts.",
+      "prereqs": [],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "k12"
+    },
+    {
+      "id": "k10_coord_geometry",
+      "name": "Coordinate geometry",
+      "description": "Distance, midpoint, and slope on the coordinate plane.",
+      "prereqs": ["k8_linear_equations"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "k12"
+    },
+    {
+      "id": "k11_sequences",
+      "name": "Sequences and series",
+      "description": "Nth terms and finite sums of arithmetic and geometric sequences.",
+      "prereqs": ["k7_linear_expressions"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "k12"
+    },
+    {
+      "id": "k11_probability",
+      "name": "Classical probability",
+      "description": "Favorable-over-total probabilities as decimal values.",
+      "prereqs": ["k10_counting"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "k12"
+    },
+    {
+      "id": "k11_trig_equations",
+      "name": "Trigonometric equations",
+      "description": "Smallest positive solution of basic trig equations, in degrees.",
+      "prereqs": ["k9_trig_ratios"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "k12"
+    },
+    {
+      "id": "k11_vectors_3d",
+      "name": "3D vectors",
+      "description": "Magnitude and dot product of space vectors.",
+      "prereqs": ["k10_vectors_2d"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "k12"
+    },
+    {
+      "id": "k12_complex_modulus",
+      "name": "Complex modulus",
+      "description": "Modulus of complex numbers a+bi.",
+      "prereqs": ["k7_powers_roots"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "k12"
+    },
+    {
+      "id": "k12_growth_decay",
+      "name": "Exponential growth",
+      "description": "Evaluate exponential growth and decay models at given times.",
+      "prereqs": ["k11_sequences"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "k12"
+    },
+    {
+      "id": "k12_stats_spread",
+      "name": "Variance and deviation",
+      "description": "Population variance and standard deviation of datasets.",
+      "prereqs": ["k7_mean_stats"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "k12"
     }
   ]
 }

@@ -39,7 +39,7 @@ function isValidRootCause(root, weak) {
 let n = 0;
 const ok = (cond, msg) => { n++; assert.ok(cond, msg); };
 
-ok(graph.skills.length >= 30 && graph.skills.length <= 64, "30-64 skills, got " + graph.skills.length);
+ok(graph.skills.length >= 30 && graph.skills.length <= 120, "30-120 skills, got " + graph.skills.length);
 for (const s of graph.skills) {
   for (const p of s.prereqs) ok(byId.has(p), "dangling prereq " + s.id + " -> " + p);
 }
@@ -47,6 +47,10 @@ ok(isValidRootCause("chain_rule", "integration_by_parts"), "chain_rule is root o
 ok(isValidRootCause("limit_laws", "lhopital_rule"), "limit_laws is root of lhopital_rule");
 ok(isValidRootCause("differentiation_rules", "differentiation_rules"), "equal root accepted");
 ok(!isValidRootCause("integration_by_parts", "chain_rule"), "reverse direction rejected");
+ok(isValidRootCause("k7_linear_expressions", "k9_systems_2eq"), "k12 chain root resolves");
+ok(isValidRootCause("k7_integers", "k9_systems_2eq"), "k12 transitive root resolves");
+ok(!isValidRootCause("k9_systems_2eq", "k7_linear_expressions"), "k12 reverse direction rejected");
+ok(byId.get("k9_quadratic_equations").subject === "k12", "k12 subject tagged");
 ok(!isValidSkill("nope_not_a_skill"), "unknown id rejected");
 
 const good1 = { items: [{ cau_hoi: "d/dx x^2 at x=3", dap_an_sinh_vien: "6", skill_tag: ["differentiation_rules"] }] };

@@ -2,10 +2,11 @@ import graph from "../graph/skill-graph.json" with { type: "json" };
 
 export type SkillNode = { id: string; name: string; description: string; prereqs: string[]; grade: number; gradeLabel: string; subject?: Subject };
 
-export type Subject = "calculus" | "mechanics";
+export type Subject = "calculus" | "mechanics" | "k12";
 
 export function skillSubject(id: string): Subject {
-  return byId.get(id)?.subject === "mechanics" ? "mechanics" : "calculus";
+  const s = byId.get(id)?.subject;
+  return s === "mechanics" || s === "k12" ? s : "calculus";
 }
 
 const skills = (graph as { skills: SkillNode[] }).skills;

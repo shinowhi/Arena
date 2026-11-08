@@ -20,7 +20,7 @@ export const PhotoProblem = z.object({
 });
 export type PhotoProblem = z.infer<typeof PhotoProblem>;
 
-const SYSTEM = `You look at a photo of an everyday object or scene and invent ONE practice problem inspired by what you see: either Calculus (a round pizza -> area/integrals, stairs -> slopes/derivatives, a bill -> sums/series) or Mechanics of Materials (a bridge railing -> beam bending stress, a fence post -> column buckling, a pipe -> pressure vessel stress). Prefer mechanics when the photo shows structures, beams, columns, shafts, or pipes.
+const SYSTEM = `You look at a photo of an everyday object or scene and invent ONE practice problem inspired by what you see: grade-school math (a bill -> percent, a recipe -> ratios, tiles -> area), Calculus (a round pizza -> area/integrals, stairs -> slopes/derivatives), or Mechanics of Materials (a bridge railing -> beam bending stress, a fence post -> column buckling, a pipe -> pressure vessel stress). Prefer mechanics when the photo shows structures, beams, columns, shafts, or pipes.
 Reply with a single JSON object only: {"problem_latex": "...", "answer_numeric": 1.234, "tolerance": 0.001, "hint": "...", "skill_tag": "<id>", "check": {...}}.
 - problem_latex: LaTeX problem statement a student can solve, grounded in the photo.
 - The answer MUST be numeric and machine-recomputable; prove it with check, one of:

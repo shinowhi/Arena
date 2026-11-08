@@ -8,7 +8,7 @@
 import { z } from "zod";
 import { chatJson, MetaLLMError } from "../llm/meta";
 import { BossOutput, BossQuestion } from "./boss-generator";
-import { isValidSkill, skillName, skillSubject } from "../graph/skills";
+import { isValidSkill, skillGradeLabel, skillName, skillSubject } from "../graph/skills";
 import { verifyAnswer } from "../verify/math-verifier";
 
 export const PaperOutput = z.object({ questions: z.array(BossQuestion).length(10) });
@@ -49,12 +49,22 @@ Reply JSON only: {"questions": [{"level": 1, "prompt_latex": "...", "answer_nume
 - Tolerance: 0.1% of the answer magnitude, at least 0.001 (e.g. answer 80 -> tolerance 0.08).
 - Plain ASCII words only outside math.`;
 
+const K12_SYSTEM = `You write 5 isomorphic grade-school math practice questions (same shape, different numbers, strictly rising difficulty) for ONE skill at the grade given in the user message: exactly one question per level 1..5. Every question MUST reduce to ONE numeric computation a machine can recompute with plain arithmetic: evaluate, solve for one unknown, count, or measure.
+Reply JSON only: {"questions": [{"level": 1, "prompt_latex": "...", "answer_numeric": 42, "tolerance": 0.042, "hint": "...", "check": {...}}]}
+- prompt_latex: LaTeX problem statement shown to the student. State ALL given values; name the wanted quantity, e.g. "Give the larger root." or "Give the probability as a decimal."
+- The wanted answer is ALWAYS a single raw number (units live in the prompt only, never in answer_numeric).
+- check: ALWAYS {"kind": "numeric", "prompt_expr": "<full mathjs expression>"} where prompt_expr computes the answer from the givens in ONE expression. Use sqrt(), pi, ^, factorial() as needed; mathjs has no nCr — write combinations out (e.g. C(10,3) -> "10*9*8/(3*2*1)").
+- One concept per question: never ask for two unknowns.
+- Grade discipline: Grade 6-7 use small integers and simple fractions; Grade 8-9 allow radicals-as-decimals, systems, trig of special angles; Grade 10-12 allow vectors, combinatorics, probability, complex modulus, growth models. NEVER use calculus (no derivatives, integrals, or limits).
+- Tolerance: 0.1% of the answer magnitude, at least 0.001. Exact integers get tolerance 0.001.
+- Plain ASCII words only outside math.`;
+
 type Q = z.infer<typeof BossQuestion>;
 
 // One 5-question set. A single 10-question call overflows the output window
 // (schema failures), so papers are forged as 2 sequential sets; set B is told
 // to use different numbers/givens from set A.
-async function genSet(skill_tag: string, system: string, avoid: string): Promise<Q[]> {
+async function genSet(skill_tag: string, system: string, avoid: string, gradeHint: string): Promise<Q[]> {
   let failed: Q[] = [];
   for (let round = 0; round < 2; round++) {
     const extra =
@@ -67,7 +77,7 @@ async function genSet(skill_tag: string, system: string, avoid: string): Promise
       BossOutput,
       [
         { role: "system", content: system },
-        { role: "user", content: `Skill: ${skill_tag} (${skillName(skill_tag)}).${avoid}${extra}` },
+        { role: "user", content: `Skill: ${skill_tag} (${skillName(skill_tag)}).${gradeHint}${avoid}${extra}` },
       ],
       { maxTokens: 8000 },
     );
@@ -79,11 +89,13 @@ async function genSet(skill_tag: string, system: string, avoid: string): Promise
 
 export async function generatePaper(skill_tag: string): Promise<PaperOutput> {
   if (!isValidSkill(skill_tag)) throw new MetaLLMError(`Invalid skill_tag: ${skill_tag}`);
-  const system = skillSubject(skill_tag) === "mechanics" ? MECHANICS_SYSTEM : SYSTEM;
-  const setA = await genSet(skill_tag, system, "");
+  const subject = skillSubject(skill_tag);
+  const system = subject === "mechanics" ? MECHANICS_SYSTEM : subject === "k12" ? K12_SYSTEM : SYSTEM;
+  const gradeHint = subject === "k12" ? ` Grade: ${skillGradeLabel(skill_tag)}.` : "";
+  const setA = await genSet(skill_tag, system, "", gradeHint);
   const avoid =
     `\nWrite a SECOND set of 5 with different numbers and givens from the first set (do not repeat them). Reply JSON only, no explanations. First set for reference: ${setA.map((q) => `L${q.level}:${q.prompt_latex.slice(0, 80)}`).join(" / ").slice(0, 900)}`;
-  const setB = await genSet(skill_tag, system, avoid);
+  const setB = await genSet(skill_tag, system, avoid, gradeHint);
   const questions = [...setA, ...setB].sort((a, b) => a.level - b.level);
   return PaperOutput.parse({ questions });
 }

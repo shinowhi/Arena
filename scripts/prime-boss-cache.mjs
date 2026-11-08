@@ -17,6 +17,8 @@ const CONCURRENCY = 3;
 const args = process.argv.slice(2);
 const limitIdx = args.indexOf("--limit");
 const LIMIT = limitIdx >= 0 ? Number(args[limitIdx + 1]) || 0 : 0;
+const onlyIdx = args.indexOf("--only");
+const ONLY = onlyIdx >= 0 ? args[onlyIdx + 1].split(",").map((s) => s.trim()).filter(Boolean) : [];
 const DRY_RUN = args.includes("--dry-run");
 
 function loadEnv() {
@@ -56,6 +58,10 @@ const fresh = new Set(
     .map((r) => r.skill_tag),
 );
 let targets = ALL.filter((id) => !fresh.has(id));
+if (ONLY.length > 0) {
+  const want = new Set(ONLY);
+  targets = targets.filter((id) => want.has(id));
+}
 if (LIMIT > 0) targets = targets.slice(0, LIMIT);
 console.log(`Skills: ${ALL.length}, fresh: ${fresh.size}, to forge: ${targets.length}${DRY_RUN ? " (dry run)" : ""}`);
 if (DRY_RUN) {

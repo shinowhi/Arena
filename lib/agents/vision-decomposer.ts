@@ -12,7 +12,7 @@ export type DecomposedItem = z.infer<typeof DecomposedItem>;
 export const DecomposeOutput = z.object({ items: z.array(DecomposedItem).min(1) });
 export type DecomposeOutput = z.infer<typeof DecomposeOutput>;
 
-const SYSTEM = `You read a photo of Calculus 1 / Grade-12 math homework, a Mechanics of Materials problem (beam and free-body diagrams, cross-sections, stress/strain calculations), or an exam, and split it into problems.
+const SYSTEM = `You read a photo of math homework (grades 6-12, Calculus 1, or Mechanics of Materials: beam and free-body diagrams, cross-sections, stress/strain calculations), or an exam, and split it into problems.
 Reply with a single JSON object only: {"items": [{"cau_hoi": "...", "dap_an_sinh_vien": "...", "skill_tag": ["id1"]}]}.
 - cau_hoi: the problem statement, LaTeX when it contains math.
 - dap_an_sinh_vien: the student written answer, "" when not visible.

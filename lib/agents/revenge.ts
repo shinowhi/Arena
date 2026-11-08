@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { chatJson, MetaLLMError } from "../llm/meta";
 import { BossOutput, type BossQuestion } from "./boss-generator";
-import { isValidSkill, skillName, skillSubject } from "../graph/skills";
+import { isValidSkill, skillGradeLabel, skillName, skillSubject } from "../graph/skills";
 import { verifyAnswer } from "../verify/math-verifier";
 
 // Revenge Boss: a rematch forged from the player's own misses. The target is
@@ -83,9 +83,23 @@ Reply JSON only: {"questions": [{"level": 1, "prompt_latex": "...", "answer_nume
 - Plain ASCII words only outside math.
 - REMATCH RULE: every question must differ in shape AND numbers from each AVOID prompt below. Never restate, renumber, or mirror one.`;
 
+const K12_SYSTEM = `You write 5 isomorphic grade-school math practice questions (same shape, different numbers, strictly rising difficulty) for ONE skill at the grade given in the user message. Every question MUST reduce to ONE numeric computation a machine can recompute with plain arithmetic: evaluate, solve for one unknown, count, or measure.
+Reply JSON only: {"questions": [{"level": 1, "prompt_latex": "...", "answer_numeric": 42, "tolerance": 0.042, "hint": "...", "check": {...}}]}
+- Exactly one question per level 1..5.
+- prompt_latex: LaTeX problem statement shown to the student. State ALL given values; name the wanted quantity, e.g. "Give the larger root." or "Give the probability as a decimal."
+- The wanted answer is ALWAYS a single raw number (units live in the prompt only, never in answer_numeric).
+- check: ALWAYS {"kind": "numeric", "prompt_expr": "<full mathjs expression>"} where prompt_expr computes the answer from the givens in ONE expression. Example: solve 3x+5=20, wanted x -> prompt_expr "(20-5)/3". Use sqrt(), pi, ^, factorial() as needed; mathjs has no nCr — write combinations out (e.g. C(10,3) -> "10*9*8/(3*2*1)").
+- One concept per question: never ask for two unknowns.
+- Grade discipline: Grade 6-7 use small integers and simple fractions; Grade 8-9 allow radicals-as-decimals, systems, trig of special angles; Grade 10-12 allow vectors, combinatorics, probability, complex modulus, growth models. NEVER use calculus (no derivatives, integrals, or limits).
+- Tolerance: 0.1% of the answer magnitude, at least 0.001. Exact integers get tolerance 0.001.
+- Plain ASCII words only outside math.
+- REMATCH RULE: every question must differ in shape AND numbers from each AVOID prompt below. Never restate, renumber, or mirror one.`;
+
 export async function generateRevengeQuestions(skill_tag: string, avoid: string[]): Promise<BossQuestion[]> {
   if (!isValidSkill(skill_tag)) throw new MetaLLMError(`Invalid skill_tag: ${skill_tag}`);
-  const system = skillSubject(skill_tag) === "mechanics" ? MECHANICS_SYSTEM : SYSTEM;
+  const subject = skillSubject(skill_tag);
+  const system = subject === "mechanics" ? MECHANICS_SYSTEM : subject === "k12" ? K12_SYSTEM : SYSTEM;
+  const gradeHint = subject === "k12" ? ` Grade: ${skillGradeLabel(skill_tag)}.` : "";
   const avoidBlock = avoid.length > 0 ? `\nAVOID (already seen, never repeat):\n${avoid.map((p, i) => `${i + 1}. ${p}`).join("\n")}` : "";
   let failed: BossQuestion[] = [];
   for (let round = 0; round < 3; round++) {
@@ -99,7 +113,7 @@ export async function generateRevengeQuestions(skill_tag: string, avoid: string[
       BossOutput,
       [
         { role: "system", content: system },
-        { role: "user", content: `Skill: ${skill_tag} (${skillName(skill_tag)}).${avoidBlock}${extra}` },
+        { role: "user", content: `Skill: ${skill_tag} (${skillName(skill_tag)}).${gradeHint}${avoidBlock}${extra}` },
       ],
       { maxTokens: 8000 },
     );
