@@ -5,18 +5,22 @@ import { z } from "zod";
 // rotates daily (FNV hash of skill+date) so "today's paper" is stable all day
 // and fresh tomorrow. Levels cycle per skill for a realistic easy→hard mix.
 
-export const MockQuestion = z.object({
-  skill_tag: z.string().min(1),
-  skill_name: z.string().min(1),
+export const StrippedQ = z.object({
   level: z.number().int().min(1).max(5),
   prompt_latex: z.string().min(1),
   hint: z.string(),
   tolerance: z.number().positive(),
   check: z.unknown(),
 });
+
+export const MockQuestion = StrippedQ.extend({
+  skill_tag: z.string().min(1),
+  skill_name: z.string().min(1),
+});
 export type MockQuestion = z.infer<typeof MockQuestion>;
 
-export type MockSet = { skill_tag: string; skill_name: string; questions: MockQuestion[] };
+// Cache rows carry no skill fields; buildMock stamps them on.
+export type MockSet = { skill_tag: string; skill_name: string; questions: z.infer<typeof StrippedQ>[] };
 
 export type MockConfig = {
   skillsPerMock: number;
