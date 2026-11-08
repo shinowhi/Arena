@@ -461,6 +461,9 @@ function BossInner() {
               <Link href="/gauntlet" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
                 Gauntlet boss
               </Link>
+              <Link href="/pvp" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
+                PVP duel
+              </Link>
               <button
                 type="button"
                 onClick={copyWin}
