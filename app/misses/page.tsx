@@ -137,6 +137,13 @@ export default function MissesPage() {
               disabled={marks[i] === "right"}
               className="arena-input arena-num min-w-0 flex-1 rounded-xl px-4 py-2 text-zinc-100 placeholder:text-zinc-600 disabled:opacity-50"
             />
+            <Link
+              href={`/tutor?ctx=miss&boss=${encodeURIComponent(q.boss_id)}&idx=${q.question_index}`}
+              aria-label={`Ask the tutor about missed question ${i + 1}`}
+              className="arena-btn-ghost shrink-0 rounded-full px-5 py-2 text-sm font-bold text-zinc-200"
+            >
+              Ask tutor
+            </Link>
             <button
               type="button"
               onClick={() => void grade(i)}
