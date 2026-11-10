@@ -22,7 +22,7 @@ Show (live, no cuts):
 1. `/scan` — click a sample photo (pre-verified, no upload fumble), laser line sweeps, click Analyze. Narrate over the staged progress ("reading handwriting… mapping skills… tracing root cause…").
 2. Diagnosis card appears: weak skill + root cause + confidence.
 3. Click "View on skill graph" — weak node glows red, root cause amber, foundations trail left.
-Say: "Our vision agent reads the handwriting directly — no OCR. A second agent maps the mistake onto a 36-skill calculus graph and traces it back to the root cause. Here the student failed integrals, but the root is algebraic manipulation — that is what we patch."
+Say: "Our vision agent reads the handwriting directly — no OCR. A second agent maps the mistake onto an 81-skill graph — calculus, mechanics, K12 math — and traces it back to the root cause. Here the student failed integrals, but the root is algebraic manipulation — that is what we patch."
 
 ## 1:30-2:30 — The boss fight
 
@@ -36,7 +36,7 @@ Say: "The boss is five isomorphic questions — same shape, new numbers, rising 
 ## 2:30-3:00 — Slay and close
 
 Show: answer the last questions fast (jump cuts allowed), boss dies, "Boss slain" screen.
-Say: "Boss slain — one skill patched. Next: more subjects, spaced-rematch bosses, and teacher dashboards. Students stop drilling blindly; they hunt exactly what is broken. Thank you."
+Say: "Boss slain — one skill patched. Already live: national exam mocks, an AI tutor, and ranked duels. Next: teacher dashboards. Students stop drilling blindly; they hunt exactly what is broken. Thank you."
 End card: repo URL + "Built with Muse Spark 1.3 via the Meta Model API".
 
 ## Fallbacks
