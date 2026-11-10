@@ -64,6 +64,14 @@ function gradeSelection(q, selected) {
   return Number.isInteger(selected) && selected >= 0 && selected <= 3 && selected === q.answer_index;
 }
 
+// Mirror of reviewAllowed in lib/agents/exam.ts.
+function reviewAllowed(startedAt, totalMinutes, now = new Date()) {
+  const start = new Date(startedAt).getTime();
+  const t = now instanceof Date ? now.getTime() : new Date(now).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(t)) return false;
+  return t >= start + totalMinutes * 60_000;
+}
+
 function assembleReview(rows, config, p3) {
   const byId = new Map(rows.map((r) => [r.skill_tag, r]));
   return activeSections(config, p3).map((s) => {
@@ -140,5 +148,11 @@ ok(rev[0].questions[0].answer_index === 0 && rev[0].questions[3].answer_index ==
 ok(rev.every((s) => s.questions.every((q) => q.options.length === 4 && !("check" in q))), "review 4 options no check");
 ok(rev[2].questions[0].no === 61, "review numbering matches mock");
 assert.throws(() => assembleReview(vactRows.slice(0, 4), VACT), "review short paper throws");
+// Review gate: locked mid-paper, open at/after expiry (boundary inclusive).
+ok(reviewAllowed("2026-11-10T00:00:00Z", 150, "2026-11-10T02:29:59Z") === false, "review blocked mid-paper");
+ok(reviewAllowed("2026-11-10T00:00:00Z", 150, "2026-11-10T02:30:00Z") === true, "review allowed exactly at expiry");
+ok(reviewAllowed("2026-11-10T00:00:00Z", 150, "2026-11-10T03:00:00Z") === true, "review allowed after expiry");
+ok(reviewAllowed("bogus", 150, "2026-11-10T03:00:00Z") === false, "review bad start blocked");
+ok(reviewAllowed(0, 90, 90 * 60_000) === true, "review thpt 90min boundary allowed");
 
 console.log(`EXAM TESTS OK: ${n} assertions`);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { checkRate, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import {
   chatTutor,
   resolveForbidden,
@@ -24,6 +25,8 @@ export async function POST(req: Request) {
   }
   try {
     const playerId = await getOrCreatePlayerId();
+    const rl = checkRate(`tutor:${playerId}`, 30, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
     const supabase = await createClient();
     let fb;
     try {

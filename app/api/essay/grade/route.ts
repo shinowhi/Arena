@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { gradeEssay } from "@/lib/agents/essay-grader";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
 // Essay grading: photo and/or pasted solution → rubric steps + machine-audited
 // numeric verdicts. Stateless: nothing stored, nothing logged.
@@ -27,6 +28,8 @@ export async function POST(req: Request) {
   if (parsed.data.image && !/^data:image\/(jpeg|png|webp|gif);base64,/.test(parsed.data.image)) {
     return NextResponse.json({ error: "Photo must be a data URL image." }, { status: 400 });
   }
+  const rl = checkRate(`essay:${getClientIp(req)}`, 10, MINUTE_MS);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
   try {
     const out = await gradeEssay({ imageUrl: parsed.data.image, text: parsed.data.text });
     return NextResponse.json(out);

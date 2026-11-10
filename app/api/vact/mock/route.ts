@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { getOrCreatePlayerId } from "@/lib/game/player";
 import { assembleExam, CacheRow, ExamQuestion, EXAM_SET_VERSION, VACT_CONFIG } from "@/lib/agents/exam";
 
 // V-ACT paper: 120 cached MC questions, zero LLM at serve time. Readers take
@@ -9,7 +10,8 @@ const Row = z.object({ skill_tag: z.string(), questions: z.array(ExamQuestion), 
 
 export async function GET(req: Request) {
   try {
-    const day = new URL(req.url).searchParams.get("day") ?? new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const day = new URL(req.url).searchParams.get("day") ?? now.toISOString().slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return NextResponse.json({ error: "Bad day param." }, { status: 400 });
     const ids = VACT_CONFIG.sections.map((s) => s.id);
     const supabase = await createClient();
@@ -26,6 +28,16 @@ export async function GET(req: Request) {
     }
     try {
       const sections = assembleExam(rows, VACT_CONFIG);
+      // First-fetch stamp for the review gate (best-effort pre-migration).
+      try {
+        const playerId = await getOrCreatePlayerId();
+        await supabase.from("exam_attempts").upsert(
+          { player_id: playerId, exam: "vact", day, started_at: now.toISOString() },
+          { onConflict: "player_id,exam,day", ignoreDuplicates: true },
+        );
+      } catch {
+        // Pre-migration or DB hiccup: the mock still serves.
+      }
       return NextResponse.json({
         exam: VACT_CONFIG.id,
         date: day,

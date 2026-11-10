@@ -4,6 +4,7 @@ import { findGap } from "@/lib/agents/gap-finder";
 import { MetaLLMError } from "@/lib/llm/meta";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import { sampleDiagnosis } from "@/lib/scan/samples";
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -32,18 +33,13 @@ export async function POST(req: Request) {
     if (hit) return NextResponse.json(hit);
   }
   try {
-    // Player lookup overlaps the LLM chain (independent); the decompose ->
-    // gap chain stays sequential (dependent). The settled wrapper attaches a
-    // handler NOW so a fast DB failure can't surface as an unhandled
-    // rejection while the LLM calls run. DB save stays best-effort.
-    const playerSettled = getOrCreatePlayerId().then<string | null, string | null>(
-      (id) => id,
-      () => null,
-    );
+    // Rate check runs before any LLM/DB work (after the cheap sample path).
+    const playerId: string | null = await getOrCreatePlayerId().catch(() => null);
+    const rl = checkRate(`scan:${playerId ?? getClientIp(req)}`, 10, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
     const decomp = await decomposeImage(imageDataUrl);
     const gap = await findGap(decomp);
     try {
-      const playerId = await playerSettled;
       if (!playerId) throw new Error("player lookup failed");
       const supabase = await createClient();
       await supabase.from("scans").insert({

@@ -61,9 +61,21 @@ function ReviewInner() {
     } catch {
       // No stored picks: review still shows the key.
     }
-    const qs = exam === "hsa" ? `exam=hsa&day=${day}&p3=${p3}` : `exam=${exam}&day=${day}`;
+    const qs =
+      exam === "hsa"
+        ? `exam=hsa&day=${encodeURIComponent(day)}&p3=${encodeURIComponent(p3)}`
+        : `exam=${encodeURIComponent(exam)}&day=${encodeURIComponent(day)}`;
     fetch(`/api/exam/review?${qs}`)
       .then(async (r) => {
+        // 403 = paper still running: show the server message (with the wait)
+        // instead of keys.
+        if (r.status === 403) {
+          const d = (await r.json().catch(() => null)) as { error?: unknown; retryAfterSec?: unknown } | null;
+          const msg = typeof d?.error === "string" && d.error ? d.error : "This paper is still running.";
+          const secs = typeof d?.retryAfterSec === "number" && Number.isFinite(d.retryAfterSec) ? d.retryAfterSec : 0;
+          const wait = secs > 0 ? ` Try again in ${Math.ceil(secs / 60)} min.` : "";
+          throw new Error(`${msg}${wait}`);
+        }
         if (!r.ok) throw new Error(await readApiError(r, "Review failed."));
         return readApiJson<{ sections: RSection[]; scale: number; pointsPerQ: number }>(r, "Review failed.");
       })

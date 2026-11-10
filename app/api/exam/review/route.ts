@@ -1,19 +1,29 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { getPlayerId } from "@/lib/game/player";
 import {
   assembleReview,
   CacheRow,
   examConfig,
   ExamQuestion,
   EXAM_SET_VERSION,
+  reviewAllowed,
 } from "@/lib/agents/exam";
 
 // Answer-key review: GET /api/exam/review?exam=vact&day=... (&p3=... for HSA).
-// The UI calls this after the paper locks. Stateless demo: the server cannot
-// prove the caller's clock expired, so a direct early fetch is possible —
-// documented in SPEC-aptitude-exams.md, to gate post-judging.
+// Gated on the exam_attempts first-fetch stamp: keys unlock once the paper
+// clock (VACT 150', HSA 195') expires. Pre-0010 (table missing) the gate is
+// skipped and the route serves as before.
 const Row = z.object({ skill_tag: z.string(), questions: z.array(ExamQuestion), fetched_at: z.string() });
+
+// Missing-table detector (mirrors isMissingRpc in lib/game/duel-settle.ts):
+// PostgREST surfaces an absent table as 42P01 or PGRST205, or a "could not
+// find / does not exist" message.
+function isMissingTable(err: { code?: string; message?: string }): boolean {
+  if (err.code === "42P01" || err.code === "PGRST205") return true;
+  return /could not find|does not exist/i.test(err.message ?? "");
+}
 
 export async function GET(req: Request) {
   try {
@@ -27,8 +37,44 @@ export async function GET(req: Request) {
     if (config.id === "hsa" && p3 !== "hsa_science" && p3 !== "hsa_english") {
       return NextResponse.json({ error: "Bad p3 param (hsa_science or hsa_english)." }, { status: 400 });
     }
-    const ids = config.sections.map((s) => s.id);
+    const playerId = await getPlayerId();
+    if (!playerId) {
+      return NextResponse.json(
+        { error: "No attempt found — start the paper first.", retryAfterSec: config.totalMinutes * 60 },
+        { status: 403 },
+      );
+    }
     const supabase = await createClient();
+    const att = await supabase
+      .from("exam_attempts")
+      .select("started_at")
+      .eq("player_id", playerId)
+      .eq("exam", config.id)
+      .eq("day", day)
+      .maybeSingle();
+    if (att.error) {
+      // Missing table pre-migration: fall back to the open behavior.
+      if (!isMissingTable(att.error as { code?: string; message?: string })) {
+        return NextResponse.json({ error: "Review failed — retry." }, { status: 500 });
+      }
+    } else if (!att.data) {
+      return NextResponse.json(
+        { error: "No attempt found — start the paper first.", retryAfterSec: config.totalMinutes * 60 },
+        { status: 403 },
+      );
+    } else {
+      const startedAt = (att.data as { started_at: string }).started_at;
+      const nowMs = Date.now();
+      if (!reviewAllowed(startedAt, config.totalMinutes, nowMs)) {
+        const raw = Math.ceil((new Date(startedAt).getTime() + config.totalMinutes * 60_000 - nowMs) / 1000);
+        const retryAfterSec = Number.isFinite(raw) ? Math.max(1, raw) : config.totalMinutes * 60;
+        return NextResponse.json(
+          { error: "The paper is still running — the key unlocks when your clock expires.", retryAfterSec },
+          { status: 403 },
+        );
+      }
+    }
+    const ids = config.sections.map((s) => s.id);
     const { data, error } = await supabase
       .from("boss_question_cache")
       .select("skill_tag, questions, fetched_at")

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { getOrCreatePlayerId } from "@/lib/game/player";
 import { assembleExam, CacheRow, ExamQuestion, EXAM_SET_VERSION, HSA_CONFIG } from "@/lib/agents/exam";
 
 // HSA paper: fixed parts + ONE part-3 choice (science or english).
@@ -10,7 +11,8 @@ const Row = z.object({ skill_tag: z.string(), questions: z.array(ExamQuestion), 
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const day = url.searchParams.get("day") ?? new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const day = url.searchParams.get("day") ?? now.toISOString().slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return NextResponse.json({ error: "Bad day param." }, { status: 400 });
     const p3 = url.searchParams.get("p3") ?? "hsa_science";
     if (p3 !== "hsa_science" && p3 !== "hsa_english") {
@@ -31,6 +33,16 @@ export async function GET(req: Request) {
     }
     try {
       const sections = assembleExam(rows, HSA_CONFIG, p3);
+      // First-fetch stamp for the review gate (best-effort pre-migration).
+      try {
+        const playerId = await getOrCreatePlayerId();
+        await supabase.from("exam_attempts").upsert(
+          { player_id: playerId, exam: "hsa", day, started_at: now.toISOString() },
+          { onConflict: "player_id,exam,day", ignoreDuplicates: true },
+        );
+      } catch {
+        // Pre-migration or DB hiccup: the mock still serves.
+      }
       return NextResponse.json({
         exam: HSA_CONFIG.id,
         date: day,

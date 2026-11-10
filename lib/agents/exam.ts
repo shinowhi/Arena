@@ -144,8 +144,8 @@ export function assembleExam(rows: CacheRow[], config: ExamConfig, p3?: string):
 }
 
 // Review question: the key goes out ONLY through /api/exam/review, which the
-// UI calls after the paper locks. Direct early fetch is a known limitation
-// (stateless demo, no server sessions) — see SPEC-aptitude-exams.md.
+// UI calls after the paper locks. Early fetches are gated on the server by
+// the exam_attempts first-fetch stamp (see reviewAllowed).
 export const ReviewQ = StrippedExamQ.extend({
   answer_index: z.number().int().min(0).max(3),
 });
@@ -187,4 +187,18 @@ export function assembleReview(rows: CacheRow[], config: ExamConfig, p3?: string
 // Server-side grading: compare the picked option against the cached key.
 export function gradeSelection(q: ExamQuestion, selected: number): boolean {
   return Number.isInteger(selected) && selected >= 0 && selected <= 3 && selected === q.answer_index;
+}
+
+// Review gate: keys unlock once the paper clock expires. Boundary is
+// inclusive — exactly at expiry counts as allowed. Pure: mirror-tested in
+// test-exam.mjs.
+export function reviewAllowed(
+  startedAt: string | number | Date,
+  totalMinutes: number,
+  now: string | number | Date = new Date(),
+): boolean {
+  const start = new Date(startedAt).getTime();
+  const t = now instanceof Date ? now.getTime() : new Date(now).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(t)) return false;
+  return t >= start + totalMinutes * 60_000;
 }

@@ -48,17 +48,26 @@ async function postChatCompletions(
   maxTokens: number,
   temperature: number,
 ): Promise<ChatCompletionResponse> {
-  const res = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model,
-      messages,
-      max_tokens: Math.max(maxTokens, 4000),
-      temperature,
-      response_format: { type: "json_object" },
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens: Math.max(maxTokens, 4000),
+        temperature,
+        response_format: { type: "json_object" },
+      }),
+      signal: AbortSignal.timeout(60000),
+    });
+  } catch (err) {
+    if (err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError")) {
+      throw new MetaLLMError("Model API timed out after 60s.");
+    }
+    throw err;
+  }
   if (!res.ok) throw new MetaLLMError(`Model API HTTP ${res.status}: ${(await res.text()).slice(0, 500)}`);
   return (await res.json()) as ChatCompletionResponse;
 }

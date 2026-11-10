@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getBossQuestionsCached } from "@/lib/game/boss-cache";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { checkRate, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import { PRIVATE_BOSS_HP, bossTtlSeconds } from "@/lib/game/boss-rules";
 import { MetaLLMError } from "@/lib/llm/meta";
 
@@ -12,13 +13,13 @@ export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Missing skill_tag." }, { status: 400 });
   try {
-    // Player lookup and question fetch are independent: overlap them.
-    // Cached sets are ownerless templates; the insert below clones them into
-    // a fresh boss row owned by this viewer.
-    const [playerId, boss] = await Promise.all([
-      getOrCreatePlayerId(),
-      getBossQuestionsCached(parsed.data.skill_tag),
-    ]);
+    // Rate check runs before the (possibly LLM-backed) question fetch and
+    // the boss insert. Cached sets are ownerless templates; the insert
+    // below clones them into a fresh boss row owned by this viewer.
+    const playerId = await getOrCreatePlayerId();
+    const rl = checkRate(`summon:${playerId}`, 20, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
+    const boss = await getBossQuestionsCached(parsed.data.skill_tag);
     const supabase = await createClient();
     const ttl = bossTtlSeconds();
     const { data, error } = await supabase

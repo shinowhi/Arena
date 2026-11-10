@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { checkRate, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import { examConfig, ExamQuestion, EXAM_SET_VERSION } from "@/lib/agents/exam";
 
 const Body = z.object({ exam: z.enum(["vact", "hsa"]), section: z.string().min(1).max(64) });
@@ -15,6 +16,8 @@ export async function POST(req: Request) {
   if (!config || !sec) return NextResponse.json({ error: "Unknown section." }, { status: 404 });
   try {
     const playerId = await getOrCreatePlayerId();
+    const rl = checkRate(`duel-create:${playerId}`, 10, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
     const supabase = await createClient();
     const row = await supabase
       .from("boss_question_cache")

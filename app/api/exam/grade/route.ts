@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { ExamQuestion, EXAM_SET_VERSION, gradeSelection } from "@/lib/agents/exam";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
 // Stateless MC grading: the client sends the picked option index; the server
 // re-reads the answer key from cache. Keys never reach the browser.
@@ -16,6 +17,8 @@ const Body = z.object({
 export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Missing section, index, selected, or as_of." }, { status: 400 });
+  const rl = checkRate(`exam-grade:${getClientIp(req)}`, 30, MINUTE_MS);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
