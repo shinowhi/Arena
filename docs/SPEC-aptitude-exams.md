@@ -55,7 +55,12 @@ sinh + kiểm kỹ rồi mới đưa vào cache; user chỉ đọc cache (0 LLM 
 - Cache: tái dùng `boss_question_cache`, `set_version=2`, skill_tag theo
   section (`vact_math`, `hsa_literature`...). Không migration mới.
 - API: `GET /api/vact/mock`, `GET /api/hsa/mock` (đọc cache, 0 LLM),
-  `POST /api/exam/grade` (chấm theo option đã chọn, đối chiếu cache server).
+  `POST /api/exam/grade` (chấm theo option đã chọn, đối chiếu cache server),
+  `GET /api/exam/review` (trả key sau khi paper lock — UI gọi khi hết giờ;
+  giới hạn đã biết: stateless nên không chặn được gọi sớm trực tiếp,
+  cần server sessions sau chấm).
+- Trang `/exam/review`: xem lại đáp án 2 đề (key xanh + lựa chọn của user),
+  nút Ask tutor từng câu (dùng exam ctx đã có guard).
 - Trang: `/vact` (1 đồng hồ + tabs phần), `/hsa` (chọn P3 + tuần tự + khóa phần).
 
 ## 6. Test + gates

@@ -64,6 +64,26 @@ function gradeSelection(q, selected) {
   return Number.isInteger(selected) && selected >= 0 && selected <= 3 && selected === q.answer_index;
 }
 
+function assembleReview(rows, config, p3) {
+  const byId = new Map(rows.map((r) => [r.skill_tag, r]));
+  return activeSections(config, p3).map((s) => {
+    const row = byId.get(s.id);
+    if (!row || !Array.isArray(row.questions) || row.questions.length < s.count) {
+      throw new Error(`section ${s.id} not ready`);
+    }
+    return {
+      id: s.id,
+      questions: row.questions.slice(0, s.count).map((q, i) => ({
+        no: s.firstNo + i,
+        prompt_latex: q.prompt_latex,
+        options: q.options,
+        tier: q.tier,
+        answer_index: q.answer_index,
+      })),
+    };
+  });
+}
+
 let n = 0;
 const ok = (cond, msg) => {
   n += 1;
@@ -113,5 +133,12 @@ assert.throws(() => assembleExam(vactRows.slice(0, 4), VACT), "short paper throw
 ok(gradeSelection({ answer_index: 2 }, 2) === true, "grade hit");
 ok(gradeSelection({ answer_index: 2 }, 1) === false, "grade miss");
 ok(gradeSelection({ answer_index: 0 }, 4) === false, "grade out of range");
+// Review assembly: same paper plus the key, still no check spec.
+const rev = assembleReview(vactRows, VACT);
+ok(rev.reduce((a, s) => a + s.questions.length, 0) === 120, "review 120");
+ok(rev[0].questions[0].answer_index === 0 && rev[0].questions[3].answer_index === 3, "review keys kept");
+ok(rev.every((s) => s.questions.every((q) => q.options.length === 4 && !("check" in q))), "review 4 options no check");
+ok(rev[2].questions[0].no === 61, "review numbering matches mock");
+assert.throws(() => assembleReview(vactRows.slice(0, 4), VACT), "review short paper throws");
 
 console.log(`EXAM TESTS OK: ${n} assertions`);

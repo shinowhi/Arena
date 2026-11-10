@@ -143,6 +143,47 @@ export function assembleExam(rows: CacheRow[], config: ExamConfig, p3?: string):
   });
 }
 
+// Review question: the key goes out ONLY through /api/exam/review, which the
+// UI calls after the paper locks. Direct early fetch is a known limitation
+// (stateless demo, no server sessions) — see SPEC-aptitude-exams.md.
+export const ReviewQ = StrippedExamQ.extend({
+  answer_index: z.number().int().min(0).max(3),
+});
+export type ReviewQ = z.infer<typeof ReviewQ>;
+
+export type AssembledReviewSection = {
+  id: string;
+  name: string;
+  minutes: number;
+  tier: "verified" | "draft";
+  as_of: string;
+  questions: ReviewQ[];
+};
+
+export function assembleReview(rows: CacheRow[], config: ExamConfig, p3?: string): AssembledReviewSection[] {
+  const byId = new Map(rows.map((r) => [r.skill_tag, r]));
+  return activeSections(config, p3).map((s) => {
+    const row = byId.get(s.id);
+    if (!row || !Array.isArray(row.questions) || row.questions.length < s.count) {
+      throw new Error(`section ${s.id} not ready`);
+    }
+    return {
+      id: s.id,
+      name: s.name,
+      minutes: s.minutes,
+      tier: s.tier,
+      as_of: row.fetched_at,
+      questions: row.questions.slice(0, s.count).map((q, i) => ({
+        no: s.firstNo + i,
+        prompt_latex: q.prompt_latex,
+        options: q.options,
+        tier: q.tier,
+        answer_index: q.answer_index,
+      })),
+    };
+  });
+}
+
 // Server-side grading: compare the picked option against the cached key.
 export function gradeSelection(q: ExamQuestion, selected: number): boolean {
   return Number.isInteger(selected) && selected >= 0 && selected <= 3 && selected === q.answer_index;

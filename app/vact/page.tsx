@@ -1,5 +1,6 @@
 "use client";
 import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import MathText from "@/components/MathText";
@@ -200,6 +201,9 @@ function VactInner() {
             Final <span className="arena-num font-bold text-emerald-300">{score}/{total}</span>
             {" "}(<span className="arena-num font-bold text-emerald-300">{score * 10}</span>/1200) — the paper is locked.
           </p>
+          <Link href={`/exam/review?exam=vact&day=${date}`} className="arena-btn-ghost mt-3 inline-block rounded-full px-5 py-2 text-sm font-bold text-zinc-200">
+            Review answers
+          </Link>
         </div>
       ) : null}
       {sections && started ? (
@@ -255,7 +259,14 @@ function VactInner() {
                     </button>
                   ))}
                 </div>
-                <div className="mt-3 flex justify-end">
+                <div className="mt-3 flex justify-end gap-2">
+                  <Link
+                    href={`/tutor?ctx=exam&section=${encodeURIComponent(cur.id)}&index=${i}&as_of=${encodeURIComponent(cur.as_of)}`}
+                    aria-label={`Ask the tutor about question ${q.no}`}
+                    className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-bold text-zinc-200"
+                  >
+                    Ask tutor
+                  </Link>
                   <button
                     type="button"
                     onClick={() => void grade(tab, i)}
