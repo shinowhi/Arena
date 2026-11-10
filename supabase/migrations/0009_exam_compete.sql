@@ -1,6 +1,9 @@
 -- 0009: exam competition tables (Day 1 duel+ELO; Day 4 rooms appended below).
 -- Additive only. User runs this file ONCE in Supabase SQL editor.
 -- Down (if ever needed): drop table if exists exam_room_players; drop table if exists exam_rooms; drop table if exists exam_elo; drop table if exists exam_duels;
+-- NOTE: this project enables RLS by default on new tables, so every table
+-- below gets an explicit open policy (demo posture, same as 0001/0008;
+-- harden post-judging).
 
 -- Day 1: head-to-head exam duels over ONE cached section. The paper is
 -- SNAPSHOT into the duel row at create (keys included, server-side only), so
@@ -77,3 +80,19 @@ begin
   return 'ok';
 end;
 $$ language plpgsql;
+
+alter table exam_duels enable row level security;
+drop policy if exists open_all on exam_duels;
+create policy open_all on exam_duels for all using (true) with check (true);
+
+alter table exam_elo enable row level security;
+drop policy if exists open_all on exam_elo;
+create policy open_all on exam_elo for all using (true) with check (true);
+
+alter table exam_rooms enable row level security;
+drop policy if exists open_all on exam_rooms;
+create policy open_all on exam_rooms for all using (true) with check (true);
+
+alter table exam_room_players enable row level security;
+drop policy if exists open_all on exam_room_players;
+create policy open_all on exam_room_players for all using (true) with check (true);

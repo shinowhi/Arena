@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
@@ -25,7 +25,7 @@ type View = {
 
 const LETTERS = ["A", "B", "C", "D"];
 
-export default function RoyaleArenaPage() {
+function RoyaleArenaInner() {
   const params = useParams();
   const id = typeof params.id === "string" ? params.id : "";
   const [view, setView] = useState<View | null>(null);
@@ -207,5 +207,13 @@ export default function RoyaleArenaPage() {
         </p>
       ) : null}
     </main>
+  );
+}
+
+export default function RoyaleArenaPage() {
+  return (
+    <Suspense>
+      <RoyaleArenaInner />
+    </Suspense>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
@@ -22,7 +22,7 @@ type View = {
 
 const LETTERS = ["A", "B", "C", "D"];
 
-export default function DuelBattlePage() {
+function DuelBattleInner() {
   const params = useParams();
   const id = typeof params.id === "string" ? params.id : "";
   const [view, setView] = useState<View | null>(null);
@@ -189,5 +189,13 @@ export default function DuelBattlePage() {
         <p className="text-center text-sm text-zinc-400" role="status">Submitted — waiting for the foe…</p>
       ) : null}
     </main>
+  );
+}
+
+export default function DuelBattlePage() {
+  return (
+    <Suspense>
+      <DuelBattleInner />
+    </Suspense>
   );
 }
