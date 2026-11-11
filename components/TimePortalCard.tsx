@@ -27,7 +27,7 @@ export default function TimePortalCard({ weak, root }: { weak: string; root: str
         });
         const d = await r.json();
         if (!d.boss_id) throw new Error(d.error ?? "Summon failed.");
-        router.push(`/boss/${d.boss_id}?root=${root}`);
+        router.push(`/boss/${encodeURIComponent(d.boss_id)}?root=${encodeURIComponent(root)}`);
       } finally {
         clearTimeout(t);
       }

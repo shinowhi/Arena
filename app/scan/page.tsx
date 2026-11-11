@@ -363,7 +363,7 @@ export default function ScanPage() {
       if (!res.ok) throw new Error(await readApiError(res, "Summon failed."));
       const bossId = (await readApiJson<{ boss_id: string }>(res, "Summon failed.")).boss_id;
       recordRecentScan({ ts: Date.now(), mode: "exam", skill: result.weak_skill, bossId, thumb });
-      router.push("/boss/" + bossId + "?root=" + result.root_cause);
+      router.push("/boss/" + encodeURIComponent(bossId) + "?root=" + encodeURIComponent(result.root_cause));
     } catch (e) {
       setError(
         e instanceof DOMException && e.name === "AbortError"

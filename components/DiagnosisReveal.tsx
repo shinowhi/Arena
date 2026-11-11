@@ -246,13 +246,13 @@ export default function DiagnosisReveal({
               <p className="text-sm text-zinc-500">Low confidence — retake a clearer photo.</p>
             )}
             <Link
-              href={"/graph?weak=" + result.weak_skill + "&root=" + result.root_cause}
+              href={"/graph?weak=" + encodeURIComponent(result.weak_skill) + "&root=" + encodeURIComponent(result.root_cause)}
               className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
             >
               View on skill graph
             </Link>
             <Link
-              href={"/paper?skill=" + result.weak_skill}
+              href={"/paper?skill=" + encodeURIComponent(result.weak_skill)}
               className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
             >
               Forge practice paper

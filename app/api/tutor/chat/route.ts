@@ -3,7 +3,8 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
 import { logFunnel } from "@/lib/funnel";
-import { checkRate, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
+import { FREE_TUTOR_DAILY, isVip, countToday, quotaAllowed } from "@/lib/vip";
 import {
   chatTutor,
   resolveForbidden,
@@ -26,9 +27,27 @@ export async function POST(req: Request) {
   }
   try {
     const playerId = await getOrCreatePlayerId();
+    // IP bucket runs on EVERY request so cookieless callers can't dodge the
+    // player bucket by minting players.
+    const ipRl = checkRate(`tutor:ip:${getClientIp(req)}`, 30, MINUTE_MS);
+    if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
     const rl = checkRate(`tutor:${playerId}`, 30, MINUTE_MS);
     if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
     const supabase = await createClient();
+    // P2 free quota: 10 tutor chats/day, checked BEFORE the LLM.
+    {
+      const vip = await isVip(supabase, playerId);
+      const used = vip ? 0 : await countToday(supabase, playerId, "tutor_asked");
+      if (!quotaAllowed(used, FREE_TUTOR_DAILY, vip)) {
+        return NextResponse.json(
+          {
+            error: `Daily free limit reached (${FREE_TUTOR_DAILY} tutor chats). Enter a VIP code to continue.`,
+            vip_url: "/vip",
+          },
+          { status: 402 },
+        );
+      }
+    }
     let fb;
     try {
       fb = await resolveForbidden(supabase, playerId, parsed.data.context);

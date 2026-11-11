@@ -4,6 +4,8 @@ import { gradeEssay } from "@/lib/agents/essay-grader";
 import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { logFunnel } from "@/lib/funnel";
+import { getPlayerId } from "@/lib/game/player";
+import { isVip } from "@/lib/vip";
 
 // Essay grading: photo and/or pasted solution → rubric steps + machine-audited
 // numeric verdicts. Stateless: nothing stored, nothing logged.
@@ -32,6 +34,21 @@ export async function POST(req: Request) {
   }
   const rl = checkRate(`essay:${getClientIp(req)}`, 10, MINUTE_MS);
   if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
+  // P2: essay grading is VIP-only (premium hook), gated BEFORE the LLM.
+  // Read-only identity: unknown visitors are not VIP and mint no player.
+  {
+    const playerId = await getPlayerId().catch(() => null);
+    const vip = playerId ? await isVip(await createClient(), playerId) : false;
+    if (!vip) {
+      return NextResponse.json(
+        {
+          error: "Essay grading is a VIP feature. Enter a VIP code to unlock it.",
+          vip_url: "/vip",
+        },
+        { status: 402 },
+      );
+    }
+  }
   try {
     const out = await gradeEssay({ imageUrl: parsed.data.image, text: parsed.data.text });
     await logFunnel(await createClient(), null, "essay_graded");

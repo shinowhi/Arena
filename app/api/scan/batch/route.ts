@@ -5,6 +5,9 @@ import { mergeGaps } from "@/lib/scan/merge";
 import { MetaLLMError } from "@/lib/llm/meta";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { logFunnel } from "@/lib/funnel";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
+import { FREE_SCAN_DAILY, isVip, countToday } from "@/lib/vip";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_PHOTOS = 3;
@@ -45,10 +48,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Could not read uploads." }, { status: 400 });
   }
   try {
-    const playerSettled = getOrCreatePlayerId().then<string | null, string | null>(
-      (id) => id,
-      () => null,
-    );
+    // Rate + quota gates run before any LLM work, mirroring the single-scan
+    // route. The IP bucket runs on EVERY request, even when the player is
+    // known, so cookieless callers cannot dodge the player bucket by minting
+    // players. Keys are batch-specific so single and batch scans do not share
+    // budget. Each image in the batch consumes one free scan.
+    const playerId: string | null = await getOrCreatePlayerId().catch(() => null);
+    const ipRl = checkRate(`scan-batch:ip:${getClientIp(req)}`, 10, MINUTE_MS);
+    if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
+    const rl = checkRate(`scan-batch:${playerId ?? getClientIp(req)}`, 10, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
+    // P2 free quota: 5 scans/day, charged per image (before the scan_started
+    // logs, so blocked attempts do not consume quota). Unknown players (null)
+    // fail open on quota - the IP bucket above is the backstop.
+    if (playerId) {
+      const quotaDb = await createClient();
+      const vip = await isVip(quotaDb, playerId);
+      const used = vip ? 0 : await countToday(quotaDb, playerId, "scan_started");
+      if (!vip && used + images.length > FREE_SCAN_DAILY) {
+        return NextResponse.json(
+          {
+            error: `Daily free limit reached (${FREE_SCAN_DAILY} scans). Enter a VIP code to continue.`,
+            vip_url: "/vip",
+          },
+          { status: 402 },
+        );
+      }
+    }
     // Photos are independent: diagnose concurrently. One bad photo must not
     // kill the batch — merge whatever succeeded (at least 1 required).
     const settled = await Promise.allSettled(images.map(diagnoseOne));
@@ -71,7 +97,6 @@ export async function POST(req: Request) {
     }
     const merged = mergeGaps(photos);
     try {
-      const playerId = await playerSettled;
       if (!playerId) throw new Error("player lookup failed");
       const supabase = await createClient();
       await supabase.from("scans").insert(
@@ -85,6 +110,11 @@ export async function POST(req: Request) {
       );
     } catch (dbErr) {
       console.error("batch scan save failed (diagnosis still returned):", dbErr);
+    }
+    // Quota accounting: one scan_started per image, logged after success so
+    // failed batches do not consume quota. Best-effort (never throws).
+    for (let i = 0; i < images.length; i++) {
+      await logFunnel(await createClient(), playerId, "scan_started");
     }
     return NextResponse.json({ photos, merged, can_summon: merged.confidence >= 0.3 });
   } catch (err) {

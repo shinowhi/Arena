@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
 import { logFunnel } from "@/lib/funnel";
 import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
+import { FREE_SCAN_DAILY, isVip, countToday, quotaAllowed } from "@/lib/vip";
 import { sampleDiagnosis } from "@/lib/scan/samples";
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -34,10 +35,31 @@ export async function POST(req: Request) {
     if (hit) return NextResponse.json(hit);
   }
   try {
-    // Rate check runs before any LLM/DB work (after the cheap sample path).
+    // Rate checks run before any LLM/DB work (after the cheap sample path).
+    // The IP bucket runs on EVERY request, even when the player is known, so
+    // cookieless callers can't dodge the player bucket by minting players.
     const playerId: string | null = await getOrCreatePlayerId().catch(() => null);
+    const ipRl = checkRate(`scan:ip:${getClientIp(req)}`, 10, MINUTE_MS);
+    if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
     const rl = checkRate(`scan:${playerId ?? getClientIp(req)}`, 10, MINUTE_MS);
     if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
+    // P2 free quota: 5 scans/day, checked BEFORE the LLM (and before the
+    // scan_started log, so blocked attempts don't consume quota). Unknown
+    // players (null) fail open on quota — the IP bucket above is the backstop.
+    if (playerId) {
+      const quotaDb = await createClient();
+      const vip = await isVip(quotaDb, playerId);
+      const used = vip ? 0 : await countToday(quotaDb, playerId, "scan_started");
+      if (!quotaAllowed(used, FREE_SCAN_DAILY, vip)) {
+        return NextResponse.json(
+          {
+            error: `Daily free limit reached (${FREE_SCAN_DAILY} scans). Enter a VIP code to continue.`,
+            vip_url: "/vip",
+          },
+          { status: 402 },
+        );
+      }
+    }
     await logFunnel(await createClient(), playerId, "scan_started");
     const decomp = await decomposeImage(imageDataUrl);
     const gap = await findGap(decomp);

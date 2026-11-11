@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { verifyAdmin } from "@/lib/game/player-sign";
+import CodesForm from "./codes-form";
 
 // Admin funnel dashboard (server component: every query runs server-side).
 // No ADMIN_SECRET -> "not configured". No valid arena_admin cookie -> key
@@ -30,6 +32,15 @@ type RecentRow = {
   created_at: string;
 };
 
+type VipCode = {
+  code: string;
+  max_uses: number;
+  used: number;
+  expires_at: string | null;
+  note: string | null;
+  created_at: string;
+};
+
 function Shell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
@@ -46,6 +57,8 @@ async function loadDashboard(): Promise<{
   c30: Map<string, number>;
   recent: RecentRow[];
   missing: boolean;
+  codes: VipCode[];
+  vipMissing: boolean;
 }> {
   const supabase = await createClient();
   const since7 = new Date(Date.now() - 7 * 86400_000).toISOString();
@@ -73,7 +86,23 @@ async function loadDashboard(): Promise<{
       .limit(50);
     if (!r.error && Array.isArray(r.data)) recent = r.data as RecentRow[];
   }
-  return { c7, c30, recent, missing };
+  // P2 VIP inventory via definer RPC (vip_codes is deny-all for anon).
+  // Service-role client: EXECUTE on admin_* is revoked from every public
+  // role (0012). Safe: this loader only runs after verifyAdmin passes.
+  let codes: VipCode[] = [];
+  let vipMissing = false;
+  {
+    let rows: VipCode[] | null = null;
+    try {
+      const r = await createServiceClient().rpc("admin_list_codes");
+      if (!r.error && Array.isArray(r.data)) rows = r.data as VipCode[];
+    } catch {
+      rows = null;
+    }
+    if (!rows) vipMissing = true;
+    else codes = rows;
+  }
+  return { c7, c30, recent, missing, codes, vipMissing };
 }
 
 export default async function AdminPage({
@@ -121,7 +150,7 @@ export default async function AdminPage({
     );
   }
 
-  const { c7, c30, recent, missing } = await loadDashboard();
+  const { c7, c30, recent, missing, codes, vipMissing } = await loadDashboard();
 
   return (
     <Shell title="Funnel dashboard">
@@ -210,11 +239,41 @@ export default async function AdminPage({
         )}
       </section>
 
-      <section className="mt-6 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/20 p-5">
-        <p className="text-sm font-semibold text-zinc-300">VIP codes — coming in Phase 2</p>
-        <p className="mt-1 text-sm text-zinc-500">
-          Code minting, listing, and redemption land here in P2. Nothing to configure yet.
-        </p>
+      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+        <p className="text-sm font-semibold text-zinc-200">VIP codes</p>
+        {vipMissing ? (
+          <p className="mt-2 text-sm text-amber-200">
+            No VIP data yet — run migration supabase/migrations/0012_vip.sql in Supabase.
+          </p>
+        ) : codes.length === 0 ? (
+          <p className="mt-2 text-sm text-zinc-500">No codes yet — create one below.</p>
+        ) : (
+          <table className="mt-3 w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-zinc-500">
+                <th className="py-1 font-semibold">Code</th>
+                <th className="py-1 text-right font-semibold">Used</th>
+                <th className="py-1 text-right font-semibold">Expires</th>
+                <th className="py-1 font-semibold">Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              {codes.map((c) => (
+                <tr key={c.code} className="border-t border-zinc-800 text-zinc-300">
+                  <td className="py-1.5 font-mono text-xs">{c.code}</td>
+                  <td className="py-1.5 text-right tabular-nums">
+                    {c.used}/{c.max_uses}
+                  </td>
+                  <td className="py-1.5 text-right tabular-nums">
+                    {c.expires_at ? new Date(c.expires_at).toISOString().slice(0, 10) : "—"}
+                  </td>
+                  <td className="max-w-40 truncate py-1.5 text-xs text-zinc-400">{c.note ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {!vipMissing && <CodesForm />}
       </section>
     </Shell>
   );
