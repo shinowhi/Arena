@@ -19,6 +19,35 @@ export function signPlayerId(id: string): string {
 // Returns the player id when the signature is valid, else null. Legacy
 // unsigned values (no dot) also return null — the caller upgrades those via
 // a DB check.
+// Admin dashboard cookie. Value format mirrors the player cookie:
+// `admin.${hmac}` where hmac is HMAC-SHA256("admin", ADMIN_SECRET)
+// hex-truncated to 32 chars. Pure: mirror-tested in test-admin-auth.mjs.
+// ADMIN_SECRET unset -> signAdmin returns null and verifyAdmin always fails,
+// so the dashboard shows "not configured" and never opens without a secret.
+export function signAdmin(): string | null {
+  const s = process.env.ADMIN_SECRET;
+  if (!s) return null;
+  const hmac = createHmac("sha256", s).update("admin").digest("hex").slice(0, 32);
+  return `admin.${hmac}`;
+}
+
+export function verifyAdmin(value: string | null | undefined): boolean {
+  const s = process.env.ADMIN_SECRET;
+  if (!s || !value) return false;
+  const dot = value.lastIndexOf(".");
+  if (dot <= 0) return false;
+  const id = value.slice(0, dot);
+  if (id !== "admin") return false;
+  const sig = value.slice(dot + 1);
+  const expected = createHmac("sha256", s).update(id).digest("hex").slice(0, 32);
+  if (sig.length !== expected.length) return false;
+  try {
+    return timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+  } catch {
+    return false;
+  }
+}
+
 export function verifyPlayerCookie(value: string): string | null {
   const dot = value.lastIndexOf(".");
   if (dot <= 0) return null;

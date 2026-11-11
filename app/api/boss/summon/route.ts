@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getBossQuestionsCached } from "@/lib/game/boss-cache";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { logFunnel } from "@/lib/funnel";
 import { checkRate, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import { PRIVATE_BOSS_HP, bossTtlSeconds } from "@/lib/game/boss-rules";
 import { MetaLLMError } from "@/lib/llm/meta";
@@ -35,6 +36,7 @@ export async function POST(req: Request) {
       .select("id")
       .single();
     if (error || !data) throw new Error("Could not save boss.");
+    await logFunnel(supabase, playerId, "boss_summoned");
     return NextResponse.json({ boss_id: (data as { id: string }).id });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Summon failed.";

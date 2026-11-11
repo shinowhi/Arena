@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { logFunnel } from "@/lib/funnel";
 import { checkRate, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import {
   chatTutor,
@@ -37,6 +38,7 @@ export async function POST(req: Request) {
       throw e;
     }
     const out = await chatTutor(parsed.data.messages, fb);
+    await logFunnel(supabase, playerId, "tutor_asked");
     return NextResponse.json(out);
   } catch {
     return NextResponse.json({ error: "Tutor failed — retry." }, { status: 500 });

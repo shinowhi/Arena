@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { skillGrade, skillName, SKILL_IDS } from "@/lib/graph/skills";
 import { buildMock, MockQuestion, THPT_CONFIG } from "@/lib/agents/thpt";
+import { logFunnel } from "@/lib/funnel";
 
 // Daily THPTQG mock: 50 questions from 25 cached sets (grades 10-12, no
 // mechanics). Reads the 7-day cache window — verified questions never rot,
@@ -43,6 +44,7 @@ export async function GET(req: Request) {
     const questions = buildMock(sets, day, THPT_CONFIG);
     const parsed = z.array(MockQuestion).safeParse(questions);
     if (!parsed.success) return NextResponse.json({ error: "Mock failed — retry." }, { status: 500 });
+    await logFunnel(supabase, null, "exam_started", { exam: "thpt" });
     return NextResponse.json({
       date: day,
       total: parsed.data.length,

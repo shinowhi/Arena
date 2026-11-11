@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
 import { DuelRow, sideOf } from "@/lib/game/duel";
 import { settleDuel } from "@/lib/game/duel-settle";
+import { logFunnel } from "@/lib/funnel";
 import { examConfig } from "@/lib/agents/exam";
 
 // Duel view: stripped paper + live progress. Scores stay hidden until both
@@ -29,6 +30,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     if (d.p1_score !== null && d.p2_score !== null && d.status !== "finished") {
       try {
         const s = await settleDuel(supabase, id);
+        if (s.finished) await logFunnel(supabase, playerId, "duel_finished", { winner: s.winner });
         if (s.finished) {
           const re = await supabase.from("exam_duels").select("*").eq("id", id).single();
           const rp = DuelRow.safeParse(re.data);

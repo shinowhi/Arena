@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { logFunnel } from "@/lib/funnel";
 import { assembleExam, CacheRow, ExamQuestion, EXAM_SET_VERSION, HSA_CONFIG } from "@/lib/agents/exam";
 
 // HSA paper: fixed parts + ONE part-3 choice (science or english).
@@ -36,6 +37,7 @@ export async function GET(req: Request) {
       // First-fetch stamp for the review gate (best-effort pre-migration).
       try {
         const playerId = await getOrCreatePlayerId();
+        await logFunnel(supabase, playerId, "exam_started", { exam: "hsa" });
         await supabase.from("exam_attempts").upsert(
           { player_id: playerId, exam: "hsa", day, started_at: now.toISOString() },
           { onConflict: "player_id,exam,day", ignoreDuplicates: true },

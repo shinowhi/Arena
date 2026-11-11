@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { ExamQuestion, EXAM_SET_VERSION, gradeSelection } from "@/lib/agents/exam";
 import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
+import { logFunnel } from "@/lib/funnel";
 
 // Stateless MC grading: the client sends the picked option index; the server
 // re-reads the answer key from cache. Keys never reach the browser.
@@ -38,6 +39,7 @@ export async function POST(req: Request) {
     if (!qs.success) return NextResponse.json({ error: "Grade failed — retry." }, { status: 500 });
     const q = qs.data[parsed.data.index];
     if (!q) return NextResponse.json({ error: "Question out of range." }, { status: 422 });
+    await logFunnel(supabase, null, "exam_graded", { section: parsed.data.section });
     return NextResponse.json({ correct: gradeSelection(q, parsed.data.selected) });
   } catch {
     return NextResponse.json({ error: "Grade failed — retry." }, { status: 500 });

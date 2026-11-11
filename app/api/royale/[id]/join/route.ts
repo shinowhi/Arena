@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { logFunnel } from "@/lib/funnel";
 
 // Joins a lobby (idempotent). Cap 8; over-cap race accepted for the demo.
 export async function POST(_req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -23,6 +24,7 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
     if (rpc.data === "missing") return NextResponse.json({ error: "Room not found." }, { status: 404 });
     if (rpc.data === "started") return NextResponse.json({ error: "Room already started." }, { status: 409 });
     if (rpc.data === "full") return NextResponse.json({ error: "Room is full." }, { status: 409 });
+    await logFunnel(supabase, playerId, "royale_joined");
     return NextResponse.json({ id });
   } catch {
     return NextResponse.json({ error: "Join failed — retry." }, { status: 500 });

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
 import { canSubmit, DuelRow, sideOf } from "@/lib/game/duel";
 import { settleDuel } from "@/lib/game/duel-settle";
+import { logFunnel } from "@/lib/funnel";
 
 const Body = z.object({ answers: z.array(z.number().int().min(-1).max(3)).min(1).max(60) });
 
@@ -49,6 +50,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     // Shared idempotent settle (also retried by the view on every poll).
     try {
       const s = await settleDuel(supabase, id);
+      if (s.finished) await logFunnel(supabase, playerId, "duel_finished", { winner: s.winner });
       return NextResponse.json({ score, total: d.paper.length, finished: s.finished, winner: s.winner });
     } catch {
       return NextResponse.json({ error: "Submit recorded — settle failed, reload." }, { status: 500 });

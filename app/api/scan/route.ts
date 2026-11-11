@@ -4,6 +4,7 @@ import { findGap } from "@/lib/agents/gap-finder";
 import { MetaLLMError } from "@/lib/llm/meta";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { logFunnel } from "@/lib/funnel";
 import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import { sampleDiagnosis } from "@/lib/scan/samples";
 
@@ -37,6 +38,7 @@ export async function POST(req: Request) {
     const playerId: string | null = await getOrCreatePlayerId().catch(() => null);
     const rl = checkRate(`scan:${playerId ?? getClientIp(req)}`, 10, MINUTE_MS);
     if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
+    await logFunnel(await createClient(), playerId, "scan_started");
     const decomp = await decomposeImage(imageDataUrl);
     const gap = await findGap(decomp);
     try {
@@ -52,6 +54,7 @@ export async function POST(req: Request) {
     } catch (dbErr) {
       console.error("scan save failed (diagnosis still returned):", dbErr);
     }
+    await logFunnel(await createClient(), playerId, "scan_completed");
     return NextResponse.json({ ...decomp, ...gap, can_summon: gap.confidence >= 0.3 });
   } catch (err) {
     const raw = err instanceof MetaLLMError ? err.message : "Analysis failed.";

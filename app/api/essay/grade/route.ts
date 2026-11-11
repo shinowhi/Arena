@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { gradeEssay } from "@/lib/agents/essay-grader";
 import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
+import { createClient } from "@/lib/supabase/server";
+import { logFunnel } from "@/lib/funnel";
 
 // Essay grading: photo and/or pasted solution → rubric steps + machine-audited
 // numeric verdicts. Stateless: nothing stored, nothing logged.
@@ -32,6 +34,7 @@ export async function POST(req: Request) {
   if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
   try {
     const out = await gradeEssay({ imageUrl: parsed.data.image, text: parsed.data.text });
+    await logFunnel(await createClient(), null, "essay_graded");
     return NextResponse.json(out);
   } catch {
     return NextResponse.json({ error: "Grading failed — retry with a clearer photo." }, { status: 500 });

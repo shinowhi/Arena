@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { logFunnel } from "@/lib/funnel";
 import { DAMAGE_PER_HIT } from "@/lib/game/boss-rules";
 
 const Body = z.object({ question_index: z.number().int().min(0).max(4), answer: z.number() });
@@ -61,5 +62,6 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       status = row.status;
     }
   }
+  if (status !== "ALIVE") await logFunnel(supabase, playerId, "boss_killed");
   return NextResponse.json({ correct, damage, current_hp: hp, max_hp: b.max_hp, status });
 }

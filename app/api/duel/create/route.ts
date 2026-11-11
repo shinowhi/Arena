@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { logFunnel } from "@/lib/funnel";
 import { checkRate, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import { examConfig, ExamQuestion, EXAM_SET_VERSION } from "@/lib/agents/exam";
 
@@ -52,6 +53,7 @@ export async function POST(req: Request) {
       }
       return NextResponse.json({ error: "Create failed — retry." }, { status: 500 });
     }
+    await logFunnel(supabase, playerId, "duel_created", { exam: config.id });
     return NextResponse.json({ id: (ins.data as { id: string }).id });
   } catch {
     return NextResponse.json({ error: "Create failed — retry." }, { status: 500 });
