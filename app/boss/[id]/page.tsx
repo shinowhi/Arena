@@ -8,6 +8,7 @@ import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
 import BossAvatar from "@/components/BossAvatar";
 import BossIntro from "@/components/BossIntro";
+import Onboarding from "@/components/education/Onboarding";
 import RaidFeed from "@/components/RaidFeed";
 import ShareCard from "@/components/ShareCard";
 import CharRig from "@/components/CharRig";
@@ -352,6 +353,7 @@ function BossInner() {
           </span>
         }
       />
+      <Onboarding />
       {taunt ? (
         <p className="arena-enter rounded-2xl border border-violet-500/40 bg-violet-950/30 px-4 py-2 text-center text-sm text-violet-200 italic">
           “{taunt}”
@@ -519,7 +521,7 @@ function BossInner() {
           </div>
           <MathText text={q.prompt_latex} className="overflow-x-auto text-xl text-zinc-100" />
           <p className="text-sm text-zinc-400"><span aria-hidden="true">💡</span> Hint: {q.hint}</p>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input
               type="number"
               step="any"
@@ -530,12 +532,12 @@ function BossInner() {
               }}
               placeholder="Your numeric answer"
               aria-label="Your numeric answer"
-              className="arena-input arena-num min-w-0 flex-1 rounded-xl px-4 py-2.5 text-lg text-zinc-100 placeholder:text-zinc-600"
+              className="arena-input arena-num min-w-0 w-full flex-1 rounded-xl px-4 py-2.5 text-lg text-zinc-100 placeholder:text-zinc-600"
             />
             <button
               onClick={attack}
               disabled={busy}
-              className="arena-btn-primary shrink-0 rounded-full px-6 py-2.5 font-bold text-white disabled:opacity-40 disabled:shadow-none"
+              className="arena-btn-primary min-h-[48px] w-full rounded-full px-6 py-2.5 font-bold text-white disabled:opacity-40 disabled:shadow-none sm:w-auto sm:shrink-0"
             >
               {busy ? "…" : "⚔ Attack"}
             </button>

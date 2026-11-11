@@ -2,6 +2,8 @@ import Link from "next/link";
 import StreakBadge from "@/components/StreakBadge";
 import ScanHistory from "@/components/ScanHistory";
 import TonightStrip from "@/components/TonightStrip";
+import EducationHero from "@/components/education/EducationHero";
+import ExamStrip from "@/components/education/ExamStrip";
 import PageHeader from "@/components/ui/PageHeader";
 import {
   BookIcon,
@@ -77,6 +79,8 @@ export default function Home() {
           </Link>
         </nav>
         <TonightStrip />
+        <EducationHero />
+        <ExamStrip />
         <div className="grid w-full gap-3 pt-6 text-left sm:grid-cols-3">
           {STEPS.map((s, i) => (
             <div key={s.n} className={`arena-enter arena-card rounded-2xl p-5 ${i === 1 ? "arena-d2" : i === 2 ? "arena-d3" : "arena-d1"}`}>

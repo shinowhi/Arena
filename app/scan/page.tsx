@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import DiagnosisReveal from "@/components/DiagnosisReveal";
+import Onboarding from "@/components/education/Onboarding";
 import ScreenCapture from "@/components/ScreenCapture";
 import LifeBatch, { type LifeJob } from "@/components/LifeBatch";
 import { recordRecentScan, makeThumb } from "@/lib/game/recent-scans";
@@ -46,6 +47,7 @@ export default function ScanPage() {
   // Sync ref guard: state/disabled apply only after re-render, so a same-tick
   // double-click would otherwise summon twin bosses.
   const summonRef = useRef(false);
+  const sampleRef = useRef(false);
   const [mode, setMode] = useState<"exam" | "life">("exam");
   const [jobs, setJobs] = useState<LifeJob[]>([]);
   const [forging, setForging] = useState(false);
@@ -127,6 +129,10 @@ export default function ScanPage() {
         const q = new URLSearchParams(window.location.search);
         if (q.get("mode") === "life") setMode("life");
         if (q.get("capture") === "screen") setScreenOpen(true);
+        if (q.get("sample") === "1" && q.get("mode") !== "life" && !sampleRef.current) {
+          sampleRef.current = true;
+          void autoplaySample();
+        }
       } catch {
         // Non-browser or malformed query: defaults stand.
       }
@@ -134,6 +140,9 @@ export default function ScanPage() {
     return () => {
       alive = false;
     };
+  // autoplaySample intentionally omitted: the sampleRef guard makes it
+  // run-once, and listing it would re-trigger deep links every render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   async function loadSample(id: string, path: string, name: string) {
@@ -233,20 +242,36 @@ export default function ScanPage() {
     }
   }
 
-  async function analyze() {
+  // ?sample=1 autoplay (B onboarding): load the bundled sample photo and
+  // run it exactly like a user upload. Real vision path, no cached id.
+  async function autoplaySample() {
+    try {
+      const res = await fetch("/samples/sample-1.jpg");
+      if (!res.ok) throw new Error("Sample failed to load.");
+      const blob = await res.blob();
+      const f = new File([blob], "sample-1.jpg", { type: blob.type || "image/jpeg" });
+      pick(f);
+      await analyze(f);
+    } catch {
+      setError("Sample failed to load. Pick a photo instead.");
+    }
+  }
+
+  async function analyze(target?: File) {
     if (loading) return;
     if (batch.length >= 2) {
       void analyzeBatch();
       return;
     }
-    if (!file) return;
+    const src = target ?? file;
+    if (!src) return;
     setLoading(true);
     setStage(0);
     setError("");
     setResult(null);
-    let upload = file;
+    let upload = src;
     try {
-      upload = (await prepareUploadImage(file)).file;
+      upload = (await prepareUploadImage(src)).file;
     } catch (e) {
       setLoading(false);
       setError(e instanceof Error ? e.message : "That photo can't be read — try a JPG or PNG.");
@@ -361,6 +386,7 @@ export default function ScanPage() {
         title={<>Show us <span className="arena-title">your work</span></>}
         sub="Exam sheets, screenshots, or real life. We find the weak skill and its root cause."
       />
+      <Onboarding />
       <div className="mx-auto flex gap-1 rounded-full border border-zinc-800 bg-zinc-900/60 p-1" role="tablist" aria-label="Scan mode">
         {(["exam", "life"] as const).map((m) => (
           <button
@@ -443,28 +469,28 @@ export default function ScanPage() {
             <p className="text-sm text-zinc-500">Drag a photo here, or choose one below.</p>
           </div>
         )}
-        <div className="flex flex-wrap justify-center gap-2">
-          <label className="arena-btn-ghost cursor-pointer rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
+        <div className="flex w-full flex-wrap justify-center gap-2">
+          <label className="arena-btn-ghost inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-full px-5 py-2 text-sm font-medium text-zinc-200 sm:w-auto">
             {preview ? "Choose another" : "Choose photo"}
             <input type="file" accept="image/*" capture="environment" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
           </label>
           <button
             type="button"
             onClick={() => setScreenOpen(true)}
-            className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
+            className="arena-btn-ghost inline-flex min-h-[48px] w-full items-center justify-center rounded-full px-5 py-2 text-sm font-medium text-zinc-200 sm:w-auto"
           >
             Capture screen
           </button>
         </div>
         <div className="flex w-full flex-col items-center gap-2">
           <span className="text-xs font-bold tracking-widest text-zinc-500 uppercase">No homework handy? Try a sample — instant result</span>
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex w-full flex-wrap justify-center gap-3">
             {SAMPLES.map((s) => (
               <button
                 key={s.id}
                 type="button"
                 onClick={() => loadSample(s.id, s.path, s.file)}
-                className={`group w-36 overflow-hidden rounded-xl border-2 text-left transition-all ${sampleId === s.id ? "border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.3)]" : "border-zinc-800 hover:border-zinc-500"}`}
+                className={`group min-h-[48px] w-full overflow-hidden rounded-xl border-2 text-left transition-all sm:w-36 ${sampleId === s.id ? "border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.3)]" : "border-zinc-800 hover:border-zinc-500"}`}
               >
                 <span className="block h-20 w-full overflow-hidden bg-black/60">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -483,7 +509,7 @@ export default function ScanPage() {
 
       {mode === "exam" ? (
         <button
-          onClick={analyze}
+          onClick={() => void analyze()}
           disabled={(!file && batch.length < 2) || loading}
           className={`arena-enter arena-d2 arena-btn-primary font-display rounded-full px-5 py-3.5 text-lg font-bold text-white disabled:opacity-40 disabled:shadow-none ${loading ? "animate-pulse" : ""}`}
         >

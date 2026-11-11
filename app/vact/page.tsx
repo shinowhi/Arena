@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import MathText from "@/components/MathText";
+import StickyTimer from "@/components/education/StickyTimer";
 import { examExpired, examRemainingMs, formatExamClock, URGENT_MS } from "@/lib/paper/exam";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
@@ -151,7 +152,7 @@ function VactInner() {
   const cur = sections?.[tab] ?? null;
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 overflow-x-clip px-4 py-8">
       <PageHeader
         kicker="V-ACT mock"
         title={<>Exam <span className="arena-title">{date || "…"}</span></>}
@@ -163,6 +164,12 @@ function VactInner() {
             </span>
           ) : undefined
         }
+      />
+      <StickyTimer
+        show={started}
+        label="Exam time left"
+        text={expired ? "00:00" : formatExamClock(remaining)}
+        tone={expired ? "expired" : urgent ? "urgent" : "normal"}
       />
       {loading ? (
         <div className="flex flex-col gap-3" role="status" aria-label="Loading mock">

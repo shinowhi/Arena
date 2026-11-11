@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import MathText from "@/components/MathText";
+import StickyTimer from "@/components/education/StickyTimer";
 import { examExpired, examRemainingMs, formatExamClock, URGENT_MS } from "@/lib/paper/exam";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
@@ -168,7 +169,7 @@ function HsaInner() {
   const sLocked = cur < deadlines.length && deadlines[cur] > 0 && examExpired(deadlines[cur], now);
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 overflow-x-clip px-4 py-8">
       <PageHeader
         kicker="HSA mock"
         title={<>Exam <span className="arena-title">{date || "…"}</span></>}
@@ -180,6 +181,12 @@ function HsaInner() {
             </span>
           ) : undefined
         }
+      />
+      <StickyTimer
+        show={sections !== null && !allDone && deadlines[cur] > 0}
+        label="Section time left"
+        text={sLocked ? "00:00" : formatExamClock(remaining)}
+        tone={sLocked ? "expired" : urgent ? "urgent" : "normal"}
       />
       {loading ? (
         <div className="flex flex-col gap-3" role="status" aria-label="Loading mock">
