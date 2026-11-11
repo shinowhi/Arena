@@ -1,0 +1,6 @@
+# Never upload local secrets or scratch to Vercel deployments.
+.env.local
+.env.*.local
+.tmp
+tasks
+fixtures/test.jpg
