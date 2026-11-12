@@ -50,8 +50,6 @@ export async function GET(req: Request) {
         date: day,
         p3,
         total: sections.reduce((a, s) => a + s.questions.length, 0),
-        scale: HSA_CONFIG.scale,
-        pointsPerQ: HSA_CONFIG.pointsPerQ,
         sections,
       });
     } catch {

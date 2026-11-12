@@ -13,7 +13,7 @@ function epoch2(dateStr) {
 
 // Mirror of configs in lib/agents/exam.ts.
 const VACT = {
-  clock: "single", totalMinutes: 150, pointsPerQ: 10, scale: 1200,
+  clock: "single", totalMinutes: 150,
   sections: [
     { id: "vact_vietnamese", count: 30, firstNo: 1 },
     { id: "vact_english", count: 30, firstNo: 31 },
@@ -23,7 +23,7 @@ const VACT = {
   ],
 };
 const HSA = {
-  clock: "per_section", totalMinutes: 195, pointsPerQ: 1, scale: 150,
+  clock: "per_section", totalMinutes: 195,
   sections: [
     { id: "hsa_math", count: 50, minutes: 75, firstNo: 1 },
     { id: "hsa_literature", count: 50, minutes: 60, firstNo: 51 },
@@ -98,15 +98,15 @@ const ok = (cond, msg) => {
   assert.ok(cond, msg);
 };
 
-// V-ACT shape: 120Q, single 150' clock, /1200 scale.
+// V-ACT shape: 120Q, single 150' clock, . Raw counts only — no scaled score (real exam uses IRT).
 ok(VACT.sections.reduce((a, s) => a + s.count, 0) === 120, "vact 120 questions");
 ok(VACT.clock === "single" && VACT.totalMinutes === 150, "vact single 150 clock");
-ok(120 * VACT.pointsPerQ === VACT.scale, "vact scale math");
-// HSA shape: 150Q with p3 choice, 75+60+60 clocks, /150 scale.
+ok(!("scale" in VACT) && !("pointsPerQ" in VACT), "vact has no scaled score");
+// HSA shape: 150Q with p3 choice, 75+60+60 clocks. Raw counts only.
 ok(HSA.sections.filter((s) => !s.choice).reduce((a, s) => a + s.count, 0) === 100, "hsa fixed 100");
 ok(HSA.sections.filter((s) => s.choice === "p3").length === 2, "hsa two p3 options");
 ok(HSA.sections.find((s) => s.id === "hsa_math").minutes === 75, "hsa math 75min");
-ok(HSA.totalMinutes === 195 && 150 * HSA.pointsPerQ === HSA.scale, "hsa 195min scale 150");
+ok(HSA.totalMinutes === 195 && !("scale" in HSA), "hsa 195min, no scaled score");
 // Section choice logic.
 ok(activeSections(VACT).length === 5, "vact ignores p3");
 ok(activeSections(HSA).length === 2, "hsa no-p3 gives fixed only");

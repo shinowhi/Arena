@@ -173,7 +173,7 @@ function HsaInner() {
       <PageHeader
         kicker="HSA mock"
         title={<>Exam <span className="arena-title">{date || "…"}</span></>}
-        sub="150 questions, per-section clocks (75/60/60), machine-graded. Same paper for 2 days."
+        sub="150 questions, per-section clocks (75/60/60), machine-graded. Same paper for 2 days. Practice only: raw correct counts, not official HSA scores."
         right={
           sections && !allDone && deadlines[cur] > 0 ? (
             <span role="timer" aria-label="Section time left" className={`shrink-0 font-mono text-sm tabular-nums ${sLocked ? "font-bold text-red-400" : urgent ? "arena-urgent font-bold" : "text-zinc-400"}`}>
@@ -219,8 +219,8 @@ function HsaInner() {
         <div role="status" className="arena-enter rounded-2xl bg-red-950/40 p-4 text-center">
           <p className="text-xs font-bold tracking-widest text-red-300 uppercase">Exam finished</p>
           <p className="mt-1 text-sm text-zinc-300">
-            Final <span className="arena-num font-bold text-emerald-300">{score}/{total}</span>
-            {" "}(<span className="arena-num font-bold text-emerald-300">{score}</span>/150) — the paper is locked.
+            Final <span className="arena-num font-bold text-emerald-300">{score}/{total}</span> correct
+            — the paper is locked.
           </p>
           <Link href={`/exam/review?exam=hsa&day=${date}&p3=${p3}`} className="arena-btn-ghost mt-3 inline-block rounded-full px-5 py-2 text-sm font-bold text-zinc-200">
             Review answers
@@ -240,8 +240,8 @@ function HsaInner() {
             ))}
           </div>
           <p className="text-center text-sm text-zinc-400">
-            Score <span className="arena-num font-bold text-emerald-300">{score}</span>/{total}
-            {" "}(<span className="arena-num font-bold text-emerald-300">{score}</span>/150)
+            Score <span className="arena-num font-bold text-emerald-300">{score}</span>/{total} correct
+            
           </p>
         </>
       ) : null}

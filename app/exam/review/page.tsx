@@ -28,8 +28,6 @@ function ReviewInner() {
   const day = search.get("day") ?? "";
   const p3 = search.get("p3") ?? "";
   const [sections, setSections] = useState<RSection[] | null>(null);
-  const [scale, setScale] = useState(0);
-  const [pointsPerQ, setPointsPerQ] = useState(1);
   const [picks, setPicks] = useState<Map<string, number[]>>(new Map());
   const [tab, setTab] = useState(0);
   const [error, setError] = useState("");
@@ -77,13 +75,11 @@ function ReviewInner() {
           throw new Error(`${msg}${wait}`);
         }
         if (!r.ok) throw new Error(await readApiError(r, "Review failed."));
-        return readApiJson<{ sections: RSection[]; scale: number; pointsPerQ: number }>(r, "Review failed.");
+        return readApiJson<{ sections: RSection[] }>(r, "Review failed.");
       })
       .then((d) => {
         if (!alive) return;
         setSections(d.sections);
-        setScale(d.scale);
-        setPointsPerQ(d.pointsPerQ);
       })
       .catch((e) => {
         if (alive) setError(e instanceof Error ? e.message : "Review failed.");
@@ -107,7 +103,7 @@ function ReviewInner() {
       <PageHeader
         kicker="Answer review"
         title={<>Review <span className="arena-title">{day || "…"}</span></>}
-        sub="Your picks against the key. Green is correct — red is what you chose instead."
+        sub="Your picks against the key. Green is correct — red is what you chose instead. Practice only: this score is not equivalent to the official exam."
         right={
           <Link href={backHref} className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-zinc-200">
             Back to exam
@@ -134,10 +130,7 @@ function ReviewInner() {
       {sections ? (
         <>
           <p className="text-center text-sm text-zinc-400">
-            Score <span className="arena-num font-bold text-emerald-300">{score}</span>/{total}
-            {scale > 0 ? (
-              <> (<span className="arena-num font-bold text-emerald-300">{score * pointsPerQ}</span>/{scale})</>
-            ) : null}
+            Score <span className="arena-num font-bold text-emerald-300">{score}</span>/{total} correct
           </p>
           <div className="flex flex-wrap justify-center gap-2" role="tablist" aria-label="Sections">
             {sections.map((s, a) => (

@@ -153,7 +153,7 @@ function ThptInner() {
       <PageHeader
         kicker="THPTQG mock"
         title={<>Exam <span className="arena-title">{date || "…"}</span></>}
-        sub="50 questions, 90 minutes, machine-graded. Same paper all day — retake it tomorrow for a fresh one."
+        sub="50 questions, 90 minutes, machine-graded. Same paper all day — retake it tomorrow for a fresh one. Practice only: this format differs from the official THPT paper and the score is not equivalent."
         right={
           started ? (
             <span role="timer" aria-label="Exam time left" className={`shrink-0 font-mono text-sm tabular-nums ${expired ? "font-bold text-red-400" : urgent ? "arena-urgent font-bold" : "text-zinc-400"}`}>
@@ -208,15 +208,15 @@ function ThptInner() {
         <div role="status" className="arena-enter rounded-2xl bg-red-950/40 p-4 text-center">
           <p className="text-xs font-bold tracking-widest text-red-300 uppercase">Time&apos;s up</p>
           <p className="mt-1 text-sm text-zinc-300">
-            Final <span className="arena-num font-bold text-emerald-300">{score}/{questions?.length ?? 50}</span>
-            {" "}(<span className="arena-num font-bold text-emerald-300">{((score / (questions?.length ?? 50)) * 10).toFixed(1)}</span>/10) — the paper is locked.
+            Final <span className="arena-num font-bold text-emerald-300">{score}/{questions?.length ?? 50} correct</span>
+            — the paper is locked.
           </p>
         </div>
       ) : null}
       {shown ? (
         <p className="text-center text-sm text-zinc-400">
-          Score <span className="arena-num font-bold text-emerald-300">{score}</span>/{questions?.length ?? 0}
-          {" "}(<span className="arena-num font-bold text-emerald-300">{((score / (questions?.length ?? 50)) * 10).toFixed(1)}</span>/10)
+          Score <span className="arena-num font-bold text-emerald-300">{score}</span>/{questions?.length ?? 0} correct
+          
         </p>
       ) : null}
       {(shown ? questions : null)?.map((q, i) => (

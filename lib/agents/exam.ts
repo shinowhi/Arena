@@ -47,19 +47,17 @@ export type ExamConfig = {
   name: string;
   clock: "single" | "per_section";
   totalMinutes: number;
-  pointsPerQ: number;
-  scale: number;
   sections: ExamSection[];
 };
 
-// V-ACT = ĐGNL ĐHQG-HCM, APT form 2025: 120Q / 150min / scale 1200.
+// V-ACT = ĐGNL ĐHQG-HCM, APT form 2025: 120Q / 150min.
+// Scores are raw correct counts only — the real exam uses IRT per-item weights,
+// so a practice paper must never present a /1200 scaled score.
 export const VACT_CONFIG: ExamConfig = {
   id: "vact",
   name: "V-ACT",
   clock: "single",
   totalMinutes: 150,
-  pointsPerQ: 10,
-  scale: 1200,
   sections: [
     { id: "vact_vietnamese", name: "Vietnamese", count: 30, minutes: 150, tier: "draft", firstNo: 1 },
     { id: "vact_english", name: "English", count: 30, minutes: 150, tier: "draft", firstNo: 31 },
@@ -69,14 +67,13 @@ export const VACT_CONFIG: ExamConfig = {
   ],
 };
 
-// HSA = ĐGNL ĐHQG Hà Nội 2025: 150Q / scale 150, per-section clocks.
+// HSA = ĐGNL ĐHQG Hà Nội 2025: 150Q, per-section clocks.
+// Raw correct counts only — never presented as an official-scale score.
 export const HSA_CONFIG: ExamConfig = {
   id: "hsa",
   name: "HSA",
   clock: "per_section",
   totalMinutes: 195,
-  pointsPerQ: 1,
-  scale: 150,
   sections: [
     { id: "hsa_math", name: "Math & data", count: 50, minutes: 75, tier: "verified", firstNo: 1 },
     { id: "hsa_literature", name: "Literature & language", count: 50, minutes: 60, tier: "draft", firstNo: 51 },

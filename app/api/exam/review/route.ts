@@ -92,8 +92,6 @@ export async function GET(req: Request) {
         exam: config.id,
         date: day,
         total: sections.reduce((a, s) => a + s.questions.length, 0),
-        scale: config.scale,
-        pointsPerQ: config.pointsPerQ,
         sections,
       });
     } catch {

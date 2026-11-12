@@ -44,8 +44,6 @@ export async function GET(req: Request) {
         exam: VACT_CONFIG.id,
         date: day,
         total: sections.reduce((a, s) => a + s.questions.length, 0),
-        scale: VACT_CONFIG.scale,
-        pointsPerQ: VACT_CONFIG.pointsPerQ,
         sections,
       });
     } catch {

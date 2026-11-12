@@ -156,7 +156,7 @@ function VactInner() {
       <PageHeader
         kicker="V-ACT mock"
         title={<>Exam <span className="arena-title">{date || "…"}</span></>}
-        sub="120 questions, 150 minutes, machine-graded. Same paper for 2 days — retake it after refresh for a fresh one."
+        sub="120 questions, 150 minutes, machine-graded. Same paper for 2 days — retake it after refresh for a fresh one. Practice only: raw correct counts, not official V-ACT scores (the real exam uses IRT)."
         right={
           started ? (
             <span role="timer" aria-label="Exam time left" className={`shrink-0 font-mono text-sm tabular-nums ${expired ? "font-bold text-red-400" : urgent ? "arena-urgent font-bold" : "text-zinc-400"}`}>
@@ -205,8 +205,8 @@ function VactInner() {
         <div role="status" className="arena-enter rounded-2xl bg-red-950/40 p-4 text-center">
           <p className="text-xs font-bold tracking-widest text-red-300 uppercase">Time&apos;s up</p>
           <p className="mt-1 text-sm text-zinc-300">
-            Final <span className="arena-num font-bold text-emerald-300">{score}/{total}</span>
-            {" "}(<span className="arena-num font-bold text-emerald-300">{score * 10}</span>/1200) — the paper is locked.
+            Final <span className="arena-num font-bold text-emerald-300">{score}/{total}</span> correct
+            — the paper is locked.
           </p>
           <Link href={`/exam/review?exam=vact&day=${date}`} className="arena-btn-ghost mt-3 inline-block rounded-full px-5 py-2 text-sm font-bold text-zinc-200">
             Review answers
@@ -230,8 +230,8 @@ function VactInner() {
             ))}
           </div>
           <p className="text-center text-sm text-zinc-400">
-            Score <span className="arena-num font-bold text-emerald-300">{score}</span>/{total}
-            {" "}(<span className="arena-num font-bold text-emerald-300">{score * 10}</span>/1200)
+            Score <span className="arena-num font-bold text-emerald-300">{score}</span>/{total} correct
+            
           </p>
         </>
       ) : null}
