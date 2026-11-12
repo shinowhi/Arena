@@ -2,19 +2,24 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
+import HotSkills, { type HotSkill } from "@/components/ghosts/HotSkills";
+import GhostFeed, { type FeedItem } from "@/components/ghosts/GhostFeed";
 
-type Ghosts = {
+type GhostsData = {
   ghosts: number;
-  hotSkills: Array<{ tag: string; name: string; count: number }>;
+  hotSkills: HotSkill[];
   solvedTonight: number;
   nightlyGoal: number;
+  recent: FeedItem[];
+  youTonight: boolean;
 };
 
 const POLL_MS = 30000;
 
 export default function GhostsPage() {
-  const [data, setData] = useState<Ghosts | null>(null);
+  const [data, setData] = useState<GhostsData | null>(null);
   const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -22,13 +27,20 @@ export default function GhostsPage() {
       try {
         const r = await fetch("/api/ghosts");
         const d = await r.json();
-        if (!r.ok) throw new Error(d.error ?? "Load failed.");
+        if (!r.ok) throw new Error("load-failed");
         if (alive) {
-          setData(d as Ghosts);
+          setData({
+            ghosts: typeof d.ghosts === "number" ? d.ghosts : 0,
+            hotSkills: Array.isArray(d.hotSkills) ? d.hotSkills : [],
+            solvedTonight: typeof d.solvedTonight === "number" ? d.solvedTonight : 0,
+            nightlyGoal: typeof d.nightlyGoal === "number" && d.nightlyGoal > 0 ? d.nightlyGoal : 100,
+            recent: Array.isArray(d.recent) ? d.recent : [],
+            youTonight: d.youTonight === true,
+          });
           setError("");
         }
-      } catch (e) {
-        if (alive) setError(e instanceof Error ? e.message : "Load failed.");
+      } catch {
+        if (alive) setError("Không tìm thấy ma. Kiểm tra mạng rồi thử lại nhé.");
       }
     }
     load();
@@ -37,62 +49,95 @@ export default function GhostsPage() {
       alive = false;
       clearInterval(id);
     };
-  }, []);
+  }, [attempt]);
 
   const pct = data ? Math.min(100, Math.round((data.solvedTonight / data.nightlyGoal) * 100)) : 0;
+  const total = data ? data.ghosts + (data.youTonight ? 1 : 0) : 0;
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Ghost classroom"
-        title="You never grind alone"
-        sub="Anonymous hunters grinding beside you tonight."
+        kicker="Lớp học ma"
+        title="Tối nay không cày một mình"
+        sub="Những thợ săn ẩn danh đang cày cùng bạn. Không tên, không mặt — chỉ có tiến độ."
       />
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
-      {!data && !error ? <p className="text-zinc-500">Sensing nearby ghosts…</p> : null}
+      {error ? (
+        <div role="alert" className="arena-card flex min-h-[48px] flex-wrap items-center gap-3 rounded-2xl p-4">
+          <p className="min-w-0 flex-1 basis-48 text-sm text-red-400">{error}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setError("");
+              setAttempt((a) => a + 1);
+            }}
+            className="arena-btn-ghost inline-flex min-h-[48px] shrink-0 items-center rounded-full px-5 py-2 text-sm font-semibold text-zinc-200"
+          >
+            Thử lại
+          </button>
+        </div>
+      ) : null}
+      {!data && !error ? (
+        <>
+          <p className="sr-only" role="status">
+            Đang tìm ma…
+          </p>
+          <div aria-hidden="true" className="flex flex-col gap-5">
+            <div className="arena-card rounded-2xl p-6">
+              <div className="arena-shimmer mx-auto h-12 w-24 rounded-xl" />
+              <div className="arena-shimmer mx-auto mt-2 h-4 w-48 rounded-full" />
+            </div>
+            <div className="arena-card rounded-2xl p-4">
+              <div className="arena-shimmer h-3 rounded-full" />
+            </div>
+            <div className="arena-card rounded-2xl p-4">
+              <div className="arena-shimmer h-10 rounded-xl" />
+            </div>
+          </div>
+        </>
+      ) : null}
       {data ? (
         <>
           <div className="arena-card rounded-2xl p-6 text-center">
-            <p className="font-display arena-num text-5xl font-black text-zinc-100">{data.ghosts}</p>
+            <p className="font-display arena-num text-5xl font-black text-zinc-100">{total}</p>
             <p className="mt-1 text-sm text-zinc-400">
-              {data.ghosts === 1 ? "ghost" : "ghosts"} grinding in the last 15 minutes
+              {data.youTonight ? (
+                <>Bạn đang là 1 trong {total} ghost</>
+              ) : (
+                <>
+                  {data.ghosts} ghost đang cày trong 15 phút qua
+                </>
+              )}
             </p>
           </div>
           <div className="arena-card rounded-2xl p-4">
-            <div className="flex items-baseline justify-between">
-              <p className="text-sm text-zinc-400">Tonight, together</p>
-              <p className="text-sm font-bold text-zinc-200">
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="min-w-0 truncate text-sm text-zinc-400">Tối nay, cùng nhau</p>
+              <p className="shrink-0 text-sm font-bold text-zinc-200 tabular-nums">
                 {data.solvedTonight}/{data.nightlyGoal}
               </p>
             </div>
-            <div className="mt-2 h-3 overflow-hidden rounded-full bg-zinc-800">
-              <div className="h-full bg-sky-500 transition-all" style={{ width: `${pct}%` }} />
+            <div
+              className="mt-2 h-3 overflow-hidden rounded-full bg-zinc-800"
+              role="progressbar"
+              aria-label="Tiến độ giải bài tối nay"
+              aria-valuenow={pct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div
+                className="h-full bg-sky-500 transition-all motion-reduce:transition-none"
+                style={{ width: `${pct}%` }}
+              />
             </div>
           </div>
-          <div className="arena-card rounded-2xl p-4">
-            <p className="mb-2 text-sm font-semibold text-zinc-300">Glowing right now</p>
-            {data.hotSkills.length === 0 ? (
-              <p className="text-sm text-zinc-500">Quiet… be the first ghost tonight.</p>
-            ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {data.hotSkills.map((s) => (
-                  <span
-                    key={s.tag}
-                    title={`${s.count} solves in 15 min`}
-                    className="rounded-full border border-zinc-700 bg-zinc-900/70 px-2.5 py-1 text-xs text-zinc-300"
-                  >
-                    {s.name} · {s.count}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-          <nav className="flex flex-wrap gap-3 text-sm" aria-label="Keep grinding">
-            <Link href="/arena" className="arena-btn-primary rounded-full px-5 py-2 font-semibold text-white">
-              Join the grind
+          <HotSkills skills={data.hotSkills} />
+          <GhostFeed items={data.recent} />
+          <nav className="flex flex-wrap gap-3 text-sm" aria-label="Cày tiếp">
+            <Link href="/arena" className="arena-btn-primary inline-flex min-h-[48px] items-center rounded-full px-5 py-2 font-semibold text-white">
+              Vào đấu trường
             </Link>
-            <Link href="/scan" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
-              Scan your work
+            <Link href="/scan" className="arena-btn-ghost inline-flex min-h-[48px] items-center rounded-full px-5 py-2 font-medium text-zinc-200">
+              Quét bài của bạn
             </Link>
           </nav>
         </>
