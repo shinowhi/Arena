@@ -48,6 +48,7 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
       <p className="text-xs font-bold uppercase tracking-widest text-amber-400">Admin</p>
       <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">{title}</h1>
       <a href="/admin/billing" className="mt-2 inline-block text-sm text-amber-400 underline">Billing desk</a>
+      <a href="/admin/centers" className="mt-2 ml-4 inline-block text-sm text-amber-400 underline">Centers</a>
       <div className="mt-6">{children}</div>
     </main>
   );
