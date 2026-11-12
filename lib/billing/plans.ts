@@ -3,10 +3,22 @@
 // line: plan prices, hero plan, memo format. Mirrors the 0016 seed rows —
 // update the seed INSERT in supabase/migrations/0016_billing.sql to match.
 //
-// PRICES ARE PLACEHOLDERS pending user/A confirm (29k/29k/49k/490k VND).
+// PRICES ARE PLACEHOLDERS pending user/A confirm (29k/29k/49k/490k VND,
+// family 79k/119k VND — coordinator locks, confirm with user/A).
+//
+// FAMILY PLANS (P5, appended — mirrors the 0017 seed rows; update the seed
+// INSERT in supabase/migrations/0017_family.sql to match):
+//   family_2  79,000 VND / 30 days (product bundle, 2 kid seats)
+//   family_4 119,000 VND / 30 days (product bundle, 4 kid seats)
 
 export type PlanProduct = "A" | "B" | "bundle";
-export type PlanCode = "scan_monthly" | "exam_monthly" | "bundle_monthly" | "bundle_yearly";
+export type PlanCode =
+  | "scan_monthly"
+  | "exam_monthly"
+  | "bundle_monthly"
+  | "bundle_yearly"
+  | "family_2"
+  | "family_4";
 
 export type Plan = {
   code: PlanCode;
@@ -45,6 +57,26 @@ export const PLANS: Record<PlanCode, Plan> = {
     price_vnd: 490000,
     period_days: 365,
   },
+  family_2: {
+    code: "family_2",
+    name: "Family 2 kids",
+    product: "bundle",
+    price_vnd: 79000,
+    period_days: 30,
+  },
+  family_4: {
+    code: "family_4",
+    name: "Family 4 kids",
+    product: "bundle",
+    price_vnd: 119000,
+    period_days: 30,
+  },
+};
+
+// Kid seats per family plan (P5 single constant — mirrors the 0017 header).
+export const FAMILY_SEATS: Record<"family_2" | "family_4", number> = {
+  family_2: 2,
+  family_4: 4,
 };
 
 export const PLAN_CODES = Object.keys(PLANS) as PlanCode[];
