@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -105,55 +106,42 @@ async function loadDashboard(): Promise<{
   return { c7, c30, recent, missing, codes, vipMissing };
 }
 
-export default async function AdminPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ err?: string }>;
-}) {
-  if (!process.env.ADMIN_SECRET) {
-    return (
-      <Shell title="Funnel dashboard">
-        <p className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
-          Admin is not configured — set ADMIN_SECRET on the server first.
-        </p>
-      </Shell>
-    );
-  }
+// Everything below the Shell reads cookies/searchParams/DB, so it streams
+// inside Suspense (Next 16 cacheComponents forbids dynamic reads in prerender).
+async function AdminBody({ searchParams }: { searchParams: Promise<{ err?: string }> }) {
   const store = await cookies();
   if (!verifyAdmin(store.get("arena_admin")?.value)) {
     const { err } = await searchParams;
     return (
-      <Shell title="Funnel dashboard">
-        <form
-          method="POST"
-          action="/api/admin/login"
-          className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"
+      <form
+        method="POST"
+        action="/api/admin/login"
+        className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"
+      >
+        <label className="block text-xs text-zinc-400">
+          Admin key
+          <input
+            type="password"
+            name="key"
+            autoComplete="off"
+            className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+          />
+        </label>
+        {err && <p className="mt-2 text-sm text-red-400">Wrong key — try again.</p>}
+        <button
+          type="submit"
+          className="mt-4 rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400"
         >
-          <label className="block text-xs text-zinc-400">
-            Admin key
-            <input
-              type="password"
-              name="key"
-              autoComplete="off"
-              className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
-            />
-          </label>
-          {err && <p className="mt-2 text-sm text-red-400">Wrong key — try again.</p>}
-          <button
-            type="submit"
-            className="mt-4 rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400"
-          >
-            Unlock
-          </button>
-        </form>
-      </Shell>
+          Unlock
+        </button>
+      </form>
     );
   }
 
   const { c7, c30, recent, missing, codes, vipMissing } = await loadDashboard();
 
   return (
-    <Shell title="Funnel dashboard">
+    <>
       {missing && (
         <p className="rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
           No funnel data yet — run migration supabase/migrations/0011_funnel.sql in Supabase, then
@@ -275,6 +263,29 @@ export default async function AdminPage({
         )}
         {!vipMissing && <CodesForm />}
       </section>
+    </>
+  );
+}
+
+export default function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ err?: string }>;
+}) {
+  if (!process.env.ADMIN_SECRET) {
+    return (
+      <Shell title="Funnel dashboard">
+        <p className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
+          Admin is not configured — set ADMIN_SECRET on the server first.
+        </p>
+      </Shell>
+    );
+  }
+  return (
+    <Shell title="Funnel dashboard">
+      <Suspense fallback={<p className="text-sm text-zinc-500">Loading dashboard…</p>}>
+        <AdminBody searchParams={searchParams} />
+      </Suspense>
     </Shell>
   );
 }
