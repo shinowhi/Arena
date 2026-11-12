@@ -13,7 +13,9 @@ export type FunnelEvent =
   | "duel_finished"
   | "royale_joined"
   | "essay_graded"
-  | "tutor_asked";
+  | "tutor_asked"
+  | "order_created"
+  | "order_approved";
 
 // Best-effort insert into funnel_events (migration 0011). Never throws and
 // never fails the caller: missing table, RLS hiccup, and network blips all
