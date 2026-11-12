@@ -7,6 +7,7 @@ import { logFunnel } from "@/lib/funnel";
 import { checkRate, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import { PRIVATE_BOSS_HP, bossTtlSeconds } from "@/lib/game/boss-rules";
 import { MetaLLMError } from "@/lib/llm/meta";
+import { hasAccess, paywallBody } from "@/lib/billing/access";
 
 const Body = z.object({ skill_tag: z.string().min(1) });
 
@@ -20,8 +21,10 @@ export async function POST(req: Request) {
     const playerId = await getOrCreatePlayerId();
     const rl = checkRate(`summon:${playerId}`, 20, MINUTE_MS);
     if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
-    const boss = await getBossQuestionsCached(parsed.data.skill_tag);
     const supabase = await createClient();
+    const gate = await hasAccess(supabase, playerId, "A");
+    if (!gate.ok) return NextResponse.json(paywallBody(), { status: 402 });
+    const boss = await getBossQuestionsCached(parsed.data.skill_tag);
     const ttl = bossTtlSeconds();
     const { data, error } = await supabase
       .from("bosses")

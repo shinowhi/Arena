@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { getPlayerId } from "@/lib/game/player";
 import { skillGrade, skillName, SKILL_IDS } from "@/lib/graph/skills";
 import { buildMock, MockQuestion, THPT_CONFIG } from "@/lib/agents/thpt";
+import { hasAccess, paywallBody } from "@/lib/billing/access";
 import { logFunnel } from "@/lib/funnel";
 
 // Daily THPTQG mock: 50 questions from 25 cached sets (grades 10-12, no
@@ -25,6 +27,8 @@ export async function GET(req: Request) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return NextResponse.json({ error: "Bad day param." }, { status: 400 });
     const pool = poolSkills();
     const supabase = await createClient();
+    const gate = await hasAccess(supabase, await getPlayerId().catch(() => null), "B");
+    if (!gate.ok) return NextResponse.json(paywallBody(), { status: 402 });
     const since = new Date(Date.now() - SEVEN_DAYS_MS).toISOString();
     const { data, error } = await supabase
       .from("boss_question_cache")

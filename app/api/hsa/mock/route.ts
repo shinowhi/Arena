@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreatePlayerId } from "@/lib/game/player";
+import { getOrCreatePlayerId, getPlayerId } from "@/lib/game/player";
 import { logFunnel } from "@/lib/funnel";
+import { hasAccess, paywallBody } from "@/lib/billing/access";
 import { assembleExam, CacheRow, ExamQuestion, EXAM_SET_VERSION, HSA_CONFIG } from "@/lib/agents/exam";
 
 // HSA paper: fixed parts + ONE part-3 choice (science or english).
@@ -21,6 +22,8 @@ export async function GET(req: Request) {
     }
     const ids = HSA_CONFIG.sections.map((s) => s.id);
     const supabase = await createClient();
+    const gate = await hasAccess(supabase, await getPlayerId().catch(() => null), "B");
+    if (!gate.ok) return NextResponse.json(paywallBody(), { status: 402 });
     const { data, error } = await supabase
       .from("boss_question_cache")
       .select("skill_tag, questions, fetched_at")

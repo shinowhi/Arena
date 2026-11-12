@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreatePlayerId } from "@/lib/game/player";
+import { getOrCreatePlayerId, getPlayerId } from "@/lib/game/player";
 import { logFunnel } from "@/lib/funnel";
+import { hasAccess, paywallBody } from "@/lib/billing/access";
 import { assembleExam, CacheRow, ExamQuestion, EXAM_SET_VERSION, VACT_CONFIG } from "@/lib/agents/exam";
 
 // V-ACT paper: 120 cached MC questions, zero LLM at serve time. Readers take
@@ -16,6 +17,8 @@ export async function GET(req: Request) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return NextResponse.json({ error: "Bad day param." }, { status: 400 });
     const ids = VACT_CONFIG.sections.map((s) => s.id);
     const supabase = await createClient();
+    const gate = await hasAccess(supabase, await getPlayerId().catch(() => null), "B");
+    if (!gate.ok) return NextResponse.json(paywallBody(), { status: 402 });
     const { data, error } = await supabase
       .from("boss_question_cache")
       .select("skill_tag, questions, fetched_at")
