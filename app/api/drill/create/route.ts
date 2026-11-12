@@ -3,7 +3,6 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId, getPlayerId } from "@/lib/game/player";
 import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
-import { generatePaper } from "@/lib/agents/paper-generator";
 import { BossQuestion } from "@/lib/agents/boss-generator";
 import { getBossQuestionsCached } from "@/lib/game/boss-cache";
 import { photoToProblem } from "@/lib/agents/photo-problem";
@@ -38,9 +37,9 @@ export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Missing or invalid drill source." }, { status: 400 });
   const { source, topic, image } = parsed.data;
-  // Topic/upload forges are LLM-bound: >10 triggers a second forge (4
-  // sequential batches worst-case) and risks the 60s function cap, so cap
-  // forged sources at 10. Cache-backed sources (weak/misses) keep 20.
+  // Topic/upload serve the 5Q cached set (no live forge: too slow for
+  // the function clock), so cap them at 10 — the response count tells the
+  // client how many actually shipped. Weak/misses interleave caches, keep 20.
   const count =
     source === "topic" || source === "upload"
       ? Math.min(clampCount(parsed.data.count), 10)
@@ -79,12 +78,15 @@ export async function POST(req: Request) {
     let questions: DrillQuestion[] = [];
     if (source === "topic") {
       const skill = topic as string;
-      const first = await generatePaper(skill);
-      questions = first.questions.slice(0, count).map((q) => ({ ...q, skill_tag: skill }));
-      if (questions.length < count) {
-        const second = await generatePaper(skill);
-        questions.push(
-          ...second.questions.slice(0, count - questions.length).map((q) => ({ ...q, skill_tag: skill })),
+      // Cache-first: live forging (2x8k LLM calls) blows past the function
+      // clock (verified live: >90s). Boss cache holds a verified 5Q set per
+      // skill, refreshed by cron; serve what is cached.
+      const cached = await getBossQuestionsCached(skill);
+      questions = cached.questions.slice(0, count).map((q) => ({ ...q, skill_tag: skill }));
+      if (questions.length === 0) {
+        return NextResponse.json(
+          { error: "Warming up: this topic has no cached set yet — try again in a minute." },
+          { status: 503 },
         );
       }
       title = `${skillName(skill)} drill`;
@@ -160,8 +162,8 @@ export async function POST(req: Request) {
       title = "Miss-queue drill";
     } else {
       // Photo pipeline: the photo problem IS question 1 (as in
-      // photo-problem), the cached set fills the rest, paper-generator tops
-      // up when the caller asked for more than the cache holds.
+      // photo-problem), the cached set fills the rest. No live forge
+      // top-up: forging exceeds the function clock (see topic path).
       const photo = await photoToProblem(image as string);
       const cached = await getBossQuestionsCached(photo.skill_tag);
       questions = [
@@ -176,14 +178,6 @@ export async function POST(req: Request) {
         },
         ...cached.questions.slice(1, count).map((q) => ({ ...q, skill_tag: photo.skill_tag })),
       ].slice(0, count);
-      while (questions.length < count) {
-        const extra = await generatePaper(photo.skill_tag);
-        questions.push(
-          ...extra.questions
-            .slice(0, count - questions.length)
-            .map((q) => ({ ...q, skill_tag: photo.skill_tag })),
-        );
-      }
       title = `Photo drill: ${skillName(photo.skill_tag)}`;
     }
     const paper = DrillPaper.parse({ questions });
