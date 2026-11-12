@@ -231,7 +231,7 @@ function VactInner() {
           </div>
           <p className="text-center text-sm text-zinc-400">
             Score <span className="arena-num font-bold text-emerald-300">{score}</span>/{total} correct
-            
+
           </p>
         </>
       ) : null}

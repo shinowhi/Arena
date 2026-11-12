@@ -9,6 +9,8 @@ import ScreenCapture from "@/components/ScreenCapture";
 import LifeBatch, { type LifeJob } from "@/components/LifeBatch";
 import { recordRecentScan, makeThumb } from "@/lib/game/recent-scans";
 import { prepareUploadImage, readApiError, readApiJson } from "@/lib/scan/image-prep";
+import { loadProfile } from "@/lib/profile/storage";
+import { SUBJECT_LABEL, type SubjectId } from "@/lib/profile/types";
 
 type ScanResult = {
   items: Array<{ cau_hoi: string; dap_an_sinh_vien: string; skill_tag: string[] }>;
@@ -18,12 +20,13 @@ type ScanResult = {
   can_summon: boolean;
   sample?: boolean;
   batch?: { votes: number; total: number };
+  quota?: { used: number; limit: number; vip: boolean };
 };
 
 const STAGES = [
-  "Reading handwriting…",
-  "Mapping mistakes to skills…",
-  "Tracing the root cause…",
+  "Đang đọc chữ viết…",
+  "Đang soi lỗi theo kỹ năng…",
+  "Đang truy tìm gốc rễ…",
 ];
 const ANALYZE_TIMEOUT_MS = 120000;
 const SUMMON_TIMEOUT_MS = 180000;
@@ -31,8 +34,8 @@ const LIFE_TIMEOUT_MS = 180000;
 const BATCH_MAX = 3;
 
 const SAMPLES = [
-  { id: "area-integral", label: "Area integral", path: "/samples/area-integral.png", file: "area-integral.png" },
-  { id: "implicit-diff", label: "Implicit diff", path: "/samples/implicit-diff.png", file: "implicit-diff.png" },
+  { id: "area-integral", label: "Tích phân diện tích", path: "/samples/area-integral.png", file: "area-integral.png" },
+  { id: "implicit-diff", label: "Đạo hàm ẩn", path: "/samples/implicit-diff.png", file: "implicit-diff.png" },
 ];
 
 export default function ScanPage() {
@@ -56,6 +59,7 @@ export default function ScanPage() {
   const [error, setError] = useState("");
   const [result, setResult] = useState<ScanResult | null>(null);
   const [screenOpen, setScreenOpen] = useState(false);
+  const [subject, setSubject] = useState<SubjectId>("toan");
 
   function pick(f: File | undefined, sample = "") {
     if (!f) return;
@@ -130,6 +134,8 @@ export default function ScanPage() {
         const q = new URLSearchParams(window.location.search);
         if (q.get("mode") === "life") setMode("life");
         if (q.get("capture") === "screen") setScreenOpen(true);
+        const p = loadProfile();
+        if (p?.subjects?.[0]) setSubject(p.subjects[0]);
         if (q.get("sample") === "1" && q.get("mode") !== "life" && !sampleRef.current) {
           sampleRef.current = true;
           void autoplaySample();
@@ -150,26 +156,26 @@ export default function ScanPage() {
     setError("");
     try {
       const res = await fetch(path);
-      if (!res.ok) throw new Error("Sample failed to load.");
+      if (!res.ok) throw new Error("Không tải được ảnh mẫu.");
       const blob = await res.blob();
       pick(new File([blob], name, { type: blob.type || "image/png" }), id);
     } catch {
-      setError("Sample failed to load. Pick a photo instead.");
+      setError("Không tải được ảnh mẫu. Hãy chọn ảnh khác.");
     }
   }
 
   function addJobs(files: File[]) {
     const room = BATCH_MAX - jobs.length;
     if (room <= 0) {
-      setError("Batch is full — 3 photos max. Remove one to add more.");
+      setError("Đã đủ 3 ảnh. Xóa bớt 1 ảnh để thêm.");
       return;
     }
     const take = files.filter((f) => f.type.startsWith("image/")).slice(0, room);
     if (take.length === 0) {
-      setError("Only image files can join the batch.");
+      setError("Chỉ nhận file ảnh.");
       return;
     }
-    if (take.length < files.length) setError("Only images, 3 max — extras skipped.");
+    if (take.length < files.length) setError("Chỉ nhận ảnh, tối đa 3 — ảnh thừa đã bỏ qua.");
     else setError("");
     const fresh: LifeJob[] = take.map((f) => ({
       key: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -204,7 +210,7 @@ export default function ScanPage() {
       for (const b of batch) uploads.push((await prepareUploadImage(b.file)).file);
     } catch (e) {
       setLoading(false);
-      setError(e instanceof Error ? e.message : "Those photos can't be read — try JPG or PNG.");
+      setError(e instanceof Error ? e.message : "Không đọc được các ảnh này — thử JPG hoặc PNG.");
       return;
     }
     const ticker = setInterval(() => setStage((s) => (s + 1) % STAGES.length), 4000);
@@ -213,13 +219,14 @@ export default function ScanPage() {
     try {
       const form = new FormData();
       for (const u of uploads) form.append("images", u);
+      form.append("subject", subject);
       const res = await fetch("/api/scan/batch", { method: "POST", body: form, signal: ctrl.signal });
-      if (!res.ok) throw new Error(await readApiError(res, "Batch analysis failed."));
+      if (!res.ok) throw new Error(await readApiError(res, "Phân tích hàng loạt thất bại."));
       const r = await readApiJson<{
         photos: Array<ScanResult>;
         merged: { weak_skill: string; root_cause: string; confidence: number; votes: number; total: number };
         can_summon: boolean;
-      }>(res, "Batch analysis failed.");
+      }>(res, "Phân tích hàng loạt thất bại.");
       setResult({
         items: r.photos.flatMap((p) => p.items),
         weak_skill: r.merged.weak_skill,
@@ -231,10 +238,10 @@ export default function ScanPage() {
     } catch (e) {
       setError(
         e instanceof DOMException && e.name === "AbortError"
-          ? "Batch timed out. Try fewer photos or clearer shots."
+          ? "Hết giờ chờ. Thử ít ảnh hơn hoặc chụp rõ hơn."
           : e instanceof Error
             ? e.message
-            : "Batch analysis failed.",
+            : "Phân tích hàng loạt thất bại.",
       );
     } finally {
       clearInterval(ticker);
@@ -248,13 +255,13 @@ export default function ScanPage() {
   async function autoplaySample() {
     try {
       const res = await fetch("/samples/sample-1.jpg");
-      if (!res.ok) throw new Error("Sample failed to load.");
+      if (!res.ok) throw new Error("Không tải được ảnh mẫu.");
       const blob = await res.blob();
       const f = new File([blob], "sample-1.jpg", { type: blob.type || "image/jpeg" });
       pick(f);
       await analyze(f);
     } catch {
-      setError("Sample failed to load. Pick a photo instead.");
+      setError("Không tải được ảnh mẫu. Hãy chọn ảnh khác.");
     }
   }
 
@@ -275,7 +282,7 @@ export default function ScanPage() {
       upload = (await prepareUploadImage(src)).file;
     } catch (e) {
       setLoading(false);
-      setError(e instanceof Error ? e.message : "That photo can't be read — try a JPG or PNG.");
+      setError(e instanceof Error ? e.message : "Không đọc được ảnh này — thử JPG hoặc PNG.");
       return;
     }
     const ticker = setInterval(() => setStage((s) => (s + 1) % STAGES.length), 4000);
@@ -285,16 +292,17 @@ export default function ScanPage() {
       const form = new FormData();
       form.append("image", upload);
       if (sampleId) form.append("sample", sampleId);
+      form.append("subject", subject);
       const res = await fetch("/api/scan", { method: "POST", body: form, signal: ctrl.signal });
-      if (!res.ok) throw new Error(await readApiError(res, "Analysis failed."));
-      setResult(await readApiJson<ScanResult>(res, "Analysis failed."));
+      if (!res.ok) throw new Error(await readApiError(res, "Phân tích thất bại."));
+      setResult(await readApiJson<ScanResult>(res, "Phân tích thất bại."));
     } catch (e) {
       setError(
         e instanceof DOMException && e.name === "AbortError"
-          ? "Analysis timed out. Try again with a clearer photo."
+          ? "Hết giờ chờ. Thử lại với ảnh rõ hơn."
           : e instanceof Error
             ? e.message
-            : "Analysis failed.",
+            : "Phân tích thất bại.",
       );
     } finally {
       clearInterval(ticker);
@@ -309,7 +317,7 @@ export default function ScanPage() {
     try {
       upload = (await prepareUploadImage(job.file)).file;
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "That photo can't be read — try a JPG or PNG.";
+      const msg = e instanceof Error ? e.message : "Không đọc được ảnh này — thử JPG hoặc PNG.";
       setJobs((prev) => prev.map((j) => (j.key === job.key ? { ...j, status: "failed", error: msg } : j)));
       return;
     }
@@ -319,17 +327,17 @@ export default function ScanPage() {
       const form = new FormData();
       form.append("image", upload);
       const res = await fetch("/api/photo-problem", { method: "POST", body: form, signal: ctrl.signal });
-      if (!res.ok) throw new Error(await readApiError(res, "Photo scan failed."));
-      const r = await readApiJson<{ boss_id: string; skill_tag: string; problem_latex: string }>(res, "Photo scan failed.");
+      if (!res.ok) throw new Error(await readApiError(res, "Quét ảnh thất bại."));
+      const r = await readApiJson<{ boss_id: string; skill_tag: string; problem_latex: string }>(res, "Quét ảnh thất bại.");
       recordRecentScan({ ts: Date.now(), mode: "life", skill: r.skill_tag, bossId: r.boss_id, thumb: job.thumb });
       setJobs((prev) => prev.map((j) => (j.key === job.key ? { ...j, status: "done", result: r } : j)));
     } catch (e) {
       const msg =
         e instanceof DOMException && e.name === "AbortError"
-          ? "Timed out — tap Forge to retry this one."
+          ? "Hết giờ chờ — bấm Rèn lại ảnh này."
           : e instanceof Error
             ? e.message
-            : "Forge failed.";
+            : "Rèn thất bại.";
       setJobs((prev) => prev.map((j) => (j.key === job.key ? { ...j, status: "failed", error: msg } : j)));
     } finally {
       clearTimeout(timer);
@@ -361,17 +369,17 @@ export default function ScanPage() {
         body: JSON.stringify({ skill_tag: result.weak_skill }),
         signal: ctrl.signal,
       });
-      if (!res.ok) throw new Error(await readApiError(res, "Summon failed."));
-      const bossId = (await readApiJson<{ boss_id: string }>(res, "Summon failed.")).boss_id;
+      if (!res.ok) throw new Error(await readApiError(res, "Gọi boss thất bại."));
+      const bossId = (await readApiJson<{ boss_id: string }>(res, "Gọi boss thất bại.")).boss_id;
       recordRecentScan({ ts: Date.now(), mode: "exam", skill: result.weak_skill, bossId, thumb });
       router.push("/boss/" + encodeURIComponent(bossId) + "?root=" + encodeURIComponent(result.root_cause));
     } catch (e) {
       setError(
         e instanceof DOMException && e.name === "AbortError"
-          ? "Summon timed out — check the arena, your boss may already be waiting."
+          ? "Hết giờ gọi boss — vào đấu trường xem, boss có thể đã chờ sẵn."
           : e instanceof Error
             ? e.message
-            : "Summon failed.",
+            : "Gọi boss thất bại.",
       );
     } finally {
       clearTimeout(timer);
@@ -383,13 +391,13 @@ export default function ScanPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Step 01 — Scan"
-        title={<>Show us <span className="arena-title">your work</span></>}
-        sub="Exam sheets, screenshots, or real life. We find the weak skill and its root cause."
+        kicker="Bước 01 — Quét bài"
+        title={<>Cho xem <span className="arena-title">bài của bạn</span></>}
+        sub="Bài kiểm tra, ảnh chụp màn hình hay đời thực. Mình tìm kỹ năng yếu và gốc rễ của nó."
       />
       <RaidBanner />
       <Onboarding />
-      <div className="mx-auto flex gap-1 rounded-full border border-zinc-800 bg-zinc-900/60 p-1" role="tablist" aria-label="Scan mode">
+      <div className="mx-auto flex gap-1 rounded-full border border-zinc-800 bg-zinc-900/60 p-1" role="tablist" aria-label="Chế độ quét">
         {(["exam", "life"] as const).map((m) => (
           <button
             key={m}
@@ -401,12 +409,26 @@ export default function ScanPage() {
               mode === m ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
-            {m === "exam" ? "Exam work" : "Real life"}
+            {m === "exam" ? "Bài kiểm tra" : "Đời thực"}
+          </button>
+        ))}
+      </div>
+      <div className="mx-auto flex flex-wrap justify-center gap-2" role="radiogroup" aria-label="Môn học">
+        {(Object.keys(SUBJECT_LABEL) as SubjectId[]).map((s) => (
+          <button
+            key={s}
+            type="button"
+            role="radio"
+            aria-checked={subject === s}
+            onClick={() => setSubject(s)}
+            className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${subject === s ? "border-emerald-400 bg-emerald-400/10 text-emerald-300" : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"}`}
+          >
+            {SUBJECT_LABEL[s]}
           </button>
         ))}
       </div>
 
-      {screenOpen ? (
+        {screenOpen ? (
         <ScreenCapture
           multi={mode === "life"}
           onCapture={(f) => {
@@ -452,7 +474,7 @@ export default function ScanPage() {
                 </span>
               ))}
             </div>
-            <p className="text-xs font-bold tracking-widest text-cyan-300 uppercase">Batch of {batch.length} — merged verdict</p>
+            <p className="text-xs font-bold tracking-widest text-cyan-300 uppercase">Gộp {batch.length} ảnh — kết luận chung</p>
           </div>
         ) : preview ? (
           <div className="relative overflow-hidden rounded-xl ring-1 ring-zinc-700">
@@ -468,12 +490,12 @@ export default function ScanPage() {
               <path d="M21 15.5c-1.5-1.5-3.5-1.5-5 0L7 20.5" />
               <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" />
             </svg>
-            <p className="text-sm text-zinc-500">Drag a photo here, or choose one below.</p>
+            <p className="text-sm text-zinc-500">Kéo ảnh vào đây, hoặc chọn bên dưới.</p>
           </div>
         )}
         <div className="flex w-full flex-wrap justify-center gap-2">
           <label className="arena-btn-ghost inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-full px-5 py-2 text-sm font-medium text-zinc-200 sm:w-auto">
-            {preview ? "Choose another" : "Choose photo"}
+            {preview ? "Chọn ảnh khác" : "Chọn ảnh"}
             <input type="file" accept="image/*" capture="environment" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
           </label>
           <button
@@ -481,11 +503,11 @@ export default function ScanPage() {
             onClick={() => setScreenOpen(true)}
             className="arena-btn-ghost inline-flex min-h-[48px] w-full items-center justify-center rounded-full px-5 py-2 text-sm font-medium text-zinc-200 sm:w-auto"
           >
-            Capture screen
+            Chụp màn hình
           </button>
         </div>
         <div className="flex w-full flex-col items-center gap-2">
-          <span className="text-xs font-bold tracking-widest text-zinc-500 uppercase">No homework handy? Try a sample — instant result</span>
+          <span className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Không có bài tập? Thử ảnh mẫu — có kết quả ngay</span>
           <div className="flex w-full flex-wrap justify-center gap-3">
             {SAMPLES.map((s) => (
               <button
@@ -500,7 +522,7 @@ export default function ScanPage() {
                 </span>
                 <span className="block bg-zinc-900/80 px-2.5 py-1.5">
                   <span className="block text-xs font-bold text-zinc-200">{s.label}</span>
-                  <span className="block text-[10px] font-bold tracking-widest text-emerald-400 uppercase">Instant · cached</span>
+                  <span className="block text-[10px] font-bold tracking-widest text-emerald-400 uppercase">Mẫu · có ngay</span>
                 </span>
               </button>
             ))}
@@ -515,8 +537,18 @@ export default function ScanPage() {
           disabled={(!file && batch.length < 2) || loading}
           className={`arena-enter arena-d2 arena-btn-primary font-display rounded-full px-5 py-3.5 text-lg font-bold text-white disabled:opacity-40 disabled:shadow-none ${loading ? "animate-pulse" : ""}`}
         >
-          {loading ? STAGES[stage % STAGES.length] : "Analyze"}
+          {loading ? STAGES[stage % STAGES.length] : "Phân tích"}
         </button>
+      ) : null}
+
+      {result?.quota && !result.quota.vip ? (
+        <p className="text-center text-xs text-zinc-500">
+          {result.quota.limit - result.quota.used > 0 ? (
+            <>Còn {result.quota.limit - result.quota.used}/{result.quota.limit} lượt quét miễn phí hôm nay</>
+          ) : (
+            <>Hết lượt miễn phí hôm nay — <a href="/vip" className="underline hover:text-zinc-300">nhập mã VIP</a> để tiếp tục</>
+          )}
+        </p>
       ) : null}
 
       {(file || result || jobs.length > 0) && !loading && !forging ? (
@@ -525,18 +557,18 @@ export default function ScanPage() {
           onClick={resetAll}
           className="-mt-2 text-center text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
         >
-          Start over
+          Làm lại từ đầu
         </button>
       ) : null}
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       {result?.sample ? (
         <p className="rounded-full border border-emerald-500/50 bg-emerald-950/40 px-4 py-1.5 text-center text-xs font-bold tracking-widest text-emerald-300 uppercase">
-          Sample · instant cached diagnosis — summon to fight it
+          Ảnh mẫu · chẩn đoán có sẵn — gọi boss ra đánh
         </p>
       ) : null}
       {result?.batch ? (
         <p className="rounded-full border border-cyan-500/50 bg-cyan-950/40 px-4 py-1.5 text-center text-xs font-bold tracking-widest text-cyan-300 uppercase">
-          Batch of {result.batch.total} · {result.batch.votes} agree — merged verdict
+          Gộp {result.batch.total} ảnh · {result.batch.votes} đồng thuận — kết luận chung
         </p>
       ) : null}
       {result ? (

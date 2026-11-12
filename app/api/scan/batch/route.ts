@@ -8,6 +8,7 @@ import { getOrCreatePlayerId } from "@/lib/game/player";
 import { logFunnel } from "@/lib/funnel";
 import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import { FREE_SCAN_DAILY, isVip, countToday } from "@/lib/vip";
+import { SubjectId } from "@/lib/profile/types";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_PHOTOS = 3;
@@ -19,20 +20,24 @@ type PhotoResult = {
   confidence: number;
 };
 
-async function diagnoseOne(imageDataUrl: string): Promise<PhotoResult> {
-  const decomp = await decomposeImage(imageDataUrl);
-  const gap = await findGap(decomp);
+async function diagnoseOne(imageDataUrl: string, subject: SubjectId): Promise<PhotoResult> {
+  const decomp = await decomposeImage(imageDataUrl, { subject });
+  const gap = await findGap(decomp, { subject });
   return { ...decomp, ...gap };
 }
 
 export async function POST(req: Request) {
   let images: string[];
+  let subject: SubjectId = "toan";
   try {
     const form = await req.formData();
     const files = form.getAll("images").filter((f): f is File => f instanceof File);
     if (files.length < 2 || files.length > MAX_PHOTOS) {
       return NextResponse.json({ error: "Send 2-3 image files as 'images'." }, { status: 400 });
     }
+    const subj = form.get("subject");
+    const parsed = typeof subj === "string" ? SubjectId.safeParse(subj) : null;
+    if (parsed?.success) subject = parsed.data;
     images = [];
     for (const file of files) {
       if (!file.type.startsWith("image/")) {
@@ -77,7 +82,7 @@ export async function POST(req: Request) {
     }
     // Photos are independent: diagnose concurrently. One bad photo must not
     // kill the batch — merge whatever succeeded (at least 1 required).
-    const settled = await Promise.allSettled(images.map(diagnoseOne));
+    const settled = await Promise.allSettled(images.map((img) => diagnoseOne(img, subject)));
     const photos = settled
       .filter((s): s is PromiseFulfilledResult<PhotoResult> => s.status === "fulfilled")
       .map((s) => s.value);
@@ -116,7 +121,7 @@ export async function POST(req: Request) {
     for (let i = 0; i < images.length; i++) {
       await logFunnel(await createClient(), playerId, "scan_started");
     }
-    return NextResponse.json({ photos, merged, can_summon: merged.confidence >= 0.3 });
+    return NextResponse.json({ photos, merged, subject, can_summon: merged.confidence >= 0.3 });
   } catch (err) {
     const raw = err instanceof MetaLLMError ? err.message : "Analysis failed.";
     const msg = /schema|valid|json|parse|empty|no problem/i.test(raw)

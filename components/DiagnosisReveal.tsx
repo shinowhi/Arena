@@ -84,22 +84,22 @@ export default function DiagnosisReveal({
   }, [shown, target]);
 
   return (
-    <section className="flex flex-col gap-3" aria-label="Diagnosis result">
+    <section className="flex flex-col gap-3" aria-label="Kết quả chẩn đoán">
       <div className="arena-pop arena-card overflow-hidden rounded-2xl">
         <div className="flex flex-col gap-4 p-5 sm:flex-row">
           {preview ? (
             <div className="relative mx-auto w-full max-w-56 shrink-0 overflow-hidden rounded-xl ring-1 ring-zinc-700">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="scanned work" className="max-h-44 w-full object-cover" />
+              <img src={preview} alt="ảnh bài đã quét" className="max-h-44 w-full object-cover" />
               <div className="arena-scan-once" />
               <p className="absolute bottom-1 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold tracking-widest text-emerald-300 uppercase">
-                Evidence
+                Bằng chứng
               </p>
             </div>
           ) : null}
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">
-              AI read {result.items.length} problem{result.items.length === 1 ? "" : "s"}
+              AI đã đọc {result.items.length} bài
             </p>
             <div className="mt-2 flex max-h-44 flex-col gap-2 overflow-y-auto pr-1">
               {result.items.map((it, i) => (
@@ -128,10 +128,10 @@ export default function DiagnosisReveal({
         </div>
 
         <div className="border-t border-zinc-800 bg-red-950/20 p-5">
-          <p className="text-xs font-bold tracking-widest text-red-400 uppercase">The verdict</p>
+          <p className="text-xs font-bold tracking-widest text-red-400 uppercase">Kết luận</p>
           <div className="mt-3 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
             <div className="arena-pop flex-1 rounded-xl border border-red-500/60 bg-red-950/60 px-4 py-3 text-center">
-              <p className="text-[10px] font-bold tracking-widest text-red-400/80 uppercase">Weak skill</p>
+              <p className="text-[10px] font-bold tracking-widest text-red-400/80 uppercase">Kỹ năng yếu</p>
               <p title={result.weak_skill} className="font-display mt-0.5 text-lg font-extrabold text-red-100">
                 {skillName(result.weak_skill)}
               </p>
@@ -139,7 +139,7 @@ export default function DiagnosisReveal({
             <div className="flex items-center justify-center gap-2">
               <div className="arena-flowline h-8 w-1 rounded-full sm:h-1 sm:w-14" aria-hidden="true" />
               <span className="text-[11px] font-bold tracking-widest whitespace-nowrap text-zinc-500 uppercase">
-                rooted in
+                gốc rễ là
               </span>
               <div className="arena-flowline h-8 w-1 rounded-full sm:h-1 sm:w-14" aria-hidden="true" />
             </div>
@@ -147,7 +147,7 @@ export default function DiagnosisReveal({
               style={{ animationDelay: "200ms" }}
               className="arena-pop flex-1 rounded-xl border border-amber-500/60 bg-amber-950/60 px-4 py-3 text-center"
             >
-              <p className="text-[10px] font-bold tracking-widest text-amber-400/80 uppercase">Root cause</p>
+              <p className="text-[10px] font-bold tracking-widest text-amber-400/80 uppercase">Gốc rễ</p>
               <p title={result.root_cause} className="font-display mt-0.5 text-lg font-extrabold text-amber-100">
                 {skillName(result.root_cause)}
               </p>
@@ -163,12 +163,12 @@ export default function DiagnosisReveal({
             }}
             className="mt-3 w-full rounded-xl border border-zinc-700 px-4 py-2 text-sm font-bold text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800"
           >
-            {whyOpen ? "Hide: why this root?" : "Why this root?"}
+            {whyOpen ? "Ẩn: vì sao gốc này?" : "Vì sao gốc này?"}
           </button>
           {whyOpen ? (
             <div className="mt-2 rounded-xl border border-zinc-800 bg-black/40 px-4 py-3">
               {whyLoading ? (
-                <p className="text-sm text-zinc-500">Asking the tutor…</p>
+                <p className="text-sm text-zinc-500">Đang hỏi gia sư AI…</p>
               ) : why ? (
                 <>
                   <p className="text-sm font-bold text-amber-200">{why.title}</p>
@@ -182,13 +182,13 @@ export default function DiagnosisReveal({
                   </ul>
                 </>
               ) : (
-                <p className="text-sm text-zinc-500">Could not load the explanation. Try again.</p>
+                <p className="text-sm text-zinc-500">Không tải được giải thích. Thử lại.</p>
               )}
             </div>
           ) : null}
           {sample ? (
             <p className="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-950/30 px-4 py-2 text-center text-xs font-bold tracking-widest text-emerald-300 uppercase">
-              Cached sample — no AI wait
+              Ảnh mẫu có sẵn — không cần chờ AI
             </p>
           ) : (
           <div className="mt-4 flex items-center gap-2">
@@ -198,7 +198,7 @@ export default function DiagnosisReveal({
               aria-valuenow={pct}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label="Diagnosis confidence"
+              aria-label="Độ tin cậy"
             >
               <div
                 className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-300 transition-[width]"
@@ -210,15 +210,15 @@ export default function DiagnosisReveal({
           )}
 
           <div className="mt-4 border-t border-zinc-800 pt-3">
-            <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Your patch plan</p>
+            <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Kế hoạch vá gốc</p>
             <ol className="mt-2 flex flex-col gap-2">
               <li className="flex items-start gap-2 text-sm">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-xs font-bold text-amber-300">
                   1
                 </span>
                 <span className="text-zinc-300">
-                  Rebuild the root: {skillName(result.root_cause)} — 10 minutes of basics unlocks
-                  everything above it.
+                  Dựng lại gốc: {skillName(result.root_cause)} — 10 phút học nền tảng mở khóa
+                  mọi thứ phía trên.
                 </span>
               </li>
               <li className="flex items-start gap-2 text-sm">
@@ -226,8 +226,8 @@ export default function DiagnosisReveal({
                   2
                 </span>
                 <span className="text-zinc-300">
-                  Attack the weakness: {skillName(result.weak_skill)} — summon the boss below and slay
-                  5 questions to close it.
+                  Đánh điểm yếu: {skillName(result.weak_skill)} — gọi boss bên dưới, hạ
+                  5 câu để vá xong.
                 </span>
               </li>
             </ol>
@@ -240,28 +240,28 @@ export default function DiagnosisReveal({
                 disabled={summoning}
                 className="arena-btn-primary arena-cta-pulse font-display rounded-full px-7 py-3 text-base font-bold text-white disabled:opacity-40 disabled:shadow-none"
               >
-                {summoning ? "Forging 5 questions, verifying answers…" : "⚔ Summon boss"}
+                {summoning ? "Đang rèn 5 câu, kiểm đáp án…" : "⚔ Gọi boss"}
               </button>
             ) : (
-              <p className="text-sm text-zinc-500">Low confidence — retake a clearer photo.</p>
+              <p className="text-sm text-zinc-500">Độ tin cậy thấp — chụp lại ảnh rõ hơn.</p>
             )}
             <Link
               href={"/graph?weak=" + encodeURIComponent(result.weak_skill) + "&root=" + encodeURIComponent(result.root_cause)}
               className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
             >
-              View on skill graph
+              Xem trên cây kỹ năng
             </Link>
             <Link
               href={"/paper?skill=" + encodeURIComponent(result.weak_skill)}
               className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
             >
-              Forge practice paper
+              Rèn đề luyện tập
             </Link>
             <Link
               href="/streak"
               className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
             >
-              View your streak
+              Xem chuỗi ngày
             </Link>
           </div>
         </div>

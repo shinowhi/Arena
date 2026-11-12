@@ -8,12 +8,14 @@ import { logFunnel } from "@/lib/funnel";
 import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import { FREE_SCAN_DAILY, isVip, countToday, quotaAllowed } from "@/lib/vip";
 import { sampleDiagnosis } from "@/lib/scan/samples";
+import { SubjectId } from "@/lib/profile/types";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
 export async function POST(req: Request) {
   let imageDataUrl: string;
   let sampleId = "";
+  let subject: SubjectId = "toan";
   try {
     const form = await req.formData();
     const file = form.get("image");
@@ -22,6 +24,9 @@ export async function POST(req: Request) {
     if (file.size > MAX_BYTES) return NextResponse.json({ error: "Image too large (max 5MB)." }, { status: 400 });
     const s = form.get("sample");
     if (typeof s === "string") sampleId = s;
+    const subj = form.get("subject");
+    const parsed = typeof subj === "string" ? SubjectId.safeParse(subj) : null;
+    if (parsed?.success) subject = parsed.data;
     const buf = Buffer.from(await file.arrayBuffer());
     imageDataUrl = `data:${file.type};base64,${buf.toString("base64")}`;
   } catch {
@@ -46,23 +51,26 @@ export async function POST(req: Request) {
     // P2 free quota: 5 scans/day, checked BEFORE the LLM (and before the
     // scan_started log, so blocked attempts don't consume quota). Unknown
     // players (null) fail open on quota — the IP bucket above is the backstop.
+    let quotaVip = false;
+    let quotaUsed = 0;
     if (playerId) {
       const quotaDb = await createClient();
-      const vip = await isVip(quotaDb, playerId);
-      const used = vip ? 0 : await countToday(quotaDb, playerId, "scan_started");
-      if (!quotaAllowed(used, FREE_SCAN_DAILY, vip)) {
+      quotaVip = await isVip(quotaDb, playerId);
+      quotaUsed = quotaVip ? 0 : await countToday(quotaDb, playerId, "scan_started");
+      if (!quotaAllowed(quotaUsed, FREE_SCAN_DAILY, quotaVip)) {
         return NextResponse.json(
           {
             error: `Daily free limit reached (${FREE_SCAN_DAILY} scans). Enter a VIP code to continue.`,
             vip_url: "/vip",
+            quota: { used: quotaUsed, limit: FREE_SCAN_DAILY, vip: false },
           },
           { status: 402 },
         );
       }
     }
     await logFunnel(await createClient(), playerId, "scan_started");
-    const decomp = await decomposeImage(imageDataUrl);
-    const gap = await findGap(decomp);
+    const decomp = await decomposeImage(imageDataUrl, { subject });
+    const gap = await findGap(decomp, { subject });
     try {
       if (!playerId) throw new Error("player lookup failed");
       const supabase = await createClient();
@@ -77,7 +85,7 @@ export async function POST(req: Request) {
       console.error("scan save failed (diagnosis still returned):", dbErr);
     }
     await logFunnel(await createClient(), playerId, "scan_completed");
-    return NextResponse.json({ ...decomp, ...gap, can_summon: gap.confidence >= 0.3 });
+    return NextResponse.json({ ...decomp, ...gap, subject, can_summon: gap.confidence >= 0.3, quota: playerId ? { used: quotaUsed + 1, limit: FREE_SCAN_DAILY, vip: quotaVip } : undefined });
   } catch (err) {
     const raw = err instanceof MetaLLMError ? err.message : "Analysis failed.";
     const msg = /schema|valid|json|parse|empty|no problem/i.test(raw)

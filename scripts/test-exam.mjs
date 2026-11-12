@@ -98,7 +98,7 @@ const ok = (cond, msg) => {
   assert.ok(cond, msg);
 };
 
-// V-ACT shape: 120Q, single 150' clock, . Raw counts only — no scaled score (real exam uses IRT).
+// V-ACT shape: 120Q, single 150' clock. Raw counts only — no scaled score (real exam uses IRT).
 ok(VACT.sections.reduce((a, s) => a + s.count, 0) === 120, "vact 120 questions");
 ok(VACT.clock === "single" && VACT.totalMinutes === 150, "vact single 150 clock");
 ok(!("scale" in VACT) && !("pointsPerQ" in VACT), "vact has no scaled score");
