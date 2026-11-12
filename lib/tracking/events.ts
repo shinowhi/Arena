@@ -6,7 +6,9 @@ const MAX_EVENTS = 200;
 export type TrackName =
   | "profile_completed"
   | "profile_skipped"
-  | "start_nudge_clicked";
+  | "start_nudge_clicked"
+  | "thpt_started"
+  | "thpt_finished";
 
 export type TrackProps = Record<string, string | number | boolean | string[]>;
 

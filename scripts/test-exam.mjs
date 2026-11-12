@@ -155,4 +155,28 @@ ok(reviewAllowed("2026-11-10T00:00:00Z", 150, "2026-11-10T03:00:00Z") === true, 
 ok(reviewAllowed("bogus", 150, "2026-11-10T03:00:00Z") === false, "review bad start blocked");
 ok(reviewAllowed(0, 90, 90 * 60_000) === true, "review thpt 90min boundary allowed");
 
+// Stars (P2): mirror of lib/paper/stars.ts.
+function starCount(firstTryRight, total) {
+  if (!Number.isFinite(firstTryRight) || !Number.isFinite(total) || total <= 0 || firstTryRight < 0) return 0;
+  const pct = firstTryRight / total;
+  if (pct >= 0.9) return 3;
+  if (pct >= 0.7) return 2;
+  if (pct >= 0.5) return 1;
+  return 0;
+}
+function starLabel(stars) {
+  const s = Math.max(0, Math.min(3, Math.floor(stars)));
+  return "★".repeat(s) + "☆".repeat(3 - s);
+}
+ok(starCount(45, 50) === 3, "stars 90pct boundary 3");
+ok(starCount(44, 50) === 2, "stars below 90pct 2");
+ok(starCount(35, 50) === 2, "stars 70pct boundary 2");
+ok(starCount(34, 50) === 1, "stars below 70pct 1");
+ok(starCount(25, 50) === 1, "stars 50pct boundary 1");
+ok(starCount(24, 50) === 0, "stars below 50pct 0");
+ok(starCount(0, 0) === 0, "stars empty 0");
+ok(starCount(-1, 50) === 0, "stars negative 0");
+ok(starLabel(2) === "★★☆", "stars label 2");
+ok(starLabel(9) === "★★★", "stars label clamp");
+
 console.log(`EXAM TESTS OK: ${n} assertions`);

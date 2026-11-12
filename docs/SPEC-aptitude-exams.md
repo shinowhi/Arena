@@ -42,6 +42,7 @@ chấm /1200, /150, /10) đã XÓA vì vi phạm khung.
 - Trang /thpt PHẢI ghi rõ format khác đề chính thức. Đưa đề về đúng cấu
   trúc 12+4+6 là việc P-next (chưa có ngày), không được ngầm tuyên bố
   đã giống.
+- P2: 2 chế độ (Luyện tập: không giờ + gợi ý + chấm ngay + sao theo tỉ lệ đúng lần đầu; Thi thử: 90 phút + nộp bài chấm hàng loạt + tự nộp khi hết giờ). Đánh dấu chưa chắc (❓) cả 2 chế độ, sao lưu localStorage theo ngày. Không đổi API.
 
 ## 3. Yêu cầu cho mỗi câu hỏi (từ mục 7 khung nghiên cứu)
 
