@@ -67,7 +67,12 @@ export async function GET() {
     .order("spawn_at", { ascending: false });
   // Only the shared World Boss plus your own: other players' bosses would 403 on open.
   const alive = ((data ?? []) as BossRow[]).filter((b) => b.owner_player_id === playerId);
-  let world = ((data ?? []) as BossRow[]).find((b) => b.owner_player_id === null) ?? null;
+  // Raid bosses (P4.3) are ownerless but must not claim the world slot:
+  // pre-migration the column is absent (undefined !== true → kept), so this
+  // filter is a no-op until 0014 lands. (One-time B touch in A's file — see
+  // agent-exchange.md; revert or restyle freely.)
+  const nonRaid = ((data ?? []) as (BossRow & { is_raid?: boolean })[]).filter((b) => b.is_raid !== true);
+  let world = (nonRaid as BossRow[]).find((b) => b.owner_player_id === null) ?? null;
 
   // Lazy World Boss spawn: none alive -> create one.
   if (!world) {

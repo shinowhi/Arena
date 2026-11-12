@@ -4,6 +4,8 @@
     { "path": "/api/cron/prime?slot=0", "schedule": "13 0 * * *" },
     { "path": "/api/cron/prime?slot=20", "schedule": "13 6 * * *" },
     { "path": "/api/cron/prime?slot=40", "schedule": "13 12 * * *" },
-    { "path": "/api/cron/prime?slot=60", "schedule": "13 18 * * *" }
+    { "path": "/api/cron/prime?slot=60", "schedule": "13 18 * * *" },
+    { "path": "/api/cron/raid?slot=0", "schedule": "13 9 * * *" },
+    { "path": "/api/cron/raid?slot=1", "schedule": "13 21 * * *" }
   ]
 }

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
+import RaidBanner from "@/components/raid/RaidBanner";
 import DiagnosisReveal from "@/components/DiagnosisReveal";
 import Onboarding from "@/components/education/Onboarding";
 import ScreenCapture from "@/components/ScreenCapture";
@@ -386,6 +387,7 @@ export default function ScanPage() {
         title={<>Show us <span className="arena-title">your work</span></>}
         sub="Exam sheets, screenshots, or real life. We find the weak skill and its root cause."
       />
+      <RaidBanner />
       <Onboarding />
       <div className="mx-auto flex gap-1 rounded-full border border-zinc-800 bg-zinc-900/60 p-1" role="tablist" aria-label="Scan mode">
         {(["exam", "life"] as const).map((m) => (

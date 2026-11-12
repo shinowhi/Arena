@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import RaidBanner from "@/components/raid/RaidBanner";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
 type Skill = {
@@ -101,6 +102,7 @@ export default function MasteryClient() {
 
   return (
     <>
+      <RaidBanner />
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-bold tracking-widest text-zinc-500 uppercase">Practice today</h2>
         {items.map((it) => (
