@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { SKILL_IDS, skillName } from "@/lib/graph/skills";
+import { SKILL_IDS, isValidSkill, skillName } from "@/lib/graph/skills";
 import { prepareUploadImage, readApiError, readApiJson } from "@/lib/scan/image-prep";
 
 type MineSet = { id: string; title: string; source: string; created: string; score?: number };
@@ -33,6 +33,16 @@ export default function HubClient() {
 
   useEffect(() => {
     let alive = true;
+    // ?skill= preselect (mastery "Practice" links). Read from window.location
+    // instead of useSearchParams so the page stays statically prerenderable
+    // with no Suspense boundary.
+    try {
+      const q = new URLSearchParams(window.location.search).get("skill");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- mount-time sync from the URL (external system)
+      if (q && isValidSkill(q)) setTopic(q);
+    } catch {
+      // Non-browser or malformed query: leave the topic chooser untouched.
+    }
     fetch("/api/vip/status")
       .then(async (r) => readApiJson<{ vip: boolean }>(r, "VIP status failed."))
       .then((d) => {
