@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { createAuthClient } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getPlayerId } from "@/lib/game/player";
+import { getAuthUser } from "@/lib/auth/session";
 import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import { hasFamilyVip, seatsFor } from "@/lib/family/family";
 import { loadMasteryInput } from "@/lib/mastery/load";
@@ -14,6 +16,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // - nobody        -> { role:"none" }
 // Kid stats reuse the mastery loader + engine read-only: scans count, drills
 // (attempts) count, avg mastery over the top-5 mastered skills, slain count.
+// Tiering (sec-phase2a M6): raw child_player_id values + the consents map
+// require a LINKED-PARENT session (verified auth user whose auth_links row is
+// role=parent AND owns this family). Cookie-only / child / unauthenticated
+// callers get kid labels + stats only, consents:{} — the cookie stats path is
+// otherwise unchanged.
 const TOP_N = 5;
 
 type FamilyRow = {
@@ -90,9 +97,58 @@ export async function GET(req: Request) {
         child_player_id: string;
         created_at: string;
       }[];
+      // Linked-parent proof for the tiered fields below (child ids + consent
+      // map): verified session AND auth_links role=parent AND owns THIS
+      // family. Anything else (no session, Auth not set up, child caller)
+      // fails closed to the pseudonymous tier.
+      let linkedParent = false;
+      try {
+        const auth = await createAuthClient();
+        const user = await getAuthUser(auth);
+        if (user) {
+          const l = await supabase
+            .from("auth_links")
+            .select("player_id, role")
+            .eq("auth_user_id", user.id)
+            .limit(1);
+          const linkRow =
+            Array.isArray(l.data) && l.data.length > 0
+              ? (l.data[0] as { player_id: string; role: string })
+              : null;
+          linkedParent =
+            !!linkRow &&
+            linkRow.role === "parent" &&
+            linkRow.player_id === family.parent_player_id;
+        }
+      } catch {
+        linkedParent = false;
+      }
+      // Child ids + consent map for the LINKED-parent view only (the child
+      // leg below stays pseudonymous). A missing consents table (pre-0020)
+      // degrades to "none consented".
+      let consents: Record<string, true> = {};
+      if (linkedParent && rows.length > 0) {
+        try {
+          const c = await supabase
+            .from("consents")
+            .select("child_player_id")
+            .in(
+              "child_player_id",
+              rows.map((r) => r.child_player_id),
+            );
+          if (!c.error && Array.isArray(c.data)) {
+            for (const row of c.data as { child_player_id: string }[]) {
+              consents[row.child_player_id] = true;
+            }
+          }
+        } catch {
+          consents = {};
+        }
+      }
       const kids = await Promise.all(
         rows.map(async (r, i) => ({
           kid: `Kid ${i + 1}`,
+          ...(linkedParent ? { child_player_id: r.child_player_id } : {}),
           joined_at: r.created_at,
           stats: await kidStats(supabase, r.child_player_id),
         })),
@@ -107,6 +163,7 @@ export async function GET(req: Request) {
           seats_total: seatsFor(family.plan_code),
         },
         members: kids,
+        consents,
       });
     }
     const mine = await supabase

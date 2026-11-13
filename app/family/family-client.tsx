@@ -11,7 +11,7 @@ type KidStats = {
   vip: boolean;
 };
 
-type Member = { kid: string; joined_at?: string; stats: KidStats };
+type Member = { kid: string; child_player_id?: string; joined_at?: string; stats: KidStats };
 
 type MeOk =
   | { role: "none" }
@@ -25,6 +25,7 @@ type MeOk =
         seats_total: number;
       };
       members: Member[];
+      consents: Record<string, true>;
     }
   | {
       role: "child";
@@ -77,6 +78,7 @@ export default function FamilyClient() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState<"create" | "join" | null>(null);
   const [copied, setCopied] = useState(false);
+  const [consentBusy, setConsentBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -129,6 +131,34 @@ export default function FamilyClient() {
       setError(e instanceof Error ? e.message : "Could not join family.");
     } finally {
       setBusy(null);
+    }
+  }
+
+  // Phase-2a: record parental consent for one kid (parent view only).
+  // Reads the JSON error body directly so the route's friendly 401/403 copy
+  // ("Log in as a parent…") survives instead of a generic status message.
+  async function consent(childId: string) {
+    setConsentBusy(childId);
+    setError("");
+    try {
+      const r = await fetch("/api/family/consent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ child_player_id: childId }),
+      });
+      if (!r.ok) {
+        const data = (await r.json().catch(() => null)) as { error?: unknown } | null;
+        throw new Error(
+          typeof data?.error === "string" && data.error.trim().length > 0
+            ? data.error.trim()
+            : "Could not record consent.",
+        );
+      }
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not record consent.");
+    } finally {
+      setConsentBusy(null);
     }
   }
 
@@ -195,12 +225,32 @@ export default function FamilyClient() {
                 </p>
               </div>
             ) : null}
-            {me.members.map((m) => (
-              <div key={m.kid} className="arena-card rounded-2xl p-5">
-                <p className="font-display text-lg font-extrabold text-zinc-100">{m.kid}</p>
-                <StatsRow stats={m.stats} />
-              </div>
-            ))}
+            {me.members.map((m) => {
+              const childId = m.child_player_id;
+              const consented = !!childId && me.consents[childId] === true;
+              return (
+                <div key={m.child_player_id ?? m.kid} className="arena-card rounded-2xl p-5">
+                  <p className="font-display text-lg font-extrabold text-zinc-100">{m.kid}</p>
+                  <StatsRow stats={m.stats} />
+                  {childId ? (
+                    consented ? (
+                      <p className="mt-2 text-sm font-bold text-emerald-300">
+                        Parental consent recorded
+                      </p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void consent(childId)}
+                        disabled={consentBusy !== null}
+                        className="arena-btn-ghost mt-2 rounded-full px-5 py-2 text-sm font-bold text-zinc-200 disabled:opacity-40"
+                      >
+                        {consentBusy === childId ? "Recording…" : "Record parental consent"}
+                      </button>
+                    )
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         </>
       ) : null}
