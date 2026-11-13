@@ -1,11 +1,19 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreatePlayerId } from "@/lib/game/player";
+import { getPlayerId } from "@/lib/game/player";
 import { isValidSkill, skillName } from "@/lib/graph/skills";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const ipRl = checkRate(`pvp-rooms:ip:${getClientIp(req)}`, 30, MINUTE_MS);
+  if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
   try {
-    const playerId = await getOrCreatePlayerId();
+    // SECURITY PHASE-1: no identity → no rooms, without minting a player
+    // (a freshly minted player owns no rooms either, so this is identical).
+    const playerId = await getPlayerId();
+    if (!playerId) return NextResponse.json({ rooms: [] });
+    const rl = checkRate(`pvp-rooms:${playerId}`, 30, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
     const supabase = await createClient();
     const now = new Date().toISOString();
     const { data, error } = await supabase

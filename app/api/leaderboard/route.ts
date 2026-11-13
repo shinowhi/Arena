@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreatePlayerId } from "@/lib/game/player";
 
 type AttackRow = {
   player_id: string;
@@ -54,7 +53,8 @@ export async function GET(req: Request) {
   const bossId = new URL(req.url).searchParams.get("boss");
   if (bossId) return rushRanks(bossId);
   try {
-    await getOrCreatePlayerId();
+    // SECURITY PHASE-1: public board — never mints a player (the old call's
+    // result was unused).
     const supabase = await createClient();
     // shortcut: in-JS aggregation capped at 1000 rows; move to a SQL RPC when attacks grow.
     const { data: attacks } = await supabase.from("attacks").select("player_id, boss_id, bosses(status)").eq("correct", true).limit(1000);

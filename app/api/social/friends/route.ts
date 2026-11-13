@@ -5,7 +5,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreatePlayerId } from "@/lib/game/player";
+import { getOrCreatePlayerId, getPlayerId } from "@/lib/game/player";
 import { isUuidLike, normalizeCode, playerLabel } from "@/lib/social/rules";
 import { areFriends, isBlockedEither, needSocialMigration } from "@/lib/social/server";
 
@@ -36,7 +36,10 @@ async function labelsFor(ids: string[]) {
 
 export async function GET() {
   try {
-    const me = await getOrCreatePlayerId();
+    // SECURITY PHASE-1: list reads never mint a player — no identity means
+    // no friends (a fresh player has none either).
+    const me = await getPlayerId();
+    if (!me) return NextResponse.json({ friends: [], incoming: [], outgoing: [] });
     const db = await createClient();
     const { data, error } = await db
       .from("friend_requests")

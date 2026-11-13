@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateBossQuestions } from "@/lib/agents/boss-generator";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreatePlayerId } from "@/lib/game/player";
+import { getPlayerId } from "@/lib/game/player";
 import { worldBossHp, bossTtlSeconds } from "@/lib/game/boss-rules";
 
 // Seed fallback when <24h of scan data exists.
@@ -55,7 +55,8 @@ function pub(b: BossRow) {
 
 export async function GET() {
   const supabase = await createClient();
-  const playerId = await getOrCreatePlayerId();
+  // SECURITY PHASE-1: read-only lookup — arena visitors never mint a player.
+  const playerId = await getPlayerId();
   const now = new Date().toISOString();
   // Lazy expiry (no cron).
   await supabase.from("bosses").update({ status: "EXPIRED" }).eq("status", "ALIVE").lt("despawn_at", now);
@@ -66,7 +67,9 @@ export async function GET() {
     .gt("despawn_at", now)
     .order("spawn_at", { ascending: false });
   // Only the shared World Boss plus your own: other players' bosses would 403 on open.
-  const alive = ((data ?? []) as BossRow[]).filter((b) => b.owner_player_id === playerId);
+  // (Null guard: without it a null playerId would match the ownerless world
+  // boss and list it twice.)
+  const alive = ((data ?? []) as BossRow[]).filter((b) => playerId !== null && b.owner_player_id === playerId);
   // Raid bosses (P4.3) are ownerless but must not claim the world slot:
   // pre-migration the column is absent (undefined !== true → kept), so this
   // filter is a no-op until 0014 lands. (One-time B touch in A's file — see

@@ -4,14 +4,20 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
 const Body = z.object({ post_id: z.string().uuid(), answer: z.number().finite() });
 
 export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "A numeric answer is required." }, { status: 400 });
+  // Brute-forceable answers: IP bucket first, player bucket after auth.
+  const ipRl = checkRate(`market-claim:ip:${getClientIp(req)}`, 10, MINUTE_MS);
+  if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
   try {
     const me = await getOrCreatePlayerId();
+    const rl = checkRate(`market-claim:${me}`, 10, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
     const db = await createClient();
     const { data, error } = await db.rpc("claim_bounty", {
       p_post: parsed.data.post_id,

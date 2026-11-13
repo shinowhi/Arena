@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreatePlayerId } from "@/lib/game/player";
+import { getOrCreatePlayerId, getPlayerId } from "@/lib/game/player";
 import { MESSAGE_MAX_LEN, isUuidLike, playerLabel } from "@/lib/social/rules";
 import { isGroupMember, isRateLimited, needSocialMigration } from "@/lib/social/server";
 
@@ -28,7 +28,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing room." }, { status: 400 });
   }
   try {
-    const me = await getOrCreatePlayerId();
+    // SECURITY PHASE-1: thread reads never mint a player.
+    const me = await getPlayerId();
+    if (!me) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     const db = await createClient();
     if (!(await isGroupMember(db, groupId, me))) {
       return NextResponse.json({ error: "You are not in this room." }, { status: 403 });

@@ -3,13 +3,18 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
 import { ROUND_SECONDS } from "@/lib/game/royale";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
 // Starts the room (creator only, 2+ players): lobby → live, round 0 opens.
-export async function POST(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: "Bad room id." }, { status: 400 });
+  const ipRl = checkRate(`royale-start:ip:${getClientIp(req)}`, 30, MINUTE_MS);
+  if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
   try {
     const playerId = await getOrCreatePlayerId();
+    const rl = checkRate(`royale-start:${playerId}`, 30, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
     const supabase = await createClient();
     const room = await supabase.from("exam_rooms").select("status, creator_player_id").eq("id", id).maybeSingle();
     if (room.error || !room.data) return NextResponse.json({ error: "Room not found." }, { status: 404 });

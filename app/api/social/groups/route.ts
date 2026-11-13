@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreatePlayerId } from "@/lib/game/player";
+import { getOrCreatePlayerId, getPlayerId } from "@/lib/game/player";
 import { GROUP_NAME_MAX } from "@/lib/social/rules";
 import { needSocialMigration } from "@/lib/social/server";
 
@@ -12,7 +12,10 @@ const Create = z.object({ name: z.string().trim().min(1).max(GROUP_NAME_MAX) });
 
 export async function GET() {
   try {
-    const me = await getOrCreatePlayerId();
+    // SECURITY PHASE-1: list reads never mint a player — no identity means
+    // no rooms (a fresh player belongs to none either).
+    const me = await getPlayerId();
+    if (!me) return NextResponse.json({ groups: [] });
     const db = await createClient();
     const { data: mine, error } = await db
       .from("group_members")

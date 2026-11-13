@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreatePlayerId } from "@/lib/game/player";
+import { getPlayerId } from "@/lib/game/player";
 import { DuelRow, sideOf } from "@/lib/game/duel";
 import { settleDuel } from "@/lib/game/duel-settle";
 import { logFunnel } from "@/lib/funnel";
@@ -13,7 +13,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const { id } = await ctx.params;
   if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: "Bad duel id." }, { status: 400 });
   try {
-    const playerId = await getOrCreatePlayerId();
+    // SECURITY PHASE-1: spectators never mint a player. Null players see
+    // the public view with you: null (logFunnel already accepts null).
+    const playerId = await getPlayerId();
     const supabase = await createClient();
     const got = await supabase.from("exam_duels").select("*").eq("id", id).maybeSingle();
     if (got.error) {
@@ -57,7 +59,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       section: { id: d.section_id, name: secName },
       status: d.status,
       winner: d.winner,
-      you: sideOf(d, playerId),
+      you: playerId ? sideOf(d, playerId) : null,
       p1: { done: d.p1_score !== null, score: finished ? d.p1_score : null, elo: eloOf(d.p1_player_id) },
       p2: d.p2_player_id
         ? { done: d.p2_score !== null, score: finished ? d.p2_score : null, elo: eloOf(d.p2_player_id) }

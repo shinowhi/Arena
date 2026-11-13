@@ -1,5 +1,6 @@
 // Seed demo data (labelled as seed). Run from arena/: node scripts/seed.mjs
-// Requires NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local
+// Requires NEXT_PUBLIC_SUPABASE_URL in .env.local + SUPABASE_SERVICE_ROLE_KEY
+// (post-0019 the anon key cannot write; falls back to anon with a warning).
 import { readFileSync, existsSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 if (existsSync(".env.local")) {
@@ -8,7 +9,9 @@ if (existsSync(".env.local")) {
     if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim().replace(/^[\x22\x27]|[\x22\x27]$/g, "");
   }
 }
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+const _key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) console.warn("seed: no service key, anon writes will fail post-0019.");
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, _key);
 const { data: player, error: pErr } = await supabase.from("players").insert({ display_name: "seed-demo" }).select("id").single();
 if (pErr || !player) { console.error("SEED FAIL player: " + (pErr ? pErr.message : "no data")); process.exit(1); }
 const rows = [

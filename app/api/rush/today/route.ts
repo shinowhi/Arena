@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateBossQuestions } from "@/lib/agents/boss-generator";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreatePlayerId } from "@/lib/game/player";
 import { rushBossHp } from "@/lib/game/boss-rules";
 import { rushDayIndex, rushSkill, rushDayString, rushResetAt } from "@/lib/game/rush";
 
@@ -31,7 +30,8 @@ function pub(b: BossRow) {
 
 export async function GET() {
   const supabase = await createClient();
-  await getOrCreatePlayerId();
+  // SECURITY PHASE-1: public daily boss — never mints a player (the old
+  // call's result was unused).
   const nowMs = Date.now();
   const day = rushDayString(nowMs);
   const idx = rushDayIndex(nowMs);

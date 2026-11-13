@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
-export async function GET() {
+export async function GET(req: Request) {
+  // Minting endpoint: IP bucket first so fresh-cookie loops cannot mint
+  // unlimited player rows.
+  const rl = checkRate(`player:${getClientIp(req)}`, 20, MINUTE_MS);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
   try {
     const playerId = await getOrCreatePlayerId();
     const supabase = await createClient();

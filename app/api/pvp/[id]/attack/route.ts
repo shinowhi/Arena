@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
 import { loadPvpRoom } from "@/lib/game/pvp-room";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
 const Body = z.object({ question_index: z.number().int().min(0).max(4), answer: z.number().finite() });
 
@@ -12,8 +13,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const { id } = await ctx.params;
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Bad request." }, { status: 400 });
+  const ipRl = checkRate(`pvp-attack:ip:${getClientIp(req)}`, 30, MINUTE_MS);
+  if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
   try {
     const playerId = await getOrCreatePlayerId();
+    const rl = checkRate(`pvp-attack:${playerId}`, 30, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
     const r = await loadPvpRoom(id, playerId);
     if (r.missingTable) return NextResponse.json({ error: "PVP unlocks after migration 0008." }, { status: 503 });
     if (!r.view) return NextResponse.json({ error: r.error ?? "Room lookup failed." }, { status: r.status ?? 500 });

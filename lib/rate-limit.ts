@@ -32,13 +32,28 @@ export function checkRate(
   return { ok: false, retryAfterSec: Math.max(1, Math.ceil((cur.resetAt - now) / 1000)) };
 }
 
-export function getClientIp(req: Request): string {
-  const fwd = req.headers.get("x-forwarded-for");
+// Pure client-IP parser (mirror-tested in test-security.mjs). Prefers
+// x-real-ip, which Vercel/the edge overwrites with the true client IP: the
+// first X-Forwarded-For entry is attacker-spoofable (any client can prepend
+// an arbitrary address), so trusting it first lets one actor mint unlimited
+// rate-limit buckets. XFF-first is kept only as a fallback for proxies that
+// don't set x-real-ip.
+export function parseClientIp(headers: Pick<Headers, "get">): string {
+  const real = headers.get("x-real-ip");
+  if (real) {
+    const ip = real.trim();
+    if (ip) return ip;
+  }
+  const fwd = headers.get("x-forwarded-for");
   if (fwd) {
     const first = fwd.split(",")[0].trim();
     if (first) return first;
   }
   return "unknown";
+}
+
+export function getClientIp(req: Request): string {
+  return parseClientIp(req.headers);
 }
 
 export function rateLimitResponse(retryAfterSec: number) {

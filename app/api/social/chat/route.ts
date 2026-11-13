@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreatePlayerId } from "@/lib/game/player";
+import { getOrCreatePlayerId, getPlayerId } from "@/lib/game/player";
 import { MESSAGE_MAX_LEN, canMessage, isUuidLike, playerLabel } from "@/lib/social/rules";
 import { areFriends, isBlockedEither, isRateLimited, needSocialMigration } from "@/lib/social/server";
 
@@ -29,7 +29,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing friend." }, { status: 400 });
   }
   try {
-    const me = await getOrCreatePlayerId();
+    // SECURITY PHASE-1: thread reads never mint a player.
+    const me = await getPlayerId();
+    if (!me) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     const db = await createClient();
     const friends = await areFriends(db, me, peer);
     const blocked = await isBlockedEither(db, me, peer);

@@ -2,10 +2,15 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 import { newCode } from "@/lib/social/rules";
 import { needSocialMigration } from "@/lib/social/server";
 
-export async function GET() {
+export async function GET(req: Request) {
+  // Minting endpoint: IP bucket first so fresh-cookie loops cannot mint
+  // unlimited players+codes.
+  const rl = checkRate(`social-code:${getClientIp(req)}`, 20, MINUTE_MS);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
   try {
     const me = await getOrCreatePlayerId();
     const db = await createClient();

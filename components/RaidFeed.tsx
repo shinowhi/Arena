@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 type Hit = {
   damage: number;
@@ -26,40 +25,32 @@ export default function RaidFeed({ bossId }: { bossId: string }) {
 
   useEffect(() => {
     let stop = false;
-    const supabase = createClient();
+    // SECURITY PHASE-1: 2s polling of /api/boss/[id]/raid-hits replaces the
+    // direct anon read + realtime subscription (revoked in migration 0019).
+    // Fail-soft: errors keep the last hits; an initial error leaves hits
+    // null = feed stays hidden (same as the old table-missing check).
     const load = () => {
-      supabase
-        .from("raid_hits")
-        .select("damage, created_at, player_id, players(display_name)")
-        .eq("boss_id", bossId)
-        .order("created_at", { ascending: false })
-        .limit(15)
-        .then(({ data, error }) => {
-          if (!stop && !error) setHits(((data as unknown) as Hit[]) ?? []);
-        });
+      fetch("/api/boss/" + bossId + "/raid-hits")
+        .then(async (r) => {
+          if (!r.ok) return;
+          const d = (await r.json()) as { hits?: Hit[] };
+          if (!stop && Array.isArray(d.hits)) setHits(d.hits);
+        })
+        .catch(() => {});
     };
-    // Table-missing check: any error leaves hits null = feed stays hidden.
-    supabase
-      .from("raid_hits")
-      .select("id", { head: true, count: "exact" })
-      .then(({ error }) => {
-        if (!stop && !error) load();
-      });
+    load();
     fetch("/api/player")
       .then((r) => r.json())
       .then((d) => {
         if (!stop && d.id) setMe(d.id as string);
       })
       .catch(() => {});
-    const ch = supabase
-      .channel("raid-" + bossId)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "raid_hits", filter: `boss_id=eq.${bossId}` }, load)
-      .subscribe();
+    const poll = setInterval(load, 2000);
     const t = setInterval(() => setNow(Date.now()), 5000);
     return () => {
       stop = true;
+      clearInterval(poll);
       clearInterval(t);
-      supabase.removeChannel(ch);
     };
   }, [bossId]);
 

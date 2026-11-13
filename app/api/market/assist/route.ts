@@ -3,10 +3,14 @@
 import { NextResponse } from "next/server";
 import { decomposeImage } from "@/lib/agents/vision-decomposer";
 import { skillName } from "@/lib/graph/skills";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
 export async function POST(req: Request) {
+  // IP-only bucket (no player identity on this route): vision LLM follows.
+  const ipRl = checkRate(`market-assist:ip:${getClientIp(req)}`, 10, MINUTE_MS);
+  if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
   let imageDataUrl: string;
   try {
     const form = await req.formData();

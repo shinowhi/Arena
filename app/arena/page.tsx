@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
 import EmptyState from "@/components/ui/EmptyState";
@@ -49,14 +48,21 @@ export default function ArenaPage() {
 
   useEffect(() => {
     let stop = false;
-    fetch("/api/arena/active-bosses")
-      .then((r) => r.json())
-      .then((d) => {
-        if (!stop) setBosses(d.bosses ?? []);
-      })
-      .catch(() => {
-        if (!stop) setBosses([]);
-      });
+    // SECURITY PHASE-1: 2s polling replaces the anon realtime subscription
+    // (revoked in migration 0019). Fail-soft: errors keep the last list, and
+    // only the very first load falls back to [].
+    const loadBosses = (initial: boolean) => {
+      fetch("/api/arena/active-bosses")
+        .then((r) => r.json())
+        .then((d) => {
+          if (!stop) setBosses(d.bosses ?? []);
+        })
+        .catch(() => {
+          if (!stop && initial) setBosses([]);
+        });
+    };
+    loadBosses(true);
+    const poll = setInterval(() => loadBosses(false), 2000);
     fetch("/api/player")
       .then((r) => r.json())
       .then((d) => {
@@ -107,21 +113,11 @@ export default function ArenaPage() {
       .catch(() => {});
     // Client-only read after hydration; microtask keeps the no-sync-setState lint rule happy.
     queueMicrotask(() => setAvatar(loadAvatar()));
-    const supabase = createClient();
-    const ch = supabase
-      .channel("bosses-hp")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "bosses" }, (payload) => {
-        const row = payload.new as { id: string; current_hp: number; status: string };
-        setBosses((prev) =>
-          prev ? prev.map((b) => (b.id === row.id ? { ...b, current_hp: row.current_hp, status: row.status } : b)) : prev,
-        );
-      })
-      .subscribe();
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => {
       stop = true;
       clearInterval(t);
-      supabase.removeChannel(ch);
+      clearInterval(poll);
     };
   }, []);
 

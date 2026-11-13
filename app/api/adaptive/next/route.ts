@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SKILL_IDS, skillName } from "@/lib/graph/skills";
 import { BossQuestion } from "@/lib/agents/boss-generator";
 import { levelForRating, lowestRated, START_RATING } from "@/lib/game/adaptive";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
 // Next adaptive drill: weakest-rated cached skill at the matching level.
 // Client holds ratings (session); server holds the question cache.
@@ -17,6 +18,9 @@ const Body = z.object({
 export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Bad stats." }, { status: 400 });
+  // IP-only bucket (ratings live client-side; no player identity here).
+  const ipRl = checkRate(`adaptive-next:ip:${getClientIp(req)}`, 20, MINUTE_MS);
+  if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
   try {
     const supabase = await createClient();
     const { data, error } = await supabase

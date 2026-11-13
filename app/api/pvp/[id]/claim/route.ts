@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
 import { loadPvpRoom } from "@/lib/game/pvp-room";
 import { PVP_MAX_FIGHTERS, PvpSide } from "@/lib/game/pvp";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
 const Body = z.object({ side: PvpSide });
 
@@ -11,8 +12,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const { id } = await ctx.params;
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Pick side A or B." }, { status: 400 });
+  const ipRl = checkRate(`pvp-claim:ip:${getClientIp(req)}`, 30, MINUTE_MS);
+  if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
   try {
     const playerId = await getOrCreatePlayerId();
+    const rl = checkRate(`pvp-claim:${playerId}`, 30, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
     const r = await loadPvpRoom(id, playerId);
     if (r.missingTable) return NextResponse.json({ error: "PVP unlocks after migration 0008." }, { status: 503 });
     if (!r.view) return NextResponse.json({ error: r.error ?? "Room lookup failed." }, { status: r.status ?? 500 });

@@ -5,6 +5,7 @@ import { getOrCreatePlayerId } from "@/lib/game/player";
 import { canSubmit, DuelRow, sideOf } from "@/lib/game/duel";
 import { settleDuel } from "@/lib/game/duel-settle";
 import { logFunnel } from "@/lib/funnel";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
 const Body = z.object({ answers: z.array(z.number().int().min(-1).max(3)).min(1).max(60) });
 
@@ -16,8 +17,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: "Bad duel id." }, { status: 400 });
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Missing answers." }, { status: 400 });
+  const ipRl = checkRate(`duel-submit:ip:${getClientIp(req)}`, 30, MINUTE_MS);
+  if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
   try {
     const playerId = await getOrCreatePlayerId();
+    const rl = checkRate(`duel-submit:${playerId}`, 30, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
     const supabase = await createClient();
     const got = await supabase.from("exam_duels").select("*").eq("id", id).maybeSingle();
     if (got.error) {

@@ -3,13 +3,18 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
 import { logFunnel } from "@/lib/funnel";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
 // Joins a lobby (idempotent). Cap 8; over-cap race accepted for the demo.
-export async function POST(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: "Bad room id." }, { status: 400 });
+  const ipRl = checkRate(`royale-join:ip:${getClientIp(req)}`, 30, MINUTE_MS);
+  if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
   try {
     const playerId = await getOrCreatePlayerId();
+    const rl = checkRate(`royale-join:${playerId}`, 30, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
     const supabase = await createClient();
     // Race-safe DB join (row-locked cap). Missing function = migration unrun.
     const rpc = await supabase.rpc("join_room", { p_room: id, p_player: playerId });

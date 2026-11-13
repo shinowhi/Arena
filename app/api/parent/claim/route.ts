@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
 const Body = z.object({ code: z.string().trim().min(4).max(12) });
 
@@ -12,8 +13,13 @@ export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "A link code is required." }, { status: 400 });
   const code = parsed.data.code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  // Brute-forceable codes: IP bucket first, player bucket after auth.
+  const ipRl = checkRate(`parent-claim:ip:${getClientIp(req)}`, 10, MINUTE_MS);
+  if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
   try {
     const parentId = await getOrCreatePlayerId();
+    const rl = checkRate(`parent-claim:${parentId}`, 10, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
     const db = await createClient();
     const { data, error } = await db
       .from("parent_links")

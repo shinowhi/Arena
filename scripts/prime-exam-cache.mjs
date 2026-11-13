@@ -27,7 +27,9 @@ function loadEnv() {
   const get = (k) => (env.match(new RegExp(`^${k}=(.+)$`, "m")) || [])[1]?.trim();
   const MODEL_API_KEY = get("MODEL_API_KEY");
   const URL = get("NEXT_PUBLIC_SUPABASE_URL");
-  const ANON = get("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  // Post-0019 the anon key cannot write: prefer the service key, warn fallback.
+  const ANON = get("SUPABASE_SERVICE_ROLE_KEY") || get("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  if (!get("SUPABASE_SERVICE_ROLE_KEY")) console.warn("prime: no service key, writes will fail post-0019.");
   if (!URL || !ANON || (!DRY_RUN && !MODEL_API_KEY)) throw new Error("Missing keys in <arena>/.env.local.");
   if (MODEL_API_KEY) process.env.MODEL_API_KEY = MODEL_API_KEY;
   const base = env.match(/^META_MODEL_API_BASE_URL=(.+)$/m)?.[1]?.trim();

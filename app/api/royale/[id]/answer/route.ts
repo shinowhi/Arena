@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreatePlayerId } from "@/lib/game/player";
 import { advanceRoom, readRoom } from "@/lib/game/royale-advance";
+import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
 
 const Body = z.object({ answer: z.number().int().min(0).max(3) });
 
@@ -13,8 +14,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: "Bad room id." }, { status: 400 });
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Missing answer." }, { status: 400 });
+  const ipRl = checkRate(`royale-answer:ip:${getClientIp(req)}`, 30, MINUTE_MS);
+  if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
   try {
     const playerId = await getOrCreatePlayerId();
+    const rl = checkRate(`royale-answer:${playerId}`, 30, MINUTE_MS);
+    if (!rl.ok) return rateLimitResponse(rl.retryAfterSec);
     const supabase = await createClient();
     const st = await advanceRoom(supabase, id, Date.now()).catch(() => null);
     if (!st) return NextResponse.json({ error: "Room not found." }, { status: 404 });

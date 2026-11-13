@@ -4,55 +4,41 @@ import { signPlayerId, verifyPlayerCookie } from "./player-sign";
 
 const COOKIE = "arena_player_id";
 
-// Anonymous identity via signed cookie (no login in v1). Valid signatures
-// skip the DB check; legacy unsigned cookies are honored once via a DB row
-// check, then re-issued signed; invalid/missing cookies mint a new player.
+// Anonymous identity via signed cookie (no login in v1). The value MUST
+// carry a valid HMAC signature: bare UUIDs are NEVER accepted, even when a
+// matching player row exists (SECURITY PHASE-1 deleted the legacy
+// unsigned-cookie upgrade path — a bare UUID from a leaked DB grants
+// nothing without PLAYER_SECRET). Invalid/missing cookies mint a new
+// player here, or return null in getPlayerId.
+export const PLAYER_COOKIE_MAX_AGE = 60 * 60 * 24 * 90; // 90 days
+
 export async function getOrCreatePlayerId(): Promise<string> {
   const store = await cookies();
   const existing = store.get(COOKIE)?.value;
-  const supabase = await createClient();
   if (existing) {
     const verified = verifyPlayerCookie(existing);
     if (verified) return verified;
-    if (!existing.includes(".")) {
-      const { data } = await supabase.from("players").select("id").eq("id", existing).single();
-      if (data) {
-        store.set(COOKIE, signPlayerId(existing), {
-          httpOnly: true,
-          sameSite: "lax",
-          maxAge: 60 * 60 * 24 * 365,
-          path: "/",
-        });
-        return existing;
-      }
-    }
   }
+  const supabase = await createClient();
   const { data, error } = await supabase.from("players").insert({}).select("id").single();
   if (error || !data) throw new Error("Could not create player.");
   const id = (data as { id: string }).id;
   store.set(COOKIE, signPlayerId(id), {
     httpOnly: true,
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 365,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: PLAYER_COOKIE_MAX_AGE,
     path: "/",
   });
   return id;
 }
 
-// Read-only identity lookup: verifies the signed cookie, honors legacy
-// unsigned cookies via a DB row check, else returns null. NEVER inserts a
-// player row and NEVER sets a cookie — for gates (review) that must not
-// mint players on their 403 path.
+// Read-only identity lookup: verifies the signed cookie, else returns null.
+// NEVER inserts a player row and NEVER sets a cookie — for gates and GET
+// routes that must not mint players.
 export async function getPlayerId(): Promise<string | null> {
   const store = await cookies();
   const existing = store.get(COOKIE)?.value;
   if (!existing) return null;
-  const verified = verifyPlayerCookie(existing);
-  if (verified) return verified;
-  if (!existing.includes(".")) {
-    const supabase = await createClient();
-    const { data } = await supabase.from("players").select("id").eq("id", existing).single();
-    if (data) return existing;
-  }
-  return null;
+  return verifyPlayerCookie(existing);
 }

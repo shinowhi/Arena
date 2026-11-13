@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreatePlayerId } from "@/lib/game/player";
+import { getOrCreatePlayerId, getPlayerId } from "@/lib/game/player";
 import { GIFT_ITEM_MAX, GIFT_MAX_XP, isUuidLike, playerLabel, validateGift } from "@/lib/social/rules";
 import { areFriends, isBlockedEither, needSocialMigration } from "@/lib/social/server";
 
@@ -25,7 +25,10 @@ interface GiftRow {
 
 export async function GET() {
   try {
-    const me = await getOrCreatePlayerId();
+    // SECURITY PHASE-1: history reads never mint a player — no identity
+    // means no gifts (a fresh player has none either).
+    const me = await getPlayerId();
+    if (!me) return NextResponse.json({ sent: [], received: [] });
     const db = await createClient();
     const { data, error } = await db
       .from("gifts")

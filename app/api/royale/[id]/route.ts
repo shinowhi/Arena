@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreatePlayerId } from "@/lib/game/player";
+import { getPlayerId } from "@/lib/game/player";
 import { advanceRoom } from "@/lib/game/royale-advance";
 import { examConfig } from "@/lib/agents/exam";
 
@@ -11,7 +11,10 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const { id } = await ctx.params;
   if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: "Bad room id." }, { status: 400 });
   try {
-    const playerId = await getOrCreatePlayerId();
+    // SECURITY PHASE-1: spectators never mint a player. Every comparison
+    // below is null-safe: me → null, youWon/isCreator → false, roster
+    // you-flags → false (youWon is guarded by !!winner).
+    const playerId = await getPlayerId();
     const supabase = await createClient();
     let st;
     try {

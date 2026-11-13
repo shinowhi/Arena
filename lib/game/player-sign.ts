@@ -2,13 +2,33 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 // Signed anonymous-identity cookie. Value format: `${id}.${hmac}` where hmac
 // is HMAC-SHA256(id, secret) hex-truncated to 32 chars. The secret is
-// server-only (PLAYER_SECRET, else MODEL_API_KEY) and must never be exposed
-// or imported by client code. Pure: mirror-tested in test-player-cookie.mjs.
-// Set PLAYER_SECRET in prod: without it each boot mints a random secret,
-// which invalidates every cookie on restart (safe, but logs everyone out).
+// server-only (PLAYER_SECRET in prod, dev-only fallback chain below) and must
+// never be exposed or imported by client code. Pure: mirror-tested in
+// test-player-cookie.mjs.
+// PLAYER_SECRET is REQUIRED in prod (secret() throws without it). In dev,
+// without it each boot mints a random secret, which invalidates every
+// cookie on restart (safe, but logs everyone out).
 const BOOT = randomBytes(32).toString("hex");
+let warnedEphemeral = false;
 function secret(): string {
-  return process.env.PLAYER_SECRET ?? process.env.MODEL_API_KEY ?? BOOT;
+  // SECURITY PHASE-1: production REQUIRES an explicit PLAYER_SECRET. Signing
+  // with a fallback in prod would let anyone holding MODEL_API_KEY (or a
+  // rebooted server's random BOOT) forge any player's cookie.
+  if (process.env.PLAYER_SECRET) return process.env.PLAYER_SECRET;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "PLAYER_SECRET is not set — add it to the production env (server-only, long random " +
+        "string). Refusing to sign player cookies without an explicit secret.",
+    );
+  }
+  if (!warnedEphemeral) {
+    warnedEphemeral = true;
+    console.warn(
+      "[player-sign] PLAYER_SECRET is unset — dev fallback chain (MODEL_API_KEY, else an " +
+        "ephemeral boot secret; cookies invalidate on restart). Set PLAYER_SECRET for prod.",
+    );
+  }
+  return process.env.MODEL_API_KEY ?? BOOT;
 }
 
 export function signPlayerId(id: string): string {
@@ -16,9 +36,9 @@ export function signPlayerId(id: string): string {
   return `${id}.${hmac}`;
 }
 
-// Returns the player id when the signature is valid, else null. Legacy
-// unsigned values (no dot) also return null — the caller upgrades those via
-// a DB check.
+// Returns the player id when the signature is valid, else null. Unsigned
+// values (no dot) always return null — there is deliberately no DB fallback
+// (it let anyone holding a public UUID mint a valid cookie; removed P1-sec).
 // Admin dashboard cookie. Value format mirrors the player cookie:
 // `admin.${hmac}` where hmac is HMAC-SHA256("admin", ADMIN_SECRET)
 // hex-truncated to 32 chars. Pure: mirror-tested in test-admin-auth.mjs.
