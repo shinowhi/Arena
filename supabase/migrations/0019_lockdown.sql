@@ -166,14 +166,16 @@ revoke all on table assignments from anon, authenticated, public;
 -- enabled or the tables were never added, and safe to re-run.
 do $$
 begin
-  begin
-    alter publication supabase_realtime drop table if exists bosses;
-  exception when undefined_object then
-    null;
-  end;
-  begin
-    alter publication supabase_realtime drop table if exists raid_hits;
-  exception when undefined_object then
-    null;
-  end;
+  -- IF EXISTS is not valid syntax inside ALTER PUBLICATION ... DROP TABLE
+  -- on this Postgres version, so probe the catalog instead. Safe to re-run.
+  if exists (select 1 from pg_publication_tables
+             where pubname = 'supabase_realtime' and tablename = 'bosses') then
+    alter publication supabase_realtime drop table bosses;
+  end if;
+  if exists (select 1 from pg_publication_tables
+             where pubname = 'supabase_realtime' and tablename = 'raid_hits') then
+    alter publication supabase_realtime drop table raid_hits;
+  end if;
+exception when undefined_object then
+  null;
 end $$;
