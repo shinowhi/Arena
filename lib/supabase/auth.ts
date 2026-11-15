@@ -1,13 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-// SECURITY PHASE-2a: AUTH-ONLY client. Built on the ANON (publishable) key
-// with the same cookie adapter as lib/supabase/server.ts, and used ONLY for
-// Supabase Auth calls — signInWithOtp, signInWithOAuth, exchangeCodeForSession,
-// getUser, signOut. NEVER use it for table reads/writes: post-0019 the anon
-// key can read nothing (policies revoked) and post-0020 the auth tables are
-// deny-all; table access stays on the service client in server.ts with
-// app-side owner checks.
+// SECURITY PHASE-2a: AUTH-ONLY server client. Built on the ANON
+// (publishable) key with the same cookie adapter as lib/supabase/server.ts,
+// and used ONLY for the callback leg of Supabase Auth —
+// exchangeCodeForSession, getUser, signOut. The START leg (signInWithOtp,
+// signInWithOAuth) runs in the BROWSER via lib/supabase/auth-browser.ts so
+// the PKCE code_verifier lands in the browser's cookies; this server client
+// then reads that verifier back through getAll() below (the documented
+// @supabase/ssr pattern — starting the flow server-side could never work
+// because the verifier cookie would never reach the browser). NEVER use it
+// for table reads/writes: post-0019 the anon key can read nothing (policies
+// revoked) and post-0020 the auth tables are deny-all; table access stays on
+// the service client in server.ts with app-side owner checks.
 //
 // WHY NOT REUSE server.ts: it uses the SERVICE-ROLE key, which authenticates
 // every request AS the admin (the service JWT rides in the Authorization

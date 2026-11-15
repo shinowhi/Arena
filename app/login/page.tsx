@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import LoginForm from "./login-form";
 
 // Phase-2a login: static-safe server shell (no cookie/data reads here — the
-// client form POSTs to /api/auth/otp and links to /api/auth/google).
+// client form prechecks via /api/auth/otp-request, then calls Supabase Auth
+// directly in the browser so the PKCE verifier lands in browser cookies).
 export const metadata = {
   title: "Log in — Arena",
   description: "Log in with a magic email link or Google to sync your progress across devices.",

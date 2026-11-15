@@ -11,7 +11,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // name ever changes, update both.
 export const PLAYER_COOKIE_NAME = "arena_player_id";
 // Short-lived stash for the signup role across the OTP email round-trip
-// (written by /api/auth/otp, consumed+cleared by /auth/callback).
+// (written by /api/auth/otp-request, consumed+cleared by /auth/callback;
+// OTP-path-only — the Google flow threads ?role= instead).
 export const PENDING_ROLE_COOKIE = "arena_pending_role";
 
 export type AuthUser = { id: string; email: string | null };

@@ -23,7 +23,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // Ghost cookie (signed id, row gone) falls through to create-new; claimed
 // cookie progress (linked to another account) mints fresh but redirects
 // /login?err=claimed instead of a silent first=1. Role: ?role= wins, else the
-// pending cookie from /api/auth/otp, else 'student' (validated; unknowns fail
+// pending cookie from /api/auth/otp-request (OTP path only — Google threads
+// ?role= and never sets it), else 'student' (validated; unknowns fail
 // closed to student). The player cookie is re-asserted to the linked player
 // so every cookie-based route sees the same identity after login. The
 // callback itself is IP rate-limited (20/min) before the code exchange.
@@ -109,7 +110,8 @@ export async function GET(req: Request) {
     // Query wins, then the pending cookie, then student. (Cross-device loss:
     // the pending cookie never leaves this browser — a magic link opened on
     // another device drops the role and lands on student. OAuth threads role
-    // via ?role= for exactly this reason.)
+    // via ?role= for exactly this reason; a missing pending cookie is normal
+    // on the Google path, never an error.)
     const role =
       normalizeRole(url.searchParams.get("role")) ??
       normalizeRole(store.get(PENDING_ROLE_COOKIE)?.value) ??

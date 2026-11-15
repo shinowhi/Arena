@@ -1,16 +1,33 @@
 "use client";
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { createAuthBrowserClient } from "@/lib/supabase/auth-browser";
 import { readApiError } from "@/lib/scan/image-prep";
 
-// Phase-2a login form (client island): magic email link via /api/auth/otp +
-// Google OAuth via /api/auth/google. The role select only matters on first
-// link (it becomes the auth_links role); re-logins ignore it.
+// Phase-2a login form (client island). PKCE fix: the Supabase Auth calls
+// (signInWithOtp + signInWithOAuth) run DIRECTLY in this browser via the
+// cookie-based auth-browser client, so the PKCE code_verifier lands in THIS
+// browser's cookies and /auth/callback can exchange it. Calling them from an
+// API route instead sets the verifier on the server's response — never in
+// the browser — so the callback exchange always failed (/login?err=1).
+//
+// Redirect targets use window.location.origin: safe because an attacker
+// cannot change another browser's own origin (no open redirect — the URL is
+// built locally, not from request input).
+//
+// Role threading: the select only matters on first link (it becomes the
+// auth_links role); re-logins ignore it. OTP path stashes the role in the
+// HttpOnly arena_pending_role cookie via /api/auth/otp-request (same-browser
+// only — a magic link opened on ANOTHER device drops the role and lands on
+// student). Google path threads ?role= through redirectTo instead; the
+// pending cookie is OTP-path-only. The callback prefers ?role=, then the
+// pending cookie, then student.
 const ROLES = [
   { value: "student", label: "Student" },
   { value: "parent", label: "Parent" },
   { value: "teacher", label: "Teacher" },
 ];
+const VALID_ROLES = new Set(ROLES.map((r) => r.value));
 
 export default function LoginForm() {
   const params = useSearchParams();
@@ -18,6 +35,7 @@ export default function LoginForm() {
   const [role, setRole] = useState("student");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const errParam = params.get("err");
   const [error, setError] = useState(
     errParam === "claimed"
@@ -32,17 +50,44 @@ export default function LoginForm() {
     setBusy(true);
     setError("");
     try {
-      const r = await fetch("/api/auth/otp", {
+      // Precheck FIRST: rate limits (IP + per-address) + pending-role cookie.
+      // Only on {ok:true} do we ask Supabase to send the email.
+      const pre = await fetch("/api/auth/otp-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, role }),
       });
-      if (!r.ok) throw new Error(await readApiError(r, "Could not send the login email."));
+      if (!pre.ok) throw new Error(await readApiError(pre, "Could not send the login email."));
+      const auth = createAuthBrowserClient();
+      const { error: otpError } = await auth.auth.signInWithOtp({
+        email: email.trim().toLowerCase(),
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (otpError) throw new Error(otpError.message);
       setSent(true);
     } catch (e2) {
       setError(e2 instanceof Error ? e2.message : "Could not send the login email.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function continueWithGoogle() {
+    setGoogleBusy(true);
+    setError("");
+    try {
+      const safeRole = VALID_ROLES.has(role) ? role : "student";
+      const auth = createAuthBrowserClient();
+      // signInWithOAuth redirects this browser to the provider itself (unless
+      // skipBrowserRedirect is set) — nothing to do on success but wait.
+      const { error: oauthError } = await auth.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth/callback?role=${safeRole}` },
+      });
+      if (oauthError) throw new Error(oauthError.message);
+    } catch (e2) {
+      setError(e2 instanceof Error ? e2.message : "Google login failed — please try again.");
+      setGoogleBusy(false);
     }
   }
 
@@ -115,12 +160,14 @@ export default function LoginForm() {
         or
         <span className="h-px flex-1 bg-zinc-800" />
       </div>
-      <a
-        href={`/api/auth/google?role=${role}`}
-        className="mt-4 block rounded-full border border-zinc-700 bg-zinc-900 px-6 py-3 text-center font-bold text-zinc-100"
+      <button
+        type="button"
+        onClick={() => void continueWithGoogle()}
+        disabled={googleBusy}
+        className="mt-4 block w-full rounded-full border border-zinc-700 bg-zinc-900 px-6 py-3 text-center font-bold text-zinc-100 disabled:opacity-40"
       >
-        Continue with Google
-      </a>
+        {googleBusy ? "Redirecting to Google…" : "Continue with Google"}
+      </button>
       <p className="mt-4 text-center text-xs text-zinc-500">
         Logging in links this device&apos;s progress to your account.
       </p>

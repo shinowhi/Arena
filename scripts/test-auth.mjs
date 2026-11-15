@@ -5,9 +5,10 @@
 // DELETE_TABLES from lib/auth/tables.ts (Node strips types natively, so the
 // test fails if the sources drift). Mirrors kept for route branching that
 // needs Next/Supabase to run: the {confirm:"DELETE"} gate, the consent
-// 409-vs-update branch, the ?role= threading order, and the link-immunity
-// (Ban) matrix over decideAccess inputs (lib/billing/access.ts itself is
-// untouched by phase-2a — the matrix pins that).
+// 409-vs-update branch, the ?role= threading order, the login-form
+// redirectTo builders, and the link-immunity (Ban) matrix over
+// decideAccess inputs (lib/billing/access.ts itself is untouched by
+// phase-2a — the matrix pins that).
 import assert from "node:assert/strict";
 import { linkDecision, normalizeRole, consentAllowed } from "../lib/auth/session.ts";
 import { EXPORT_TABLES, DELETE_TABLES } from "../lib/auth/tables.ts";
@@ -95,8 +96,8 @@ ok(
 );
 
 // Role threading (4, real normalizeRole + mirror of the precedence in
-// /api/auth/google + /auth/callback): ?role= wins, else pending cookie,
-// else student.
+// /auth/callback): ?role= wins, else the pending cookie from
+// /api/auth/otp-request, else student.
 const threadRole = (query, cookie) => normalizeRole(query) ?? normalizeRole(cookie) ?? "student";
 ok(threadRole("parent", "teacher") === "parent", "query role wins over cookie");
 ok(threadRole(null, "teacher") === "teacher", "cookie role used when query absent");
@@ -105,6 +106,62 @@ ok(
   threadRole(null, null) === "student" && threadRole("admin", "hacker") === "student",
   "unknowns default to student",
 );
+
+// ?role= validation matrix (3, real): only the three roles survive into the
+// Google redirectTo / pending cookie; everything else fails closed.
+ok(
+  normalizeRole("student") === "student" &&
+    normalizeRole("parent") === "parent" &&
+    normalizeRole("teacher") === "teacher",
+  "all three roles thread through",
+);
+ok(
+  normalizeRole("admin") === null &&
+    normalizeRole("STUDENT") === null &&
+    normalizeRole("student?x=1") === null,
+  "privilege-escalation / case / injection roles rejected",
+);
+ok(
+  normalizeRole(undefined) === null && normalizeRole({}) === null && normalizeRole("") === null,
+  "missing/non-string/empty roles rejected",
+);
+
+// redirectTo construction (4, mirror of the login-form builders): the OTP
+// email link lands on <origin>/auth/callback, Google appends a validated
+// ?role=. The origin comes from the browser itself (window.location.origin),
+// never from request input — and the role slot only ever holds a validated
+// role, so neither builder can be turned into an open redirect.
+const otpRedirect = (origin) => `${origin}/auth/callback`;
+const googleRedirect = (origin, role) =>
+  `${origin}/auth/callback?role=${normalizeRole(role) ?? "student"}`;
+ok(
+  otpRedirect("https://arena.example") === "https://arena.example/auth/callback",
+  "OTP redirect is origin + fixed callback path",
+);
+ok(
+  googleRedirect("https://arena.example", "parent") ===
+    "https://arena.example/auth/callback?role=parent",
+  "Google redirect threads a valid role",
+);
+ok(
+  googleRedirect("https://arena.example", "admin") ===
+    "https://arena.example/auth/callback?role=student",
+  "Google redirect fails an invalid role closed to student",
+);
+ok(
+  googleRedirect("http://localhost:3000", "teacher") ===
+    "http://localhost:3000/auth/callback?role=teacher",
+  "dev origin preserved verbatim",
+);
+
+// Browser-direct Auth start: DOCUMENT-ONLY, untestable offline.
+// signInWithOtp + signInWithOAuth now run in the browser (login-form.tsx via
+// the auth-browser client) so the PKCE verifier lands in browser cookies —
+// no pure unit can cover a live Supabase call, so no assertion here by
+// design. What IS pinned offline: the pending-cookie contract (otp-request
+// stashes a validated role; Google never touches the cookie and the
+// callback treats a missing cookie as normal), the ?role= matrix above,
+// and the redirectTo rules above.
 
 // Pending-cookie cleared: DOCUMENT-ONLY, untestable offline. The clear runs
 // inside the /auth/callback + /api/auth/logout handlers via Next.js
