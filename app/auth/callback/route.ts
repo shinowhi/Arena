@@ -69,11 +69,15 @@ async function insertLink(
   authUserId: string,
   playerId: string,
   role: string,
-): Promise<boolean> {
+): Promise<{ ok: boolean; code: string }> {
   const r = await supabase
     .from("auth_links")
     .insert({ auth_user_id: authUserId, player_id: playerId, role });
-  return !r.error;
+  if (!r.error) return { ok: true, code: "" };
+  // Sanitized PG code for diagnosis (safe: 5-char class code, no internals).
+  const raw = String((r.error as { code?: unknown }).code ?? "db");
+  const code = /^[a-z0-9]{2,8}$/i.test(raw) ? raw : "db";
+  return { ok: false, code };
 }
 
 export async function GET(req: Request) {
@@ -106,7 +110,7 @@ export async function GET(req: Request) {
       // so a missing migration fails closed to login instead of minting an
       // orphan player + a doomed insert.
       const probe = await supabase.from("auth_links").select("auth_user_id").limit(0);
-      if (probe.error) return fail("link");
+      if (probe.error) return fail("link-probe");
     }
     const cookiePlayer = await getPlayerId().catch(() => null);
     const store = await cookies();
@@ -136,11 +140,13 @@ export async function GET(req: Request) {
     try {
       playerId = playerId ?? (await mintPlayer(supabase));
     } catch {
-      return fail("link");
+      return fail("link-mint");
     }
-    if (await insertLink(supabase, user.id, playerId, role)) {
+    const first = await insertLink(supabase, user.id, playerId, role);
+    if (first.ok) {
       return done(playerId, true);
     }
+    const firstCode = first.code;
     // Insert lost a race (a link appeared between read and insert) or the
     // cookie player is taken by another login (shared device): adopt the
     // winner when one exists for THIS user, else mint fresh once.
@@ -161,9 +167,10 @@ export async function GET(req: Request) {
     try {
       playerId = await mintPlayer(supabase);
     } catch {
-      return fail("link");
+      return fail("link-mint");
     }
-    if (await insertLink(supabase, user.id, playerId, role)) {
+    const second = await insertLink(supabase, user.id, playerId, role);
+    if (second.ok) {
       if (claimed) {
         setPlayerCookie(store, playerId);
         store.delete(PENDING_ROLE_COOKIE);
@@ -171,7 +178,7 @@ export async function GET(req: Request) {
       }
       return done(playerId, true);
     }
-    return fail("link");
+    return fail(`link-${firstCode}-${second.code}`);
   } catch {
     return fail();
   }

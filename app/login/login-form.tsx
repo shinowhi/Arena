@@ -44,7 +44,7 @@ export default function LoginForm() {
         ? "This login link expired or was already used — request a fresh one below."
         : errParam === "nouser"
           ? "Login session unreadable — please try again."
-          : errParam === "link"
+          : errParam === "link" || (errParam !== null && errParam.startsWith("link-"))
             ? "Account setup hiccup — please try again."
             : errParam
               ? "Login failed — please try again."
