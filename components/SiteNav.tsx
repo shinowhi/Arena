@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArenaIcon, ChatIcon, FriendsIcon, HomeIcon, ScanIcon } from "@/components/icons";
+import AuthNavButton from "@/components/auth/AuthNavButton";
 
 // Shared navigation (F1): desktop header nav + mobile bottom tab bar.
 // Rendered once in app/layout.tsx so every page has navigation —
@@ -57,10 +58,12 @@ export function SiteHeader() {
             </Link>
           );
         })}
+        <AuthNavButton loginLabel="Log in" accountLabel="Account" className="transition-colors hover:text-white" />
       </nav>
+      <AuthNavButton loginLabel="Log in" accountLabel="Account" className="ml-auto whitespace-nowrap text-zinc-400 md:hidden" />
       <Link
         href="/scan"
-        className="arena-btn-primary ml-auto rounded-full px-4 py-1.5 font-semibold text-white md:hidden"
+        className="arena-btn-primary rounded-full px-4 py-1.5 font-semibold text-white md:hidden"
       >
         + Scan
       </Link>

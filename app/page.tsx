@@ -4,6 +4,7 @@ import StreakBadge from "@/components/StreakBadge";
 import StartNudge from "@/components/StartNudge";
 import ScanHistory from "@/components/ScanHistory";
 import TonightStrip from "@/components/TonightStrip";
+import AuthNavButton from "@/components/auth/AuthNavButton";
 import EducationHero from "@/components/education/EducationHero";
 import ExamStrip from "@/components/education/ExamStrip";
 import ClusterSection from "@/components/home/ClusterSection";
@@ -64,7 +65,11 @@ export default function Home() {
           <Link href="/arena" className="transition-colors hover:text-white">Đấu trường</Link>
           <Link href="/graph" className="transition-colors hover:text-white">Kỹ năng</Link>
           <Link href="/friends" className="transition-colors hover:text-white">Bạn bè</Link>
+          <AuthNavButton loginLabel="Đăng nhập" accountLabel="Tài khoản" className="transition-colors hover:text-white" />
         </nav>
+        <span className="ml-auto sm:hidden">
+          <AuthNavButton loginLabel="Đăng nhập" accountLabel="Tài khoản" className="whitespace-nowrap text-zinc-400 transition-colors hover:text-white" />
+        </span>
       </header>
       <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center">
         <p className="arena-enter rounded-full border border-zinc-700 bg-zinc-900/70 px-4 py-1 text-xs font-medium tracking-widest text-zinc-300 uppercase">
