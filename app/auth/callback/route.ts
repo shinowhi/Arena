@@ -84,17 +84,20 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "server misconfigured" }, { status: 500 });
   }
   const url = new URL(req.url);
-  const fail = () => NextResponse.redirect(new URL("/login?err=1", origin));
+  // Staged error codes (safe, no internals) so a failed login reports WHERE
+  // it broke instead of one generic message: exchange = bad/expired link,
+  // nouser = session unreadable, link = account-linking DB failure.
+  const fail = (stage = "1") => NextResponse.redirect(new URL(`/login?err=${stage}`, origin));
   const code = url.searchParams.get("code");
-  if (!code) return fail();
+  if (!code) return fail("exchange");
   const ipRl = checkRate(`auth-callback:${getClientIp(req)}`, 20, MINUTE_MS);
   if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
   try {
     const auth = await createAuthClient();
     const { error: xchg } = await auth.auth.exchangeCodeForSession(code);
-    if (xchg) return fail();
+    if (xchg) return fail("exchange");
     const user = await getAuthUser(auth);
-    if (!user) return fail();
+    if (!user) return fail("nouser");
     const supabase = await createClient();
     // Owner check inherent: the row is keyed by the verified auth user id.
     const link = await readLink(supabase, user.id);
@@ -103,7 +106,7 @@ export async function GET(req: Request) {
       // so a missing migration fails closed to login instead of minting an
       // orphan player + a doomed insert.
       const probe = await supabase.from("auth_links").select("auth_user_id").limit(0);
-      if (probe.error) return fail();
+      if (probe.error) return fail("link");
     }
     const cookiePlayer = await getPlayerId().catch(() => null);
     const store = await cookies();
@@ -133,7 +136,7 @@ export async function GET(req: Request) {
     try {
       playerId = playerId ?? (await mintPlayer(supabase));
     } catch {
-      return fail();
+      return fail("link");
     }
     if (await insertLink(supabase, user.id, playerId, role)) {
       return done(playerId, true);
@@ -158,7 +161,7 @@ export async function GET(req: Request) {
     try {
       playerId = await mintPlayer(supabase);
     } catch {
-      return fail();
+      return fail("link");
     }
     if (await insertLink(supabase, user.id, playerId, role)) {
       if (claimed) {
@@ -168,7 +171,7 @@ export async function GET(req: Request) {
       }
       return done(playerId, true);
     }
-    return fail();
+    return fail("link");
   } catch {
     return fail();
   }

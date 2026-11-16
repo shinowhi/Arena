@@ -40,9 +40,15 @@ export default function LoginForm() {
   const [error, setError] = useState(
     errParam === "claimed"
       ? "That device progress belonged to another account."
-      : errParam
-        ? "Login failed — please try again."
-        : "",
+      : errParam === "exchange"
+        ? "This login link expired or was already used — request a fresh one below."
+        : errParam === "nouser"
+          ? "Login session unreadable — please try again."
+          : errParam === "link"
+            ? "Account setup hiccup — please try again."
+            : errParam
+              ? "Login failed — please try again."
+              : "",
   );
 
   async function sendLink(e: React.FormEvent) {
