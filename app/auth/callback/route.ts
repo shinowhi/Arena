@@ -108,9 +108,16 @@ export async function GET(req: Request) {
     if (!link) {
       // Distinguish "no link yet" from "table missing" (run 0020): probe once
       // so a missing migration fails closed to login instead of minting an
-      // orphan player + a doomed insert.
-      const probe = await supabase.from("auth_links").select("auth_user_id").limit(0);
-      if (probe.error) return fail("link-probe");
+      // orphan player + a doomed insert. NOTE: limit(0) is invalid PostgREST
+      // (must be >= 1) — a limit(0) probe errors always and bricks every
+      // first login; use limit(1).
+      const probe = await supabase.from("auth_links").select("auth_user_id").limit(1);
+      if (probe.error) {
+        const pg = String((probe.error as { code?: unknown }).code ?? "");
+        if (pg === "42P01") return fail("link-probe");
+        // Transient read error: fall through and let the insert below report
+        // its own code rather than mislabeling it as a missing table.
+      }
     }
     const cookiePlayer = await getPlayerId().catch(() => null);
     const store = await cookies();
