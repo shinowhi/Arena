@@ -58,10 +58,12 @@ async function readLink(supabase: ServiceDb, authUserId: string): Promise<LinkRo
   return r.data[0] as LinkRow;
 }
 
-async function mintPlayer(supabase: ServiceDb): Promise<string> {
+async function mintPlayer(supabase: ServiceDb): Promise<{ ok: true; id: string } | { ok: false; code: string }> {
   const { data, error } = await supabase.from("players").insert({}).select("id").single();
-  if (error || !data) throw new Error("mint player");
-  return (data as { id: string }).id;
+  if (!error && data) return { ok: true, id: (data as { id: string }).id };
+  // Sanitized PG code (safe: 5-char class code, no internals).
+  const raw = String((error as { code?: unknown } | null)?.code ?? "db");
+  return { ok: false, code: /^[a-z0-9]{2,8}$/i.test(raw) ? raw : "db" };
 }
 
 async function insertLink(
@@ -144,10 +146,10 @@ export async function GET(req: Request) {
       const probe = await supabase.from("players").select("id").eq("id", playerId).limit(1);
       if (probe.error || !Array.isArray(probe.data) || probe.data.length === 0) playerId = null;
     }
-    try {
-      playerId = playerId ?? (await mintPlayer(supabase));
-    } catch {
-      return fail("link-mint");
+    if (!playerId) {
+      const minted = await mintPlayer(supabase);
+      if (!minted.ok) return fail(`link-mint-${minted.code}`);
+      playerId = minted.id;
     }
     const first = await insertLink(supabase, user.id, playerId, role);
     if (first.ok) {
@@ -171,11 +173,9 @@ export async function GET(req: Request) {
         .limit(1);
       claimed = !taken.error && Array.isArray(taken.data) && taken.data.length > 0;
     }
-    try {
-      playerId = await mintPlayer(supabase);
-    } catch {
-      return fail("link-mint");
-    }
+    const minted2 = await mintPlayer(supabase);
+    if (!minted2.ok) return fail(`link-mint-${minted2.code}`);
+    playerId = minted2.id;
     const second = await insertLink(supabase, user.id, playerId, role);
     if (second.ok) {
       if (claimed) {

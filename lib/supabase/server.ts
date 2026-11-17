@@ -1,5 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createClient as createJsClient } from "@supabase/supabase-js";
 
 // SECURITY PHASE-1 master switch: server-side Supabase now uses the SERVICE
 // ROLE key (server-only env; never NEXT_PUBLIC_*), NOT the anon key. This is
@@ -10,6 +9,17 @@ import { cookies } from "next/headers";
 // Non-production fallback: when SUPABASE_SERVICE_ROLE_KEY is unset AND
 // NODE_ENV !== "production", fall back to the anon key with a warning so
 // local dev keeps working without the secret.
+//
+// SESSION-LESS BY DESIGN: plain supabase-js with persistSession:false — it
+// never reads auth cookies, so Authorization ALWAYS carries the service JWT.
+// A createServerClient+cookies service client silently degrades to the
+// `authenticated` role on any request carrying a user session (supabase-js
+// prefers the session access token for Authorization), and post-0019/0020
+// deny-all that 42501s every query. Found live: the /auth/callback exchange
+// writes fresh session cookies into the same request, so the very next DB
+// call ran as `authenticated` — first login died at link-mint. Auth identity
+// stays on the anon-key client in lib/supabase/auth.ts; no route may call
+// .auth.* on THIS client.
 let warnedAnonFallback = false;
 export async function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -30,17 +40,10 @@ export async function createClient() {
       );
     }
   }
-  const cookieStore = await cookies();
-  return createServerClient(url!, key!, {
-    cookies: {
-      getAll: () => cookieStore.getAll(),
-      setAll: (pairs) => {
-        try {
-          pairs.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
-        } catch {
-          // Server Component read-only context; middleware refreshes the session.
-        }
-      },
-    },
+  // Session-less: never touches cookies, so the service JWT always rides
+  // Authorization (see header comment). Async signature kept — every route
+  // awaits this.
+  return createJsClient(url!, key!, {
+    auth: { persistSession: false, autoRefreshToken: false },
   });
 }
