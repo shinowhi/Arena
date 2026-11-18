@@ -4,7 +4,7 @@ import FamilyClient from "./family-client";
 // P5 family page: static-safe server shell (no data access here — the client
 // fetches /api/family/me at runtime). Parent view / kid view / none view.
 export const metadata = {
-  title: "Family — Arena",
+  title: "Family — BossLearn",
   description: "One Family plan covers the kids: shared VIP and a simple progress report.",
 };
 

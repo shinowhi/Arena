@@ -108,7 +108,7 @@ export default function StartPage() {
           Bước {step + 1}/{STEPS.length} — {STEPS[step]}
         </p>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-white">
-          Cho Arena biết bạn là ai
+          Cho BossLearn biết bạn là ai
         </h1>
         <p className="mt-1 text-sm text-zinc-400">
           30 giây thôi — để vá đúng chỗ bạn yếu, không vá lung tung.

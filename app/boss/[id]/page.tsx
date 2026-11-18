@@ -144,7 +144,7 @@ function BossInner() {
     const comboBit = combo >= 2 ? ` with a x${combo} combo` : "";
     const timeBit = t0 > 0 ? ` in ${fmt(Date.now() - t0)}` : "";
     const text =
-      `I slayed the ${bossName} boss in Arena${comboBit}${timeBit} — ` +
+      `I slayed the ${bossName} boss in BossLearn${comboBit}${timeBit} — ` +
       `5 machine-verified questions down. Think you can? ${window.location.origin}`;
     try {
       await navigator.clipboard.writeText(text);

@@ -11,7 +11,7 @@ import MeActions from "./me-actions";
 // linked player, and the role; the client island owns export/delete/logout.
 
 export const metadata = {
-  title: "My account — Arena",
+  title: "My account — BossLearn",
   description: "Your login, linked progress, data export, and account deletion.",
 };
 

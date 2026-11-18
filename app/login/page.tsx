@@ -5,7 +5,7 @@ import LoginForm from "./login-form";
 // client form prechecks via /api/auth/otp-request, then calls Supabase Auth
 // directly in the browser so the PKCE verifier lands in browser cookies).
 export const metadata = {
-  title: "Log in — Arena",
+  title: "Log in — BossLearn",
   description: "Log in with a magic email link or Google to sync your progress across devices.",
 };
 
@@ -13,7 +13,7 @@ export default function LoginPage() {
   return (
     <main className="mx-auto max-w-md px-4 py-10">
       <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">Account</p>
-      <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">Log in to Arena</h1>
+      <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">Log in to BossLearn</h1>
       <p className="mt-2 text-sm text-zinc-400">
         One login keeps your progress, VIP, and family in sync on every device.
       </p>
