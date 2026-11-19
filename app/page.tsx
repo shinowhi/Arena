@@ -59,7 +59,7 @@ export default function Home() {
       <StartNudge />
       <header className="mx-auto flex w-full max-w-5xl items-center gap-2 py-4 pl-4 pr-16 text-base sm:pr-32">
         <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
-        <span className="shrink-0 text-lg font-black tracking-wide">ARENA</span>
+        <span className="shrink-0 text-lg font-black tracking-wide">BOSSLEARN</span>
         <nav className="ml-auto hidden gap-3 whitespace-nowrap text-zinc-400 sm:flex sm:gap-5" aria-label="Chính">
           <Link href="/scan" className="font-semibold text-white transition-colors hover:text-cyan-300">Quét bài</Link>
           <Link href="/arena" className="transition-colors hover:text-white">Đấu trường</Link>
@@ -81,7 +81,7 @@ export default function Home() {
           <span className="arena-title">Diệt gọn boss.</span>
         </h1>
         <p className="arena-enter arena-d2 max-w-xl text-zinc-400">
-          Chụp bài kiểm tra, ảnh màn hình, hay bất cứ thứ gì quanh bạn. Arena tìm ra kỹ năng yếu đằng sau nó — và gốc rễ từ hai chương trước — rồi
+          Chụp bài kiểm tra, ảnh màn hình, hay bất cứ thứ gì quanh bạn. BossLearn tìm ra kỹ năng yếu đằng sau nó — và gốc rễ từ hai chương trước — rồi
           sinh ra một con boss để vá dứt điểm.
         </p>
         <nav className="arena-enter arena-d3 flex w-full flex-col gap-3 text-sm sm:w-auto sm:flex-row sm:flex-wrap sm:justify-center" aria-label="Bắt đầu">

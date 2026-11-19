@@ -37,12 +37,12 @@ export function SiteHeader() {
   if (path === "/") return null; // Home renders its own hero header.
   return (
     <header className="mx-auto flex w-full max-w-5xl items-center gap-2 px-4 py-4 text-base">
-      <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="Arena home">
+      <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="BossLearn home">
         <span
           aria-hidden="true"
           className="inline-block h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]"
         />
-        <span className="text-lg font-black tracking-wide">ARENA</span>
+        <span className="text-lg font-black tracking-wide">BOSSLEARN</span>
       </Link>
       <nav className="ml-auto hidden gap-5 whitespace-nowrap text-zinc-400 md:flex" aria-label="Primary">
         {NAV.map((n) => {

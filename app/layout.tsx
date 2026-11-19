@@ -13,7 +13,7 @@ const display = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "Arena — scan your work, slay the boss",
+  title: "BossLearn — scan your work, slay the boss",
   description: "Gamified math gap finder: scan homework, diagnose weak skills, defeat boss questions.",
 };
 

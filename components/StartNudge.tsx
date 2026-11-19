@@ -28,7 +28,7 @@ export default function StartNudge() {
         onClick={() => track("start_nudge_clicked")}
         className="block rounded-2xl border border-cyan-400/40 bg-cyan-400/10 px-5 py-3 text-center text-sm font-semibold text-cyan-200 transition-colors hover:border-cyan-300/70 hover:bg-cyan-400/15"
       >
-        Mất 30 giây: cho Arena biết bạn là ai để vá đúng chỗ →
+        Mất 30 giây: cho BossLearn biết bạn là ai để vá đúng chỗ →
       </Link>
     </div>
   );
