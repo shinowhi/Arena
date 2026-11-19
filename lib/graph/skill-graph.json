@@ -779,6 +779,564 @@
       "grade": 12,
       "gradeLabel": "Grade 12",
       "subject": "k12"
+    },
+    {
+      "id": "phy_kinematics",
+      "name": "Kinematics",
+      "description": "Chuyen dong thang: displacement, velocity, acceleration (v = s/t, uniformly accelerated motion).",
+      "prereqs": ["k10_coord_geometry"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_newton_laws",
+      "name": "Newton laws",
+      "description": "Ba dinh luat Newton: F = m*a, action-reaction, free-body force sums.",
+      "prereqs": ["phy_kinematics", "k10_vectors_2d"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_circular_motion",
+      "name": "Circular motion",
+      "description": "Chuyen dong tron deu: angular speed, centripetal force F = m*v^2/r.",
+      "prereqs": ["phy_newton_laws"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_work_energy",
+      "name": "Work and energy",
+      "description": "Cong va nang luong: W = F*s*cos, kinetic and potential energy, power.",
+      "prereqs": ["phy_newton_laws"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_momentum",
+      "name": "Momentum",
+      "description": "Dong luong: p = m*v, impulse, conservation in collisions.",
+      "prereqs": ["phy_newton_laws"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_static_equilibrium",
+      "name": "Static equilibrium",
+      "description": "Can bang: force balance and moment balance M = F*d.",
+      "prereqs": ["phy_newton_laws"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_fluid_pressure",
+      "name": "Fluid pressure",
+      "description": "Ap suat chat long: p = d*h, Archimedes buoyant force.",
+      "prereqs": ["phy_newton_laws"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_oscillations",
+      "name": "Harmonic oscillations",
+      "description": "Dao dong dieu hoa: x = A*cos(wt+p), T = 2*pi*sqrt(m/k), pendulum period.",
+      "prereqs": ["phy_work_energy", "k9_trig_ratios"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_mechanical_waves",
+      "name": "Mechanical waves",
+      "description": "Song co: v = λ*f, wave fronts, standing-wave conditions.",
+      "prereqs": ["phy_oscillations"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_electrostatics",
+      "name": "Electrostatics",
+      "description": "Dien tich va dien truong: Coulomb F = k*q1*q2/r^2, E = F/q, E = U/d.",
+      "prereqs": ["phy_newton_laws"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_dc_circuits",
+      "name": "DC circuits",
+      "description": "Dong dien mot chieu: Ohm I = U/R, series/parallel R, P = U*I, Joule heating.",
+      "prereqs": ["phy_electrostatics"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_magnetism",
+      "name": "Magnetism",
+      "description": "Tu truong: B of currents, Lorentz and Ampere forces F = B*I*l*sin.",
+      "prereqs": ["phy_dc_circuits"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_induction",
+      "name": "Electromagnetic induction",
+      "description": "Cam ung dien tu: flux Φ = B*S*cos, induced emf e = -ΔΦ/Δt.",
+      "prereqs": ["phy_magnetism"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_geometric_optics",
+      "name": "Geometric optics",
+      "description": "Quang hinh: reflection/refraction, thin lens 1/f = 1/d + 1/dp.",
+      "prereqs": ["k9_trig_ratios"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_lc_circuit",
+      "name": "LC oscillations",
+      "description": "Dao dong dien tu: LC period T = 2*pi*sqrt(L*C), energy swap.",
+      "prereqs": ["phy_oscillations", "phy_induction"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_ac_circuits",
+      "name": "AC circuits",
+      "description": "Dien xoay chieu: rms values, Z of R-L-C, resonance, P = U*I*cosφ.",
+      "prereqs": ["phy_dc_circuits", "phy_oscillations"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_em_waves",
+      "name": "EM waves",
+      "description": "Song dien tu: c = λ*f, EM spectrum bands and uses.",
+      "prereqs": ["phy_lc_circuit", "phy_mechanical_waves"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_wave_optics",
+      "name": "Wave optics",
+      "description": "Giao thoa anh sang: fringe spacing i = λ*D/a.",
+      "prereqs": ["phy_em_waves"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_photoelectric",
+      "name": "Photoelectric effect",
+      "description": "Hien tuong quang dien: hf = A + Wdmax, photon energy.",
+      "prereqs": ["phy_em_waves"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_atomic_nucleus",
+      "name": "Atomic nucleus",
+      "description": "Hat nhan: mass defect, E = m*c^2, binding energy per nucleon.",
+      "prereqs": ["phy_photoelectric"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_nuclear_reactions",
+      "name": "Nuclear reactions",
+      "description": "Phan ung hat nhan: conservation laws, released energy, decay N = N0*2^(-t/T).",
+      "prereqs": ["phy_atomic_nucleus"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "physics"
+    },
+    {
+      "id": "phy_ideal_gas",
+      "name": "Ideal gas",
+      "description": "Khi li tuong: p*V = n*R*T, isoprocesses, absolute temperature.",
+      "prereqs": ["k8_linear_equations"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "physics"
+    },
+    {
+      "id": "che_atomic_structure",
+      "name": "Atomic structure",
+      "description": "Cau tao nguyen tu: protons, neutrons, electrons, isotopes, average atomic mass.",
+      "prereqs": ["k6_fractions"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_periodic_table",
+      "name": "Periodic table",
+      "description": "Bang tuan hoan: electron configuration, group/period position, periodicity trends.",
+      "prereqs": ["che_atomic_structure"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_chemical_bonding",
+      "name": "Chemical bonding",
+      "description": "Lien ket hoa hoc: ionic and covalent bonds, electronegativity, bond counts.",
+      "prereqs": ["che_atomic_structure"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_mole_stoichiometry",
+      "name": "Mole and stoichiometry",
+      "description": "Mol va tinh theo phuong trinh: n = m/M, n = V/22.4, mass and yield calculations.",
+      "prereqs": ["che_atomic_structure"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_redox",
+      "name": "Redox reactions",
+      "description": "Phan ung oxi hoa-khu: oxidation states, electron balance, redox balancing.",
+      "prereqs": ["che_chemical_bonding", "che_mole_stoichiometry"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_reaction_rate",
+      "name": "Reaction rate",
+      "description": "Toc do phan ung: average rate v = ΔC/Δt, factors affecting rate.",
+      "prereqs": ["che_mole_stoichiometry"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_chemical_equilibrium",
+      "name": "Chemical equilibrium",
+      "description": "Can bang hoa hoc: equilibrium constant Kc, Le Chatelier shifts.",
+      "prereqs": ["che_reaction_rate"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_acid_base_ph",
+      "name": "Acids, bases and pH",
+      "description": "Axit-bazo: pH = -log[H+], Kw, strong acid/base pH calculations.",
+      "prereqs": ["che_chemical_equilibrium"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_solutions_concentration",
+      "name": "Solutions and concentration",
+      "description": "Dung dich: C% = mct/mdd*100, CM = n/V, dilution and mixing.",
+      "prereqs": ["che_mole_stoichiometry"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_nitrogen_compounds",
+      "name": "Nitrogen and compounds",
+      "description": "Nito va hop chat: NH3, HNO3, nitrate salts, fertilizer calculations.",
+      "prereqs": ["che_redox"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_sulfur_compounds",
+      "name": "Sulfur and compounds",
+      "description": "Luu huynh va hop chat: SO2, H2SO4, sulfate reactions and masses.",
+      "prereqs": ["che_redox"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_organic_basics",
+      "name": "Organic chemistry basics",
+      "description": "Dai cuong huu co: molecular formulas, functional groups, combustion analysis.",
+      "prereqs": ["che_mole_stoichiometry"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_hydrocarbons",
+      "name": "Hydrocarbons",
+      "description": "Hidrocacbon: alkanes, alkenes, alkynes, benzene combustion and addition.",
+      "prereqs": ["che_organic_basics"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_alcohols_phenols",
+      "name": "Alcohols and phenols",
+      "description": "Ancol va phenol: -OH reactions, combustion, degree and isomer counts.",
+      "prereqs": ["che_hydrocarbons"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_aldehydes_acids",
+      "name": "Aldehydes and carboxylic acids",
+      "description": "Andehit va axit cacboxylic: -CHO/-COOH reactions, silver mirror masses.",
+      "prereqs": ["che_alcohols_phenols"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_esters_fats",
+      "name": "Esters and fats",
+      "description": "Este va chat beo: esterification, saponification, fat index calculations.",
+      "prereqs": ["che_aldehydes_acids"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_amines_amino",
+      "name": "Amines and amino acids",
+      "description": "Amin, amino axit, protein: basicity, peptide bonds, salt masses.",
+      "prereqs": ["che_organic_basics"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_polymers",
+      "name": "Polymers",
+      "description": "Polime: addition and condensation polymerization, repeat-unit masses.",
+      "prereqs": ["che_hydrocarbons"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_metals",
+      "name": "Metals",
+      "description": "Kim loai: reactivity series, displacement, corrosion mass calculations.",
+      "prereqs": ["che_redox"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "chemistry"
+    },
+    {
+      "id": "che_electrolysis",
+      "name": "Electrolysis",
+      "description": "Dien phan: Faraday m = A*I*t/(n*F), electrode masses and gas volumes.",
+      "prereqs": ["che_metals"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "chemistry"
+    },
+    {
+      "id": "eng_tenses",
+      "name": "Present and past tenses",
+      "description": "Thi hien tai va qua khu: present simple/continuous, past simple/continuous in THPT sentences.",
+      "prereqs": [],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "english"
+    },
+    {
+      "id": "eng_articles_determiners",
+      "name": "Articles and determiners",
+      "description": "Mao tu va han dinh tu: a/an/the, some/any, much/many, few/little in context.",
+      "prereqs": [],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "english"
+    },
+    {
+      "id": "eng_word_formation",
+      "name": "Word formation",
+      "description": "Cau tao tu: prefixes, suffixes, and word-class changes (noun/verb/adjective/adverb).",
+      "prereqs": [],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "english"
+    },
+    {
+      "id": "eng_pronunciation",
+      "name": "Pronunciation",
+      "description": "Phat am: vowel and consonant sounds, -ed/-s endings in minimal sets.",
+      "prereqs": [],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "english"
+    },
+    {
+      "id": "eng_comparisons",
+      "name": "Comparisons",
+      "description": "So sanh: comparative, superlative, equal and double comparative structures.",
+      "prereqs": ["eng_tenses"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "english"
+    },
+    {
+      "id": "eng_modal_verbs",
+      "name": "Modal verbs",
+      "description": "Dong tu khuyet thieu: can/could, must/have to, should, may/might in context.",
+      "prereqs": ["eng_tenses"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "english"
+    },
+    {
+      "id": "eng_word_stress",
+      "name": "Word stress",
+      "description": "Trong am tu: primary stress placement in two- and multi-syllable words.",
+      "prereqs": ["eng_pronunciation"],
+      "grade": 10,
+      "gradeLabel": "Grade 10",
+      "subject": "english"
+    },
+    {
+      "id": "eng_perfect_future",
+      "name": "Perfect and future forms",
+      "description": "Thi hoan thanh va tuong lai: present/past perfect, will/be going to, future continuous.",
+      "prereqs": ["eng_tenses"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "english"
+    },
+    {
+      "id": "eng_passive_voice",
+      "name": "Passive voice",
+      "description": "Cau bi dong: be + past participle across tenses, passive with modals.",
+      "prereqs": ["eng_tenses"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "english"
+    },
+    {
+      "id": "eng_conditionals",
+      "name": "Conditionals",
+      "description": "Cau dieu kien: type 1/2/3 and mixed conditionals, wish clauses.",
+      "prereqs": ["eng_tenses"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "english"
+    },
+    {
+      "id": "eng_reported_speech",
+      "name": "Reported speech",
+      "description": "Cau tuong thuat: tense backshift, time/place changes, reported questions.",
+      "prereqs": ["eng_tenses"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "english"
+    },
+    {
+      "id": "eng_relative_clauses",
+      "name": "Relative clauses",
+      "description": "Menh de quan he: who/whom/which/that, defining vs non-defining clauses.",
+      "prereqs": ["eng_tenses"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "english"
+    },
+    {
+      "id": "eng_phrasal_verbs",
+      "name": "Phrasal verbs",
+      "description": "Cum dong tu: common verb + particle combinations and their meanings.",
+      "prereqs": ["eng_word_formation"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "english"
+    },
+    {
+      "id": "eng_collocations",
+      "name": "Collocations",
+      "description": "Ket hop tu: verb/noun/adjective collocations tested in gap-fill sentences.",
+      "prereqs": ["eng_word_formation"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "english"
+    },
+    {
+      "id": "eng_error_identification",
+      "name": "Error identification",
+      "description": "Tim loi sai: one underlined segment is wrong in grammar, word form, or usage.",
+      "prereqs": ["eng_tenses", "eng_articles_determiners"],
+      "grade": 11,
+      "gradeLabel": "Grade 11",
+      "subject": "english"
+    },
+    {
+      "id": "eng_synonyms_antonyms",
+      "name": "Synonyms and antonyms",
+      "description": "Dong nghia va trai nghia: closest/opposite meaning in sentence context.",
+      "prereqs": ["eng_collocations"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "english"
+    },
+    {
+      "id": "eng_idioms",
+      "name": "Idioms",
+      "description": "Thanh ngu: common idioms and fixed expressions in sentence context.",
+      "prereqs": ["eng_collocations"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "english"
+    },
+    {
+      "id": "eng_cloze_test",
+      "name": "Cloze test",
+      "description": "Dien tu vao doan van: one gap per question in a short passage (grammar + vocabulary).",
+      "prereqs": ["eng_tenses", "eng_collocations"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "english"
+    },
+    {
+      "id": "eng_sentence_transformation",
+      "name": "Sentence transformation",
+      "description": "Viet lai cau: same-meaning rewrites using conditionals, reported speech, passive.",
+      "prereqs": ["eng_conditionals", "eng_reported_speech", "eng_passive_voice"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "english"
+    },
+    {
+      "id": "eng_reading_comprehension",
+      "name": "Reading comprehension",
+      "description": "Doc hieu: main idea, detail, inference, and vocabulary-in-context over a passage.",
+      "prereqs": ["eng_cloze_test", "eng_synonyms_antonyms"],
+      "grade": 12,
+      "gradeLabel": "Grade 12",
+      "subject": "english"
     }
   ]
 }

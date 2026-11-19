@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getPlayerId } from "@/lib/game/player";
-import { skillGrade, skillName, SKILL_IDS } from "@/lib/graph/skills";
+import { skillGrade, skillName, SKILL_IDS, skillSubject } from "@/lib/graph/skills";
 import { buildMock, MockQuestion, THPT_CONFIG } from "@/lib/agents/thpt";
 import { hasAccess, paywallBody } from "@/lib/billing/access";
 import { logFunnel } from "@/lib/funnel";
@@ -13,11 +13,13 @@ import { logFunnel } from "@/lib/funnel";
 const SEVEN_DAYS_MS = 7 * 24 * 3600 * 1000;
 
 // Grades 10-12 only: mechanics (14) and university-only calculus (13)
-// live outside THPT math.
+// live outside THPT math. Physics/chemistry/english skills (grades 10-12)
+// are excluded too: they belong to their own subject mocks, not math.
 function poolSkills(): string[] {
   return SKILL_IDS.filter((id) => {
     const g = skillGrade(id);
-    return g >= 10 && g <= 12;
+    const s = skillSubject(id);
+    return g >= 10 && g <= 12 && s !== "physics" && s !== "chemistry" && s !== "english";
   });
 }
 

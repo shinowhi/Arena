@@ -2,6 +2,10 @@ import { z } from "zod";
 import { chatJson, MetaLLMError } from "../llm/meta";
 import { isValidSkill, skillGradeLabel, skillName, skillSubject } from "../graph/skills";
 import { verifyAnswer } from "../verify/math-verifier";
+import { verifyPhysicsAnswer } from "../verify/physics-verifier";
+import { verifyChemistryAnswer } from "../verify/chemistry-verifier";
+import { PHYSICS_SYSTEM } from "./physics-prompts";
+import { CHEMISTRY_SYSTEM } from "./chemistry-prompts";
 
 // Single source of truth for check specs: the grade route imports this so a
 // new check kind can never split-brain fights vs grading.
@@ -62,8 +66,24 @@ Reply JSON only: {"questions": [{"level": 1, "prompt_latex": "...", "answer_nume
 export async function generateBossQuestions(skill_tag: string): Promise<BossOutput> {
   if (!isValidSkill(skill_tag)) throw new MetaLLMError(`Invalid skill_tag: ${skill_tag}`);
   const subject = skillSubject(skill_tag);
-  const system = subject === "mechanics" ? MECHANICS_SYSTEM : subject === "k12" ? K12_SYSTEM : SYSTEM;
-  const gradeHint = subject === "k12" ? ` Grade: ${skillGradeLabel(skill_tag)}.` : "";
+  // English is NOT wired here: MCQ option-picks cannot ride the numeric
+  // BossQuestion contract — fail closed instead of caching calculus questions
+  // under english tags (generateEnglishBossQuestions owns that path).
+  if (subject === "english") throw new MetaLLMError(`Subject not wired to boss dispatch: ${subject}`);
+  const system =
+    subject === "mechanics"
+      ? MECHANICS_SYSTEM
+      : subject === "k12"
+        ? K12_SYSTEM
+        : subject === "physics"
+          ? PHYSICS_SYSTEM
+          : subject === "chemistry"
+            ? CHEMISTRY_SYSTEM
+            : SYSTEM;
+  const gradeHint =
+    subject === "k12" || subject === "physics" || subject === "chemistry"
+      ? ` Grade: ${skillGradeLabel(skill_tag)}.`
+      : "";
   let failed: BossQuestion[] = [];
   for (let round = 0; round < 3; round++) {
     const extra =
@@ -81,7 +101,13 @@ export async function generateBossQuestions(skill_tag: string): Promise<BossOutp
       ],
       { maxTokens: 8000 },
     );
-    failed = out.questions.filter((q) => !verifyAnswer(q.check, q.answer_numeric, q.tolerance));
+    // Physics/chemistry prompts demand numeric-only checks: gate with the
+    // subject verifier so a derivative_at/integral_at/limit_at check can
+    // never ship into their caches via the shared dispatcher (prime forges
+    // through here).
+    const verifyFor =
+      subject === "physics" ? verifyPhysicsAnswer : subject === "chemistry" ? verifyChemistryAnswer : verifyAnswer;
+    failed = out.questions.filter((q) => !verifyFor(q.check, q.answer_numeric, q.tolerance));
     if (failed.length === 0) return out;
   }
   throw new MetaLLMError("Could not generate 5 verified questions after 3 rounds.");

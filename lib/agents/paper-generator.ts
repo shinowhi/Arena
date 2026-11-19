@@ -10,6 +10,10 @@ import { chatJson, MetaLLMError } from "../llm/meta";
 import { BossOutput, BossQuestion } from "./boss-generator";
 import { isValidSkill, skillGradeLabel, skillName, skillSubject } from "../graph/skills";
 import { verifyAnswer } from "../verify/math-verifier";
+import { verifyPhysicsAnswer } from "../verify/physics-verifier";
+import { verifyChemistryAnswer } from "../verify/chemistry-verifier";
+import { PHYSICS_PAPER_SYSTEM } from "./physics-prompts";
+import { CHEMISTRY_PAPER_SYSTEM } from "./chemistry-prompts";
 
 export const PaperOutput = z.object({ questions: z.array(BossQuestion).length(10) });
 export type PaperOutput = z.infer<typeof PaperOutput>;
@@ -65,6 +69,10 @@ type Q = z.infer<typeof BossQuestion>;
 // (schema failures), so papers are forged as 2 sequential sets; set B is told
 // to use different numbers/givens from set A.
 async function genSet(skill_tag: string, system: string, avoid: string, gradeHint: string): Promise<Q[]> {
+  // Same numeric-only gate as boss-generator for physics/chemistry.
+  const genSubject = skillSubject(skill_tag);
+  const verifyFor =
+    genSubject === "physics" ? verifyPhysicsAnswer : genSubject === "chemistry" ? verifyChemistryAnswer : verifyAnswer;
   let failed: Q[] = [];
   for (let round = 0; round < 2; round++) {
     const extra =
@@ -81,7 +89,7 @@ async function genSet(skill_tag: string, system: string, avoid: string, gradeHin
       ],
       { maxTokens: 8000 },
     );
-    failed = out.questions.filter((q) => !verifyAnswer(q.check, q.answer_numeric, q.tolerance));
+    failed = out.questions.filter((q) => !verifyFor(q.check, q.answer_numeric, q.tolerance));
     if (failed.length === 0) return out.questions;
   }
   throw new MetaLLMError("Could not generate 5 verified questions after 2 rounds.");
@@ -90,8 +98,21 @@ async function genSet(skill_tag: string, system: string, avoid: string, gradeHin
 export async function generatePaper(skill_tag: string): Promise<PaperOutput> {
   if (!isValidSkill(skill_tag)) throw new MetaLLMError(`Invalid skill_tag: ${skill_tag}`);
   const subject = skillSubject(skill_tag);
-  const system = subject === "mechanics" ? MECHANICS_SYSTEM : subject === "k12" ? K12_SYSTEM : SYSTEM;
-  const gradeHint = subject === "k12" ? ` Grade: ${skillGradeLabel(skill_tag)}.` : "";
+  if (subject === "english") throw new MetaLLMError(`Subject not wired to paper dispatch: ${subject}`);
+  const system =
+    subject === "mechanics"
+      ? MECHANICS_SYSTEM
+      : subject === "k12"
+        ? K12_SYSTEM
+        : subject === "physics"
+          ? PHYSICS_PAPER_SYSTEM
+          : subject === "chemistry"
+            ? CHEMISTRY_PAPER_SYSTEM
+            : SYSTEM;
+  const gradeHint =
+    subject === "k12" || subject === "physics" || subject === "chemistry"
+      ? ` Grade: ${skillGradeLabel(skill_tag)}.`
+      : "";
   const setA = await genSet(skill_tag, system, "", gradeHint);
   const avoid =
     `\nWrite a SECOND set of 5 with different numbers and givens from the first set (do not repeat them). Reply JSON only, no explanations. First set for reference: ${setA.map((q) => `L${q.level}:${q.prompt_latex.slice(0, 80)}`).join(" / ").slice(0, 900)}`;

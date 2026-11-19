@@ -2,11 +2,11 @@ import graph from "../graph/skill-graph.json" with { type: "json" };
 
 export type SkillNode = { id: string; name: string; description: string; prereqs: string[]; grade: number; gradeLabel: string; subject?: Subject };
 
-export type Subject = "calculus" | "mechanics" | "k12";
+export type Subject = "calculus" | "mechanics" | "k12" | "physics" | "chemistry" | "english";
 
 export function skillSubject(id: string): Subject {
   const s = byId.get(id)?.subject;
-  return s === "mechanics" || s === "k12" ? s : "calculus";
+  return s === "mechanics" || s === "k12" || s === "physics" || s === "chemistry" || s === "english" ? s : "calculus";
 }
 
 const skills = (graph as { skills: SkillNode[] }).skills;

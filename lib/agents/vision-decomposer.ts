@@ -30,7 +30,7 @@ function buildSystem(subject: Subject): string {
 Reply with a single JSON object only: {"items": [{"cau_hoi": "...", "dap_an_sinh_vien": "...", "skill_tag": ["id1"]}]}.
 - cau_hoi: the problem statement, LaTeX when it contains math.
 - dap_an_sinh_vien: the student written answer, "" when not visible.
-- skill_tag: 1-2 skill ids from the list below, closest match only. Never invent ids. (Skill ids are math-oriented for now; per-subject graphs ship later.)
+- skill_tag: 1-2 skill ids from the list below, closest match only. Never invent ids. (The list spans math, physics, chemistry, and english skills.)
 Skills:
 ${skillListForPrompt()}`;
 }

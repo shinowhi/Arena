@@ -3,6 +3,10 @@ import { chatJson, MetaLLMError } from "../llm/meta";
 import { BossOutput, type BossQuestion } from "./boss-generator";
 import { isValidSkill, skillGradeLabel, skillName, skillSubject } from "../graph/skills";
 import { verifyAnswer } from "../verify/math-verifier";
+import { verifyPhysicsAnswer } from "../verify/physics-verifier";
+import { verifyChemistryAnswer } from "../verify/chemistry-verifier";
+import { PHYSICS_REVENGE_SYSTEM } from "./physics-prompts";
+import { CHEMISTRY_REVENGE_SYSTEM } from "./chemistry-prompts";
 
 // Revenge Boss: a rematch forged from the player's own misses. The target is
 // the skill with the most wrong answers; fresh questions must avoid every
@@ -98,8 +102,21 @@ Reply JSON only: {"questions": [{"level": 1, "prompt_latex": "...", "answer_nume
 export async function generateRevengeQuestions(skill_tag: string, avoid: string[]): Promise<BossQuestion[]> {
   if (!isValidSkill(skill_tag)) throw new MetaLLMError(`Invalid skill_tag: ${skill_tag}`);
   const subject = skillSubject(skill_tag);
-  const system = subject === "mechanics" ? MECHANICS_SYSTEM : subject === "k12" ? K12_SYSTEM : SYSTEM;
-  const gradeHint = subject === "k12" ? ` Grade: ${skillGradeLabel(skill_tag)}.` : "";
+  if (subject === "english") throw new MetaLLMError(`Subject not wired to revenge dispatch: ${subject}`);
+  const system =
+    subject === "mechanics"
+      ? MECHANICS_SYSTEM
+      : subject === "k12"
+        ? K12_SYSTEM
+        : subject === "physics"
+          ? PHYSICS_REVENGE_SYSTEM
+          : subject === "chemistry"
+            ? CHEMISTRY_REVENGE_SYSTEM
+            : SYSTEM;
+  const gradeHint =
+    subject === "k12" || subject === "physics" || subject === "chemistry"
+      ? ` Grade: ${skillGradeLabel(skill_tag)}.`
+      : "";
   const avoidBlock = avoid.length > 0 ? `\nAVOID (already seen, never repeat):\n${avoid.map((p, i) => `${i + 1}. ${p}`).join("\n")}` : "";
   let failed: BossQuestion[] = [];
   for (let round = 0; round < 3; round++) {
@@ -117,7 +134,10 @@ export async function generateRevengeQuestions(skill_tag: string, avoid: string[
       ],
       { maxTokens: 8000 },
     );
-    failed = out.questions.filter((q) => !verifyAnswer(q.check, q.answer_numeric, q.tolerance));
+    // Same numeric-only gate as boss-generator for physics/chemistry.
+    const verifyFor =
+      subject === "physics" ? verifyPhysicsAnswer : subject === "chemistry" ? verifyChemistryAnswer : verifyAnswer;
+    failed = out.questions.filter((q) => !verifyFor(q.check, q.answer_numeric, q.tolerance));
     if (failed.length === 0) return out.questions;
   }
   throw new MetaLLMError("Could not generate 5 verified revenge questions after 3 rounds.");

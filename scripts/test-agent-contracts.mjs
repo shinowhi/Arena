@@ -39,9 +39,20 @@ function isValidRootCause(root, weak) {
 let n = 0;
 const ok = (cond, msg) => { n++; assert.ok(cond, msg); };
 
-ok(graph.skills.length >= 30 && graph.skills.length <= 120, "30-120 skills, got " + graph.skills.length);
+ok(graph.skills.length >= 30 && graph.skills.length <= 200, "30-200 skills, got " + graph.skills.length);
 for (const s of graph.skills) {
   for (const p of s.prereqs) ok(byId.has(p), "dangling prereq " + s.id + " -> " + p);
+}
+// New-subject classification lock (data level; skillSubject() reads this
+// field): every phy_/che_/eng_ node declares its subject + THPT grades so
+// dispatch, gradeHint, and the math-mock exclusion key off it.
+for (const [prefix, subject] of [["phy_", "physics"], ["che_", "chemistry"], ["eng_", "english"]]) {
+  const slice = graph.skills.filter((s) => s.id.indexOf(prefix) === 0);
+  ok(slice.length > 0, prefix + " slice non-empty");
+  for (const s of slice) {
+    ok(s.subject === subject, s.id + " declares subject " + subject);
+    ok(s.grade >= 10 && s.grade <= 12, s.id + " is a THPT grade (got " + s.grade + ")");
+  }
 }
 ok(isValidRootCause("chain_rule", "integration_by_parts"), "chain_rule is root of integration_by_parts");
 ok(isValidRootCause("limit_laws", "lhopital_rule"), "limit_laws is root of lhopital_rule");
