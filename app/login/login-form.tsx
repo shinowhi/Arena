@@ -114,7 +114,7 @@ export default function LoginForm() {
           <button
             type="button"
             onClick={() => setSent(false)}
-            className="mt-3 rounded-full border border-zinc-700 px-5 py-2 text-sm font-bold text-zinc-200"
+            className="mt-3 cursor-pointer rounded-full border border-zinc-700 px-5 py-2 text-sm font-bold text-zinc-200 focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none"
           >
             Use a different email
           </button>
@@ -135,7 +135,7 @@ export default function LoginForm() {
             placeholder="you@example.com"
             autoComplete="email"
             required
-            className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-base text-zinc-100 placeholder:text-zinc-600"
+            className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-base text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none"
           />
           <label htmlFor="login-role" className="mt-4 block text-sm font-semibold text-zinc-200">
             I am a…
@@ -144,7 +144,7 @@ export default function LoginForm() {
             id="login-role"
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-base text-zinc-100"
+            className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-base text-zinc-100 focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none"
           >
             {ROLES.map((r) => (
               <option key={r.value} value={r.value}>
@@ -155,7 +155,7 @@ export default function LoginForm() {
           <button
             type="submit"
             disabled={busy || email.trim().length === 0}
-            className="mt-4 w-full rounded-full bg-emerald-600 px-6 py-3 font-bold text-white disabled:opacity-40"
+            className="mt-4 w-full cursor-pointer rounded-full bg-emerald-600 px-6 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none"
           >
             {busy ? "Sending…" : "Send login link"}
           </button>
@@ -170,7 +170,7 @@ export default function LoginForm() {
         type="button"
         onClick={() => void continueWithGoogle()}
         disabled={googleBusy}
-        className="mt-4 block w-full rounded-full border border-zinc-700 bg-zinc-900 px-6 py-3 text-center font-bold text-zinc-100 disabled:opacity-40"
+        className="mt-4 block w-full cursor-pointer rounded-full border border-zinc-700 bg-zinc-900 px-6 py-3 text-center font-bold text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none"
       >
         {googleBusy ? "Redirecting to Google…" : "Continue with Google"}
       </button>
