@@ -10,7 +10,13 @@
 // decideAccess inputs (lib/billing/access.ts itself is untouched by
 // phase-2a — the matrix pins that).
 import assert from "node:assert/strict";
-import { linkDecision, normalizeRole, consentAllowed } from "../lib/auth/session.ts";
+import {
+  callbackFailureTarget,
+  linkDecision,
+  normalizeRole,
+  consentAllowed,
+  unknownFailureTarget,
+} from "../lib/auth/session.ts";
 import { EXPORT_TABLES, DELETE_TABLES } from "../lib/auth/tables.ts";
 
 let n = 0;
@@ -321,5 +327,33 @@ for (const linked of [false, true]) {
     `sub activity identical (linked=${linked})`,
   );
 }
+
+// Already-authed callback failures (6, real): a live session lands on /me,
+// never an error page — erroring at a logged-in user was the reported bug
+// (mail link clicked while the Google session was alive).
+ok(
+  callbackFailureTarget({ id: "u" }, "exchange") === "/me",
+  "session + bad code -> /me",
+);
+ok(
+  callbackFailureTarget(null, "exchange") === "/login?err=exchange",
+  "no session + bad code -> honest error",
+);
+ok(
+  callbackFailureTarget(undefined, "1") === "/login?err=1",
+  "undefined session keeps stage code",
+);
+ok(
+  unknownFailureTarget({ id: "u" }, { player_id: "p" }) === "/me",
+  "session + link row -> /me",
+);
+ok(
+  unknownFailureTarget({ id: "u" }, null) === "/login?err=1",
+  "session but unlinked -> honest error (never masked)",
+);
+ok(
+  unknownFailureTarget(null, null) === "/login?err=1",
+  "no session -> honest error",
+);
 
 console.log(`AUTH TESTS OK: ${n} assertions`);

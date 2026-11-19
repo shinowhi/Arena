@@ -58,3 +58,19 @@ export function normalizeRole(raw: unknown): AuthRole | null {
 export function consentAllowed(isParentOfChild: unknown): boolean {
   return isParentOfChild === true;
 }
+
+// Pure: where a PRE-exchange /auth/callback failure lands. An already-live
+// session (stale double-click, mail-scanner-burned single-use code, testing a
+// second method while logged in) lands on /me — erroring at a logged-in user
+// is exactly the confusion this fixes. Otherwise the honest /login?err=stage.
+export function callbackFailureTarget(hasSession: unknown, stage: string): string {
+  if (hasSession) return "/me";
+  return `/login?err=${stage}`;
+}
+
+// Pure: where an UNKNOWN post-exchange throw lands. Session + link row both
+// present means the login effectively succeeded (a good exchange writes
+// session cookies before linking runs) -> /me; anything less is honest err=1.
+export function unknownFailureTarget(hasSession: unknown, hasLink: unknown): string {
+  return hasSession && hasLink ? "/me" : "/login?err=1";
+}

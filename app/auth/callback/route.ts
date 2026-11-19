@@ -5,11 +5,13 @@ import { createClient } from "@/lib/supabase/server";
 import { getPlayerId, PLAYER_COOKIE_MAX_AGE } from "@/lib/game/player";
 import { signPlayerId } from "@/lib/game/player-sign";
 import {
+  callbackFailureTarget,
   getAuthUser,
   linkDecision,
   normalizeRole,
   PENDING_ROLE_COOKIE,
   PLAYER_COOKIE_NAME,
+  unknownFailureTarget,
 } from "@/lib/auth/session";
 import { siteOrigin } from "@/lib/auth/origin";
 import { checkRate, getClientIp, MINUTE_MS, rateLimitResponse } from "@/lib/rate-limit";
@@ -94,14 +96,28 @@ export async function GET(req: Request) {
   // it broke instead of one generic message: exchange = bad/expired link,
   // nouser = session unreadable, link = account-linking DB failure.
   const fail = (stage = "1") => NextResponse.redirect(new URL(`/login?err=${stage}`, origin));
+  // Pre-exchange failures (missing/bad code): if the browser ALREADY holds a
+  // live session (stale double-click, mail scanner burned the single-use code,
+  // testing a second method while logged in), the honest target is /me — not
+  // a scary login error for an already-logged-in user. Post-exchange link
+  // failures keep their honest codes (fail), never masked.
+  const failEarly = async (stage = "1") => {
+    let user = null;
+    try {
+      user = await getAuthUser(await createAuthClient());
+    } catch {
+      // Session unreadable: user stays null -> the real error below.
+    }
+    return NextResponse.redirect(new URL(callbackFailureTarget(user, stage), origin));
+  };
   const code = url.searchParams.get("code");
-  if (!code) return fail("exchange");
+  if (!code) return failEarly("exchange");
   const ipRl = checkRate(`auth-callback:${getClientIp(req)}`, 20, MINUTE_MS);
   if (!ipRl.ok) return rateLimitResponse(ipRl.retryAfterSec);
   try {
     const auth = await createAuthClient();
     const { error: xchg } = await auth.auth.exchangeCodeForSession(code);
-    if (xchg) return fail("exchange");
+    if (xchg) return failEarly("exchange");
     const user = await getAuthUser(auth);
     if (!user) return fail("nouser");
     const supabase = await createClient();
@@ -187,6 +203,19 @@ export async function GET(req: Request) {
     }
     return fail(`link-${firstCode}-${second.code}`);
   } catch {
-    return fail();
+    // Unknown throw AFTER the session may already exist (a successful
+    // exchange writes session cookies before linking runs): if the account is
+    // fully linked, the login effectively succeeded — land on /me instead of
+    // crying failure. Unlinked stays an honest error.
+    let target = "/login?err=1";
+    try {
+      const auth = await createAuthClient();
+      const u = await getAuthUser(auth);
+      const link = u ? await readLink(await createClient(), u.id) : null;
+      target = unknownFailureTarget(u, link);
+    } catch {
+      // target stays the honest error.
+    }
+    return NextResponse.redirect(new URL(target, origin));
   }
 }
