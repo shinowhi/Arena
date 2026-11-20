@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroList } from "@/components/ui/Hero";
 import { skillName } from "@/lib/graph/skills";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
@@ -42,10 +43,14 @@ export default function PlanPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroList
+        count={days ? `${days.reduce((a, d) => a + d.minutes, 0)}’` : "…"}
+        label={days ? `phút trong 7 ngày — ngày 7 tổng tấn công boss` : "Đang dựng kế hoạch…"}
+      />
       <PageHeader
         kicker="Tuần của bạn"
         title={<>Kế hoạch <span className="arena-title">7 ngày</span></>}
-        sub="Dựng từ lịch sử quét bài thật của bạn: gốc rễ trước, kỹ năng yếu tiếp theo, ngày 7 tổng tấn công boss."
+        sub="Dựng từ lịch sử quét bài thật của bạn."
       />
       {loading ? (
         <div className="flex flex-col gap-3" role="status" aria-label="Đang dựng kế hoạch">

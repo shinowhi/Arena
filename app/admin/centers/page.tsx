@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createServiceClient } from "@/lib/supabase/service";
 import { verifyAdmin } from "@/lib/game/player-sign";
 import CentersTable, { type CenterClass } from "./centers-table";
+import { HeroStat } from "@/components/ui/Hero";
 
 // Admin center desk (server component: every query runs server-side).
 // Same arena_admin cookie gate as /admin. Lists centers and classes with
@@ -74,8 +75,14 @@ async function CentersBody() {
     );
   }
   const centerName = new Map(centers.map((c) => [c.id, c.name]));
+  const enrolledTotal = classes.reduce((a, c) => a + (c.enrolled ?? 0), 0);
   return (
     <>
+      <HeroStat
+        value={classes.length}
+        label="lớp học đang quản lý"
+        hint={`${centers.length} trung tâm — ${enrolledTotal} học sinh đang học`}
+      />
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <h2 className="text-sm font-semibold tabular-nums text-zinc-200">Trung tâm ({centers.length})</h2>
         {centers.length === 0 ? (

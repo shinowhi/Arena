@@ -64,17 +64,7 @@ export default function PvpLobby() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
-      <PageHeader
-        kicker="Người đấu người"
-        title={<>Sảnh <span className="arena-title">đấu PvP</span></>}
-        sub="Cùng 5 câu, hai phe đánh cùng lúc. Trúng thì phe địch mất máu, trượt thì mình mất máu. Phe còn lại cuối cùng thắng."
-      />
-      {error ? (
-        <p role="alert" className="text-sm text-red-400">
-          {error}
-        </p>
-      ) : null}
-      <div className="arena-card flex flex-col gap-3 rounded-2xl p-5">
+      <div className="arena-card flex flex-col gap-3 rounded-2xl border-l-2 border-l-red-500 p-5">
         <h2 className="text-xs font-bold tracking-widest text-zinc-500">Tạo phòng</h2>
         <div className="flex gap-2">
           <select
@@ -99,6 +89,16 @@ export default function PvpLobby() {
           </button>
         </div>
       </div>
+      <PageHeader
+        kicker="Người đấu người"
+        title={<>Sảnh <span className="arena-title">đấu PvP</span></>}
+        sub="Cùng 5 câu, hai phe đánh cùng lúc. Trúng thì phe địch mất máu, trượt thì mình mất máu. Phe còn lại cuối cùng thắng."
+      />
+      {error ? (
+        <p role="alert" className="text-sm text-red-400">
+          {error}
+        </p>
+      ) : null}
       <div className="arena-card flex flex-col gap-3 rounded-2xl p-5">
         <h2 className="text-xs font-bold tracking-widest text-zinc-500">Vào bằng link</h2>
         <div className="flex gap-2">

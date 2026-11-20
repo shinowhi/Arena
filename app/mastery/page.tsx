@@ -13,7 +13,7 @@ export default function MasteryPage() {
             Bảng <span className="arena-title">thành thạo</span>
           </>
         }
-        sub="Mọi kỹ năng bạn đã luyện, xếp theo độ thành thạo. Luyện điểm yếu và xem cột điểm tăng lên."
+        sub="Mọi kỹ năng bạn đã luyện, xếp theo độ thành thạo."
       />
       <MasteryClient />
     </main>

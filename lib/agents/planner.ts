@@ -23,7 +23,7 @@ export type ScanSummary = {
 
 export async function buildPlan(history: ScanSummary[]): Promise<PlanOutput> {
   const valid = history.filter((h) => isValidSkill(h.weak_skill));
-  if (valid.length === 0) throw new Error("No scan history to plan from.");
+  if (valid.length === 0) throw new Error("Chưa có lịch sử quét bài để dựng kế hoạch.");
   const lines = valid
     .slice(0, 20)
     .map((h) => `- ${h.weak_skill} (root ${h.root_cause}, conf ${h.confidence}) @ ${h.created_at}`);
@@ -31,7 +31,7 @@ export async function buildPlan(history: ScanSummary[]): Promise<PlanOutput> {
     {
       role: "system",
       content:
-        'You are a math coach. Reply with a single JSON object only: {"days": [{"day": 1, "focus_skill": "<skill id>", "tasks": ["..."], "minutes": 25}]}. Exactly 7 days. focus_skill must be a skill id from the history or its root. Tasks are concrete study actions (review X, drill Y, fight the boss), plain words, no answers.',
+        'You are a math coach for Vietnamese K12 students. Reply with a single JSON object only: {"days": [{"day": 1, "focus_skill": "<skill id>", "tasks": ["..."], "minutes": 25}]}. Exactly 7 days. focus_skill must be a skill id from the history or its root. Tasks are concrete study actions written in Vietnamese (review X, drill Y, fight the boss), plain words, no answers, no English.',
     },
     {
       role: "user",

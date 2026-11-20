@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createServiceClient } from "@/lib/supabase/service";
 import { verifyAdmin } from "@/lib/game/player-sign";
 import OrdersTable, { type PendingOrder } from "./orders-table";
+import { HeroStat } from "@/components/ui/Hero";
 
 // Admin billing desk (server component: every query runs server-side).
 // Same arena_admin cookie gate as /admin. Pending orders render with
@@ -152,7 +153,16 @@ async function BillingBody() {
   ];
   return (
     <>
+      <HeroStat
+        value={orders.length}
+        label="đơn chờ duyệt"
+        hint={`${metrics.revenueVnd.toLocaleString("vi-VN")} đ đã thu — duyệt đơn cũ nhất trước`}
+      />
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+        <h2 className="text-sm font-semibold text-zinc-200">Đơn chờ duyệt</h2>
+        <OrdersTable orders={orders} />
+      </section>
+      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <h2 className="text-sm font-semibold text-zinc-200">Chỉ số</h2>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {cards.map(([label, value]) => (
@@ -162,10 +172,6 @@ async function BillingBody() {
             </div>
           ))}
         </div>
-      </section>
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <h2 className="text-sm font-semibold text-zinc-200">Đơn chờ duyệt</h2>
-        <OrdersTable orders={orders} />
       </section>
     </>
   );

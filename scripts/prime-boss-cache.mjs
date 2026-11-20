@@ -42,10 +42,6 @@ function loadEnv() {
 const { URL, ANON } = loadEnv();
 const graph = JSON.parse(readFileSync(join(ARENA, "lib/graph/skill-graph.json"), "utf8"));
 const ALL = graph.skills.map((s) => s.id);
-// English rides its own MCQ generator (generateEnglishBossQuestions), not the
-// numeric shared dispatcher (which fails closed on english): skip eng_ tags
-// here instead of logging them as failures.
-const SKIP = new Set(graph.skills.filter((s) => s.subject === "english").map((s) => s.id));
 
 async function rest(path, opts = {}) {
   const r = await fetch(`${URL}/rest/v1/${path}`, {
@@ -63,8 +59,7 @@ const fresh = new Set(
     .filter((r) => r.set_version === SET_VERSION && Date.now() - new Date(r.fetched_at).getTime() <= FRESH_MS)
     .map((r) => r.skill_tag),
 );
-let targets = ALL.filter((id) => !fresh.has(id) && !SKIP.has(id));
-if (SKIP.size > 0) console.log(`Skipped ${SKIP.size} english skills (own MCQ generator, unwired by design).`);
+let targets = ALL.filter((id) => !fresh.has(id));
 if (ONLY.length > 0) {
   const want = new Set(ONLY);
   targets = targets.filter((id) => want.has(id));

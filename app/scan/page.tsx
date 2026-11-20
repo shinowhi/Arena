@@ -414,11 +414,6 @@ export default function ScanPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
-      <PageHeader
-        kicker="Bước 01 — Quét bài"
-        title={<>Cho xem <span className="arena-title">bài của bạn</span></>}
-        sub="Bài kiểm tra, ảnh chụp màn hình hay đời thực. Mình tìm kỹ năng yếu và gốc rễ của nó."
-      />
       <RaidBanner />
       <Onboarding />
       <div className="mx-auto flex gap-1 rounded-full border border-zinc-800 bg-zinc-900/60 p-1" role="tablist" aria-label="Chế độ quét">
@@ -578,6 +573,11 @@ export default function ScanPage() {
           {loading ? STAGES[stage % STAGES.length] : "Phân tích"}
         </button>
       ) : null}
+      <PageHeader
+        kicker="Bước 01 — Quét bài"
+        title={<>Cho xem <span className="arena-title">bài của bạn</span></>}
+        sub="Mình tìm kỹ năng yếu và gốc rễ của nó."
+      />
 
       {result?.quota && !result.quota.vip ? (
         <p className="text-center text-xs text-zinc-500">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CHAT_POLL_MS, MESSAGE_MAX_LEN, displayTime } from "@/lib/social/rules";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroEntity } from "@/components/ui/Hero";
 
 interface Peer {
   id: string;
@@ -131,11 +132,18 @@ function ChatInner() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
+      <div className="flex flex-col gap-5">
+      <HeroEntity
+        eyebrow="Đang nhắn với"
+        name={peerLabel || peer || "Chưa chọn bạn"}
+        meta={peer ? `${messages.length} tin nhắn trong đoạn này` : "Chọn một người bạn ở khung bên dưới"}
+      />
       <PageHeader
         kicker="Tin nhắn riêng"
         title="Trò chuyện"
         sub="Chỉ nhắn tin với bạn bè — người lạ không thể liên lạc ở đây."
       />
+      </div>
 
       {needsMigration && (
         <div className="mt-4 rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">

@@ -3,6 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStatus } from "@/components/ui/Hero";
 import MathText from "@/components/MathText";
 import StickyTimer from "@/components/education/StickyTimer";
 import { CheckIcon, XIcon } from "@/components/ui/icons";
@@ -190,10 +191,13 @@ function HsaInner() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 overflow-x-clip px-4 py-8">
+      <HeroStatus label={allDone ? "Đã xong cả 3 phần" : deadlines[cur] > 0 ? `Đang thi phần ${cur + 1}` : "Chọn phần thi"}>
+        {allDone ? `Đúng ${score}/${total}` : deadlines[cur] > 0 ? (sLocked ? "Hết giờ" : formatExamClock(remaining)) : `150 câu — đề ${date || "…"}`}
+      </HeroStatus>
       <PageHeader
         kicker="Thi thử HSA"
         title={<>Bài thi <span className="arena-title">{date || "…"}</span></>}
-        sub="150 câu, bấm giờ từng phần (75/60/60 phút), máy chấm. Cùng một đề trong 2 ngày. Chỉ để luyện tập: điểm là số câu đúng, không phải điểm HSA chính thức."
+        sub="Bấm giờ từng phần (75/60/60 phút), máy chấm. Cùng một đề trong 2 ngày. Chỉ để luyện tập: điểm là số câu đúng, không phải điểm HSA chính thức."
         right={
           sections && !allDone && deadlines[cur] > 0 ? (
             <span role="timer" aria-label="Thời gian còn lại của phần thi" className={`shrink-0 font-mono text-sm tabular-nums ${sLocked ? "font-bold text-red-400" : urgent ? "arena-urgent font-bold" : "text-zinc-400"}`}>

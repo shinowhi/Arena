@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { displayTime } from "@/lib/social/rules";
 import { skillName } from "@/lib/graph/skills";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStat } from "@/components/ui/Hero";
 import EmptyState from "@/components/ui/EmptyState";
 import { GiftIcon } from "@/components/ui/icons";
 
@@ -216,11 +217,18 @@ function FriendsInner() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
+      <div className="flex flex-col gap-5">
+      <HeroStat
+        value={friends.length}
+        label="người bạn trong đội"
+        hint="Kết bạn bằng mã, thách đấu boss của nhau và so tiến độ"
+      />
       <PageHeader
         kicker="Lập đội"
         title="Bạn bè"
-        sub="Kết bạn bằng mã, thách đấu boss của nhau và so tiến độ. Người lạ chỉ gửi được lời mời kết bạn — không bao giờ nhắn tin được."
+        sub="Người lạ chỉ gửi được lời mời kết bạn — không bao giờ nhắn tin được."
       />
+      </div>
 
       {needsMigration && (
         <div className="mt-4 rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">

@@ -17,11 +17,6 @@ const MODES = [
 export default function ExamHubPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
-      <PageHeader
-        kicker="Trung tâm thi"
-        title={<>Chọn <span className="arena-title">trận đấu</span> của bạn</>}
-        sub="Thi thử toàn quốc, thách đấu xếp hạng, bộ luyện thích ứng và gia sư — tất cả đều được kiểm chứng bằng máy khi có thể."
-      />
       <div className="flex flex-col gap-3">
         {MODES.map((m) => (
           <Link key={m.href} href={m.href} className="arena-card rounded-2xl p-5 transition-colors hover:border-zinc-600 hover:bg-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2">
@@ -30,6 +25,11 @@ export default function ExamHubPage() {
           </Link>
         ))}
       </div>
+      <PageHeader
+        kicker="Trung tâm thi"
+        title={<>Chọn <span className="arena-title">trận đấu</span> của bạn</>}
+        sub="Tất cả đều được kiểm chứng bằng máy khi có thể."
+      />
     </main>
   );
 }

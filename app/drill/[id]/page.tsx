@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import MathText from "@/components/MathText";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStatus } from "@/components/ui/Hero";
 import { BulbIcon, CheckIcon, XIcon } from "@/components/ui/icons";
 import { skillName } from "@/lib/graph/skills";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
@@ -101,8 +102,13 @@ function DrillRunner() {
     setError("");
   }
 
+  const answered = answers.filter((a) => a.trim() !== "").length;
+
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStatus label={result ? "Đã chấm xong" : drill ? "Đang làm bài" : "Bộ luyện"}>
+        {result ? `Điểm ${result.score}/${result.total}` : drill ? `${answered}/${drill.questions.length} đã làm` : "Đang tải…"}
+      </HeroStatus>
       <PageHeader
         kicker="Bộ luyện"
         title={drill ? <span className="text-wrap-balance">{drill.title}</span> : "…"}
@@ -110,13 +116,6 @@ function DrillRunner() {
           drill
             ? `${drill.questions.length} câu — chấm trên máy chủ khi bạn nộp cả bộ.`
             : undefined
-        }
-        right={
-          result ? (
-            <span className="arena-num shrink-0 text-sm text-zinc-400" aria-label={`Điểm ${result.score} trên ${result.total}`}>
-              <span className="font-bold text-emerald-300">{result.score}</span>/{result.total}
-            </span>
-          ) : undefined
         }
       />
       {error ? (

@@ -6,7 +6,6 @@ import { useRef, useState } from "react";
 // B wires: drop <ShareCard kicker title stats /> on the victory screen.
 type Props = { kicker: string; title: string; stats: string[]; filename?: string };
 
-const TROPHY = "🏆";
 const W = 1080;
 const H = 1350;
 
@@ -32,6 +31,71 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, max: number): string[
   return lines.slice(0, 4);
 }
 
+// Minimal vector trophy in amber: cup + handles + stem + base. No emoji.
+function drawTrophy(ctx: CanvasRenderingContext2D, cx: number, top: number, s: number): void {
+  ctx.save();
+  ctx.translate(cx, top);
+  ctx.scale(s, s);
+  ctx.strokeStyle = "#fbbf24";
+  ctx.fillStyle = "#fbbf24";
+  ctx.lineWidth = 14;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  // Cup body.
+  ctx.beginPath();
+  ctx.moveTo(-80, 0);
+  ctx.lineTo(80, 0);
+  ctx.lineTo(64, 90);
+  ctx.quadraticCurveTo(56, 130, 20, 140);
+  ctx.lineTo(-20, 140);
+  ctx.quadraticCurveTo(-56, 130, -64, 90);
+  ctx.closePath();
+  ctx.stroke();
+  // Handles.
+  ctx.beginPath();
+  ctx.moveTo(-80, 10);
+  ctx.quadraticCurveTo(-140, 10, -132, 60);
+  ctx.quadraticCurveTo(-126, 100, -70, 104);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(80, 10);
+  ctx.quadraticCurveTo(140, 10, 132, 60);
+  ctx.quadraticCurveTo(126, 100, 70, 104);
+  ctx.stroke();
+  // Stem.
+  ctx.beginPath();
+  ctx.moveTo(-14, 140);
+  ctx.lineTo(14, 140);
+  ctx.lineTo(20, 180);
+  ctx.lineTo(-20, 180);
+  ctx.closePath();
+  ctx.fill();
+  // Base.
+  ctx.beginPath();
+  ctx.moveTo(-70, 180);
+  ctx.lineTo(70, 180);
+  ctx.lineTo(80, 208);
+  ctx.lineTo(-80, 208);
+  ctx.closePath();
+  ctx.fill();
+  // Star inlay.
+  ctx.fillStyle = "#0b0f1a";
+  ctx.beginPath();
+  const sx = 0;
+  const sy = 62;
+  for (let i = 0; i < 10; i += 1) {
+    const r = i % 2 === 0 ? 26 : 11;
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const x = sx + r * Math.cos(a);
+    const y = sy + r * Math.sin(a);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
 function draw(ctx: CanvasRenderingContext2D, kicker: string, title: string, stats: string[]): void {
   const bg = ctx.createLinearGradient(0, 0, 0, H);
   bg.addColorStop(0, "#0b0f1a");
@@ -55,8 +119,7 @@ function draw(ctx: CanvasRenderingContext2D, kicker: string, title: string, stat
   ctx.lineWidth = 2;
   ctx.strokeRect(56, 56, W - 112, H - 112);
   ctx.textAlign = "center";
-  ctx.font = "150px system-ui, sans-serif";
-  ctx.fillText(TROPHY, W / 2, 300);
+  drawTrophy(ctx, W / 2, 130, 1);
   ctx.fillStyle = "#67e8f9";
   ctx.font = "700 44px system-ui, sans-serif";
   ctx.fillText(kicker.toUpperCase().slice(0, 40), W / 2, 420);

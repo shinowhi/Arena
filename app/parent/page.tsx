@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Stat from "@/components/ui/Stat";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroEntity } from "@/components/ui/Hero";
 import { CheckIcon, GiftIcon } from "@/components/ui/icons";
 
 interface Stats {
@@ -100,11 +101,42 @@ export default function ParentPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
+      <div className="flex flex-col gap-5">
+      <HeroEntity
+        eyebrow="Mã liên kết dùng một lần"
+        name={
+          report?.role === "parent" ? (
+            <span className="text-emerald-300">Đã liên kết</span>
+          ) : code ? (
+            <span className="arena-num tracking-[0.3em] text-amber-300">{code}</span>
+          ) : (
+            "Chưa có mã"
+          )
+        }
+        meta={
+          report?.role === "parent"
+            ? "Thiết bị này xem được báo cáo của con"
+            : code
+              ? "Nhập mã này trên thiết bị của phụ huynh"
+              : "Tạo mã trên máy của con, nhập mã trên máy phụ huynh"
+        }
+      >
+        {report?.role !== "parent" && !(report?.role === "child" && report.linked) ? (
+          <button
+            onClick={mintCode}
+            disabled={busy || needsMigration}
+            className="arena-btn-primary rounded-full px-6 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+          >
+            {busy ? "Đang tạo…" : code ? "Tạo mã mới" : "Tạo mã liên kết"}
+          </button>
+        ) : null}
+      </HeroEntity>
       <PageHeader
         kicker="Cho phụ huynh"
         title="Báo cáo phụ huynh"
-        sub="Liên kết thiết bị của phụ huynh bằng mã dùng một lần — không cần tài khoản, không cần email. Phụ huynh chỉ xem được con số tiến độ, không bao giờ xem đáp án."
+        sub="Không cần tài khoản, không cần email. Phụ huynh chỉ xem được con số tiến độ, không bao giờ xem đáp án."
       />
+      </div>
 
       {needsMigration && (
         <div className="mt-4 rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
@@ -140,23 +172,9 @@ export default function ParentPage() {
               <CheckIcon className="h-4 w-4" /> Đã liên kết thiết bị của phụ huynh — phụ huynh xem được các con số tiến độ của bạn.
             </p>
           ) : (
-            <>
-              <p className="mt-1 text-sm text-zinc-400">
-                Tạo mã dùng một lần, rồi nhập mã đó trên thiết bị của phụ huynh ở dưới.
-              </p>
-              <button
-                onClick={mintCode}
-                disabled={busy || needsMigration}
-                className="mt-3 rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
-              >
-                {busy ? "Đang tạo…" : "Tạo mã liên kết"}
-              </button>
-              {code && (
-                <p className="mt-3 text-center text-4xl font-black tracking-[0.3em] text-amber-300">
-                  {code}
-                </p>
-              )}
-            </>
+            <p className="mt-1 text-sm text-zinc-400">
+              Bấm “Tạo mã liên kết” ở khung phía trên, rồi nhập mã đó trên thiết bị của phụ huynh ở dưới.
+            </p>
           )}
         </section>
       )}

@@ -32,7 +32,9 @@ import {
 import {
   crossVoteItem,
   EnglishBossOutput,
+  englishDraftToBossQuestion,
   forgeEnglishExamBatch,
+  generateEnglishBossOutput,
   generateEnglishBossQuestions,
 } from "../lib/agents/english-generator.ts";
 import {
@@ -43,7 +45,7 @@ import {
   skillSubject,
   SKILL_IDS,
 } from "../lib/graph/skills.ts";
-import { buildMock } from "../lib/agents/thpt.ts";
+import { buildMock, MockQuestion } from "../lib/agents/thpt.ts";
 import {
   buildEnglishMock,
   ENGLISH_EXAM_MINUTES,
@@ -232,6 +234,29 @@ ok(
     seenRequests[0].body.messages[1].content.includes("Grade 10"),
   "forge names the skill and grade",
 );
+// ---- Boss-pipeline adapter: rule-verified MCQ drafts -> numeric rows ----
+const adapted = englishDraftToBossQuestion({ ...demoSet.questions[2], passage: "She walks daily." });
+ok(adapted.answer_numeric === 2 && adapted.tolerance === 0.001, "adapter maps key index to numeric answer");
+ok(
+  adapted.prompt_latex.includes("0. goes") && adapted.prompt_latex.includes("3. gone"),
+  "adapter embeds numbered options",
+);
+ok(adapted.prompt_latex.includes("Passage: She walks daily."), "adapter carries the passage");
+ok(adapted.prompt_latex.includes("trả lời 0, 1, 2 hoặc 3"), "adapter instructs 0-3 answers");
+ok(adapted.check.kind === "numeric" && adapted.check.prompt_expr === "2", "adapter check restates the index");
+ok(adapted.level === 3 && adapted.hint.length > 0, "adapter keeps level + hint");
+const noPassage = englishDraftToBossQuestion(demoSet.questions[0]);
+ok(!noPassage.prompt_latex.includes("Passage:"), "adapter omits missing passage");
+// End-to-end through the stubbed forge: 5 numeric rows, one LLM round.
+cannedQueue = [chatPayload(demoSet)];
+seenRequests.length = 0;
+const bossOut = await generateEnglishBossOutput("eng_tenses");
+ok(bossOut.questions.length === 5, "adapter forge returns 5 rows");
+ok(
+  bossOut.questions.every((q, i) => q.answer_numeric === i % 4 && q.tolerance === 0.001),
+  "adapter rows carry index answers",
+);
+ok(seenRequests.length === 1, "adapter forge costs one LLM round");
 ok(String(seenRequests[0].url).endsWith("/chat/completions"), "forge posts to chat/completions");
 // Retry path: rule-breaking drafts retry, then throw after 3 rounds.
 const badSet = {
@@ -410,5 +435,139 @@ ok(!("answer_index" in strippedPassage.questions[0]), "passage question still ke
 // Short/empty sets degrade gracefully.
 ok(interleaveEnglishDrills([], 10).length === 0, "no sets give no questions");
 ok(interleaveEnglishDrills([{ skill_tag: "eng_tenses", questions: [mkBoss(1, 0)] }], 5).length === 1, "short set gives what it has");
+
+// ---- Paper + revenge forge english via the adapter (real dispatch, stubbed LLM) ----
+// paper-generator and revenge use the repo's extensionless style, which plain
+// node cannot resolve: register the .ts hooks first, then dynamic-import.
+const { register } = await import("node:module");
+register("./ts-extension-hooks.mjs", import.meta.url);
+const { generatePaper, PaperOutput } = await import("../lib/agents/paper-generator.ts");
+const { generateRevengeQuestions } = await import("../lib/agents/revenge.ts");
+n += 1;
+// Reinstall the stubbed transport (restored after the boss-forge section).
+const realFetch2 = globalThis.fetch;
+globalThis.fetch = async (url, init) => {
+  seenRequests.push({ url, body: JSON.parse(init.body) });
+  const payload = cannedQueue.shift();
+  if (!payload) throw new Error("stub fetch queue empty");
+  return { ok: true, status: 200, text: async () => JSON.stringify(payload), json: async () => payload };
+};
+// Second verified 5-set with distinct stems for paper set B.
+const paperSetB = {
+  questions: [1, 2, 3, 4, 5].map((level) => ({
+    level,
+    prompt_latex: `Chọn đáp án đúng (bộ B) câu ${level}: They ____ football yesterday.`,
+    options: ["played", "play", "playing", "plays"],
+    answer_index: level % 4,
+    hint: "Dùng thì quá khứ đơn với yesterday.",
+    explanation: "Yesterday nên dùng thì quá khứ đơn.",
+  })),
+};
+// Paper-english: two forge rounds, 10 adapter rows, set B steered off set A.
+cannedQueue = [chatPayload(demoSet), chatPayload(paperSetB)];
+seenRequests.length = 0;
+const engPaper = await generatePaper("eng_tenses");
+n += 1;
+ok(engPaper.questions.length === 10, "paper-english forges 10 questions");
+ok(PaperOutput.safeParse(engPaper).success, "paper-english output parses as real PaperOutput");
+ok(seenRequests.length === 2, "paper-english costs two forge rounds");
+ok(
+  !seenRequests[0].body.messages[1].content.includes("Avoid these stems"),
+  "paper set A forges standalone",
+);
+ok(
+  seenRequests[1].body.messages[1].content.includes(demoSet.questions[0].prompt_latex) &&
+    seenRequests[1].body.messages[1].content.includes(demoSet.questions[4].prompt_latex),
+  "paper set B carries set-A stems as avoid",
+);
+ok(
+  JSON.stringify(engPaper.questions.map((q) => q.level)) === JSON.stringify([1, 1, 2, 2, 3, 3, 4, 4, 5, 5]),
+  "paper-english merges + sorts two per level",
+);
+for (const q of engPaper.questions) {
+  ok(Number.isInteger(q.answer_numeric) && q.answer_numeric >= 0 && q.answer_numeric <= 3, "paper row answer is an option index");
+  ok(q.tolerance === 0.001, "paper row tolerance exact");
+  ok(q.check.kind === "numeric" && q.check.prompt_expr === String(q.answer_numeric), "paper row check restates the index");
+  ok(
+    q.prompt_latex.includes("0. ") && q.prompt_latex.includes("trả lời 0, 1, 2 hoặc 3"),
+    "paper row embeds numbered options + 0-3 instruction",
+  );
+}
+// Revenge-english: rematch steered off the player's seen prompts.
+const seenStems = ["She ____ to school every day (seen).", "They ____ football yesterday (seen)."];
+cannedQueue = [chatPayload(demoSet)];
+seenRequests.length = 0;
+const rematch = await generateRevengeQuestions("eng_tenses", seenStems);
+n += 1;
+ok(rematch.length === 5, "revenge-english forges 5 questions");
+ok(seenRequests.length === 1, "revenge-english costs one forge round");
+const revengeUser = seenRequests[0].body.messages[1].content;
+ok(
+  revengeUser.includes(seenStems[0]) && revengeUser.includes(seenStems[1]),
+  "revenge-english passes avoid stems",
+);
+ok(
+  revengeUser.includes("eng_tenses") && revengeUser.includes("Grade 10"),
+  "revenge-english names the skill and grade",
+);
+for (const q of rematch) {
+  ok(Number.isInteger(q.answer_numeric) && q.answer_numeric >= 0 && q.answer_numeric <= 3, "rematch row answer is an option index");
+  ok(q.check.kind === "numeric" && q.check.prompt_expr === String(q.answer_numeric), "rematch row check restates the index");
+}
+// Direct avoid-param contract: named stems land in the user prompt.
+cannedQueue = [chatPayload(demoSet)];
+seenRequests.length = 0;
+await generateEnglishBossQuestions("eng_tenses", ["STEM-AVOID-MARKER"]);
+n += 1;
+ok(
+  seenRequests[0].body.messages[1].content.includes("STEM-AVOID-MARKER"),
+  "avoid param appends stems to the prompt",
+);
+// Offline guards reject before any network on both forges.
+await assert.rejects(() => generatePaper("nope_not_a_skill"), /Invalid skill_tag/);
+n += 1;
+await assert.rejects(() => generateRevengeQuestions("nope_not_a_skill", []), /Invalid skill_tag/);
+n += 1;
+globalThis.fetch = realFetch2;
+
+// ---- Route contract: /api/english/mock serves the english pool only (no DB) ----
+// The route reads numeric boss-cache rows: prime forges eng_ via the shared
+// dispatcher adapter (option picks as 0-3 answers), so cache-shaped rows
+// assemble through buildMock + ENGLISH_MOCK_CONFIG exactly like math.
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+ok(DAY_RE.test("2026-11-19") && !DAY_RE.test("19-11-2026") && !DAY_RE.test("2026/11/19"), "day param accepts YYYY-MM-DD only");
+ok(pool.every((id) => id.startsWith("eng_")), "pool is eng_ prefixed only");
+ok(pool.every((id) => skillGrade(id) >= 10 && skillGrade(id) <= 12), "pool is grades 10-12 only");
+ok(!pool.includes("limit_laws") && !pool.includes("phy_kinematics") && !pool.includes("che_atomic_structure"), "math/physics/chemistry skills stay out of the pool");
+ok(
+  ENGLISH_MOCK_CONFIG.skillsPerMock * ENGLISH_MOCK_CONFIG.perSkill === ENGLISH_MOCK_COUNT,
+  "config counts multiply to 40",
+);
+ok(pool.length >= ENGLISH_MOCK_CONFIG.skillsPerMock, "full pool clears the warming-up threshold");
+ok([pool[0]].length < ENGLISH_MOCK_CONFIG.skillsPerMock, "short pool trips the warming-up threshold");
+const mkCacheSet = (tag) => ({
+  skill_tag: tag,
+  skill_name: skillName(tag),
+  questions: [1, 2, 3, 4, 5].map((level) => ({
+    level,
+    prompt_latex: `${tag}-L${level}\n0. goes\n1. go\n2. going\n3. gone\nTrả lời 0, 1, 2 hoặc 3.`,
+    hint: "h",
+    tolerance: 0.001,
+    check: { kind: "numeric", prompt_expr: String(level % 4) },
+  })),
+});
+const cacheMock = buildMock(pool.map(mkCacheSet), "2026-11-19", ENGLISH_MOCK_CONFIG);
+ok(cacheMock.length === 40, `cache-shaped rows assemble 40 questions (got ${cacheMock.length})`);
+ok(MockQuestion.array().safeParse(cacheMock).success, "assembled cache-shaped rows parse as MockQuestion");
+ok(MockQuestion.array().safeParse(mock).success, "assembled MCQ-draft rows parse as MockQuestion");
+ok(!MockQuestion.array().safeParse([{ level: 9 }]).success, "malformed rows fail MockQuestion");
+const routeBody = {
+  date: "2026-11-19",
+  total: cacheMock.length,
+  skills: [...new Set(cacheMock.map((q) => q.skill_tag))],
+  questions: cacheMock,
+};
+ok(routeBody.total === 40 && routeBody.skills.length === 20, "response shape carries date/total/skills/questions");
+ok(routeBody.skills.every((id) => pool.includes(id)), "response skills stay inside the pool");
 
 console.log(`ENGLISH TESTS OK: ${n} assertions`);

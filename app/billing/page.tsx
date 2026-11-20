@@ -33,7 +33,13 @@ async function GateNote() {
 export default function BillingPage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
-      <p className="text-xs font-bold tracking-widest text-amber-400">Thanh toán</p>
+      <div>
+        <Suspense fallback={<p className="text-sm text-zinc-500">Đang tải thanh toán…</p>}>
+          <BillingClient />
+        </Suspense>
+      </div>
+
+      <p className="mt-6 text-xs font-bold tracking-widest text-amber-400">Thanh toán</p>
       <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">Gói &amp; thanh toán</h1>
       <p className="mt-2 text-sm text-zinc-400">
         3 lần vá lỗ hổng đầu tiên miễn phí. Sau đó, bạn chọn gói, chuyển khoản kèm mã đơn,
@@ -43,12 +49,6 @@ export default function BillingPage() {
       <Suspense fallback={<p className="mt-6 text-sm text-zinc-500">Đang tải trạng thái…</p>}>
         <GateNote />
       </Suspense>
-
-      <div className="mt-6">
-        <Suspense fallback={<p className="text-sm text-zinc-500">Đang tải thanh toán…</p>}>
-          <BillingClient />
-        </Suspense>
-      </div>
 
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <h2 className="text-sm font-semibold text-zinc-200">Thanh toán thủ công thế nào</h2>

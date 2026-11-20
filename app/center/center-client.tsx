@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { HeroEntity } from "@/components/ui/Hero";
 import { CLASS_TIERS, CLASS_TIER_CODES, type ClassTierCode } from "@/lib/center/center";
 import { SKILL_IDS, skillName } from "@/lib/graph/skills";
 
@@ -436,9 +437,22 @@ export default function CenterClient() {
   }
 
   const hasRoles = me.teaching.length > 0 || me.enrolled.length > 0;
+  const firstTeach = me.teaching[0];
+  const firstEnroll = me.enrolled[0];
 
   return (
     <>
+      <HeroEntity
+        eyebrow={firstTeach ? `Đang dạy${firstTeach.center ? ` — ${firstTeach.center}` : ""}` : firstEnroll ? `Đang học${firstEnroll.center ? ` — ${firstEnroll.center}` : ""}` : "Trung tâm học tập"}
+        name={firstTeach ? firstTeach.name : firstEnroll ? firstEnroll.name : "Chưa vào lớp nào"}
+        meta={
+          firstTeach
+            ? `${firstTeach.enrolled}/${firstTeach.seats} chỗ — mã vào ${firstTeach.join_code}`
+            : firstEnroll
+              ? `${firstEnroll.assignments.length} bài tập đang giao`
+              : "Mở lớp mới hoặc nhập mã vào lớp ở dưới"
+        }
+      />
       {me.enrollment_vip && (
         <p className="rounded-xl border border-emerald-700 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
           VIP trung tâm đang bật — bạn được full VIP khi lớp còn mở.

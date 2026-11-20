@@ -69,15 +69,7 @@ export default function EssayPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
-      <PageHeader
-        kicker="Chấm tự luận"
-        title={<>Bài <span className="arena-title">tự luận</span></>}
-        sub="Chụp bài làm của bạn hoặc dán vào đây. Chấm theo từng bước, điểm chặt, máy kiểm tra lại các con số."
-      />
-      {error ? (
-        <p role="alert" className="arena-card rounded-2xl p-4 text-center text-sm text-red-300">{error}</p>
-      ) : null}
-      <div className="arena-card flex flex-col gap-3 rounded-2xl p-6">
+      <div className="arena-card flex flex-col gap-3 rounded-2xl border-l-2 border-l-red-500 p-6">
         <div className="flex gap-2">
           <input
             ref={fileRef}
@@ -117,6 +109,14 @@ export default function EssayPage() {
           {busy ? "Đang chấm…" : "Chấm bài"}
         </button>
       </div>
+      <PageHeader
+        kicker="Chấm tự luận"
+        title={<>Bài <span className="arena-title">tự luận</span></>}
+        sub="Chấm theo từng bước, điểm chặt, máy kiểm tra lại các con số."
+      />
+      {error ? (
+        <p role="alert" className="arena-card rounded-2xl p-4 text-center text-sm text-red-300">{error}</p>
+      ) : null}
       {result ? (
         <div role="status" className="arena-enter arena-card rounded-2xl p-6 text-center">
           <p className="text-xs font-bold text-zinc-400">Tổng điểm theo thang</p>

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { chatJson, MetaLLMError } from "../llm/meta.ts";
 import type { ExamQuestion as SharedExamQuestion } from "./exam";
+import type { BossOutput as SharedBossOutput, BossQuestion as SharedBossQuestion } from "./boss-generator";
 import { isValidSkill, skillGradeLabel, skillName, skillSubject } from "../graph/skills.ts";
 import {
   checkEnglishDraft,
@@ -40,7 +41,7 @@ export const EnglishBossQuestion = EnglishDraftQ.extend({
 
 export const EnglishBossOutput = z.object({ questions: z.array(EnglishBossQuestion).length(5) });
 
-type EnglishBossQuestionShape = z.infer<typeof EnglishBossQuestion>;
+export type EnglishBossQuestionShape = z.infer<typeof EnglishBossQuestion>;
 
 function batchReasons(skillTag: string, questions: EnglishBossQuestionShape[]): string[][] {
   const stems = questions.map((q) => q.prompt_latex);
@@ -50,9 +51,16 @@ function batchReasons(skillTag: string, questions: EnglishBossQuestionShape[]): 
   });
 }
 
-export async function generateEnglishBossQuestions(skill_tag: string): Promise<z.infer<typeof EnglishBossOutput>> {
+export async function generateEnglishBossQuestions(
+  skill_tag: string,
+  avoid: string[] = [],
+): Promise<z.infer<typeof EnglishBossOutput>> {
   if (!isValidSkill(skill_tag)) throw new MetaLLMError(`Invalid skill_tag: ${skill_tag}`);
   if (skillSubject(skill_tag) !== "english") throw new MetaLLMError(`Not an english skill: ${skill_tag}`);
+  // Paper set-B variety + revenge rematch rule: stems the fresh set must not
+  // repeat or mirror. Empty by default (boss path forges a standalone set).
+  const avoidBlock =
+    avoid.length > 0 ? `\nAvoid these stems (never repeat or mirror them): ${avoid.join(" || ")}` : "";
   let failed: EnglishBossQuestionShape[] = [];
   for (let round = 0; round < 3; round++) {
     const extra =
@@ -65,7 +73,7 @@ export async function generateEnglishBossQuestions(skill_tag: string): Promise<z
         { role: "system", content: ENGLISH_SYSTEM },
         {
           role: "user",
-          content: `Skill: ${skill_tag} (${skillName(skill_tag)}). Grade: ${skillGradeLabel(skill_tag)}.${extra}`,
+          content: `Skill: ${skill_tag} (${skillName(skill_tag)}). Grade: ${skillGradeLabel(skill_tag)}.${avoidBlock}${extra}`,
         },
       ],
       { maxTokens: 8000, temperature: 0.7 },
@@ -75,6 +83,40 @@ export async function generateEnglishBossQuestions(skill_tag: string): Promise<z
     if (failed.length === 0) return out;
   }
   throw new MetaLLMError("Could not generate 5 rule-verified english questions after 3 rounds.");
+}
+
+// Boss-pipeline adapter: English answers are option picks, but the shared
+// boss pipeline (cache, summon, fight, grading) speaks numeric BossQuestion.
+// So a rule-verified MCQ draft becomes a numeric question whose answer is the
+// option INDEX 0-3, with numbered options embedded in the stem — the fight
+// client already takes numeric input, and tolerance 0.001 grades exactly.
+//
+// HONESTY NOTE: the numeric check here is a carrier, not a proof —
+// prompt_expr restates the index, so verifyAnswer passes by construction.
+// Real verification happened one step earlier: generateEnglishBossQuestions
+// only returns drafts that pass rule checks (4 distinct options, valid key,
+// no banned patterns, passage present). Never forge english BossQuestions
+// except through this adapter.
+export function englishDraftToBossQuestion(d: EnglishBossQuestionShape): SharedBossQuestion {
+  const stem = [
+    d.prompt_latex,
+    ...d.options.map((o, k) => `${k}. ${o}`),
+    ...(d.passage ? [`Passage: ${d.passage}`] : []),
+    "Chọn đáp án đúng (trả lời 0, 1, 2 hoặc 3).",
+  ];
+  return {
+    level: d.level,
+    prompt_latex: stem.join("\n"),
+    answer_numeric: d.answer_index,
+    tolerance: 0.001,
+    hint: d.hint,
+    check: { kind: "numeric", prompt_expr: String(d.answer_index) },
+  };
+}
+
+export async function generateEnglishBossOutput(skill_tag: string, avoid: string[] = []): Promise<SharedBossOutput> {
+  const out = await generateEnglishBossQuestions(skill_tag, avoid);
+  return { questions: out.questions.map(englishDraftToBossQuestion) };
 }
 
 // Draft-tier multiple-choice forge for a future THPT English paper:

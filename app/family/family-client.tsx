@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStat } from "@/components/ui/Hero";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
 type KidStats = {
@@ -174,6 +175,11 @@ export default function FamilyClient() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStat
+        value={me && me.role !== "none" ? `${me.family.seats_used}/${me.family.seats_total}` : "…"}
+        label="chỗ đã dùng trong gói"
+        hint={me && me.role !== "none" ? planLabel(me.family.plan_code) : loading ? "Đang tải trang Gia đình…" : "Tạo gói hoặc nhập mã để tham gia"}
+      />
       <PageHeader
         kicker="Gói Gia đình"
         title={
@@ -181,7 +187,7 @@ export default function FamilyClient() {
             Một gói, <span className="arena-title">cho mọi con</span>
           </>
         }
-        sub="Gói Gia đình chia sẻ VIP cho các con và báo cáo tiến độ đơn giản từng con."
+        sub="Chia sẻ VIP cho các con và báo cáo tiến độ đơn giản từng con."
       />
       {loading ? (
         <div className="flex flex-col gap-3" role="status" aria-label="Đang tải trang Gia đình">

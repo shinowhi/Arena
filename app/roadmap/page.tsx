@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStat } from "@/components/ui/Hero";
 import { CheckIcon, GiftIcon } from "@/components/ui/icons";
 
 interface WeakEntry {
@@ -117,11 +118,18 @@ export default function RoadmapPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
+      <div className="flex flex-col gap-5">
+      <HeroStat
+        value={loaded ? `${checkedCount}/${DAYS}` : "…"}
+        label="ngày đã đánh dấu"
+        hint={loaded ? (open.length > 0 ? `${open.length} điểm yếu còn lại — kỹ năng yếu nhất trước` : "Mọi điểm yếu đã chữa — chế độ ôn lại") : "Đang dựng lộ trình…"}
+      />
       <PageHeader
         kicker="Kế hoạch 30 ngày"
         title="Lộ trình"
-        sub="Dựng từ lịch sử quét bài của bạn, kỹ năng yếu nhất trước. Mỗi ngày đánh một mục tiêu, đánh dấu xong, rồi xem danh sách ngắn lại."
+        sub="Mỗi ngày đánh một mục tiêu, đánh dấu xong, rồi xem danh sách ngắn lại."
       />
+      </div>
 
       {loaded && focusList.length === 0 && !error && (
         <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 text-center">

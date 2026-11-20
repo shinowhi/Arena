@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStat } from "@/components/ui/Hero";
 import HotSkills, { type HotSkill } from "@/components/ghosts/HotSkills";
 import GhostFeed, { type FeedItem } from "@/components/ghosts/GhostFeed";
 
@@ -56,10 +57,15 @@ export default function GhostsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStat
+        value={data ? total : "…"}
+        label="ma đang cày tối nay"
+        hint={data ? (data.youTonight ? `Bạn là 1 trong ${total} — không tên, không mặt, chỉ có tiến độ` : "Quét bài để nhập hội tối nay") : "Đang tìm ma…"}
+      />
       <PageHeader
         kicker="Lớp học ma"
         title="Tối nay không cày một mình"
-        sub="Những thợ săn ẩn danh đang cày cùng bạn. Không tên, không mặt — chỉ có tiến độ."
+        sub="Những thợ săn ẩn danh đang cày cùng bạn."
       />
       {error ? (
         <div role="alert" className="arena-card flex min-h-[48px] flex-wrap items-center gap-3 rounded-2xl p-4">
@@ -97,18 +103,6 @@ export default function GhostsPage() {
       ) : null}
       {data ? (
         <>
-          <div className="arena-card rounded-2xl p-6 text-center">
-            <p className="font-display arena-num text-5xl font-black text-zinc-100">{total}</p>
-            <p className="mt-1 text-sm text-zinc-400">
-              {data.youTonight ? (
-                <>Bạn là 1 trong {total} ma đang cày</>
-              ) : (
-                <>
-                  {data.ghosts} ma đang cày trong 15 phút qua
-                </>
-              )}
-            </p>
-          </div>
           <div className="arena-card rounded-2xl p-4">
             <div className="flex items-baseline justify-between gap-2">
               <p className="min-w-0 truncate text-sm text-zinc-400">Tối nay, cùng nhau</p>

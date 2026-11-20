@@ -5,6 +5,7 @@ import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
 import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStatus } from "@/components/ui/Hero";
 import CharRig from "@/components/CharRig";
 import AvatarBuilder from "@/components/AvatarBuilder";
 import BossAvatar from "@/components/BossAvatar";
@@ -163,6 +164,9 @@ export default function ArenaPage() {
           </p>
         ) : null}
       </div>
+      <HeroStatus label="Trực tiếp">
+        {rush ? `Rush reset sau ${fmt(new Date(rush.reset_at).getTime() - now)}` : bosses ? `${bosses.length} boss đang live` : "Đang tải đấu trường…"}
+      </HeroStatus>
       <PageHeader
         kicker="Chiến trường trực tiếp"
         title={

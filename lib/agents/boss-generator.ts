@@ -6,6 +6,7 @@ import { verifyPhysicsAnswer } from "../verify/physics-verifier";
 import { verifyChemistryAnswer } from "../verify/chemistry-verifier";
 import { PHYSICS_SYSTEM } from "./physics-prompts";
 import { CHEMISTRY_SYSTEM } from "./chemistry-prompts";
+import { generateEnglishBossOutput } from "./english-generator";
 
 // Single source of truth for check specs: the grade route imports this so a
 // new check kind can never split-brain fights vs grading.
@@ -66,10 +67,11 @@ Reply JSON only: {"questions": [{"level": 1, "prompt_latex": "...", "answer_nume
 export async function generateBossQuestions(skill_tag: string): Promise<BossOutput> {
   if (!isValidSkill(skill_tag)) throw new MetaLLMError(`Invalid skill_tag: ${skill_tag}`);
   const subject = skillSubject(skill_tag);
-  // English is NOT wired here: MCQ option-picks cannot ride the numeric
-  // BossQuestion contract — fail closed instead of caching calculus questions
-  // under english tags (generateEnglishBossQuestions owns that path).
-  if (subject === "english") throw new MetaLLMError(`Subject not wired to boss dispatch: ${subject}`);
+  // English rides the numeric contract via the MCQ→index adapter (option
+  // picks become 0-3 answers with embedded numbered options — see
+  // englishDraftToBossQuestion for the honesty note). Rule verification
+  // happens inside the english generator, not in the filter below.
+  if (subject === "english") return generateEnglishBossOutput(skill_tag);
   const system =
     subject === "mechanics"
       ? MECHANICS_SYSTEM

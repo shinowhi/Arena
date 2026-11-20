@@ -5,6 +5,7 @@ import Link from "next/link";
 import graph from "@/lib/graph/skill-graph.json";
 import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStat } from "@/components/ui/Hero";
 import { PauseIcon, PlayIcon } from "@/components/ui/icons";
 
 type Week = { week: string; skills: Record<string, "red" | "green"> };
@@ -120,12 +121,18 @@ export default function ProgressPage() {
 
   const weeks = data.timeline;
   const cur = weeks[Math.min(idx, weeks.length - 1)];
+  const healed = Object.values(cur.skills).filter((s) => s === "green").length;
   return (
-    <main className="mx-auto max-w-2xl p-6">
+    <main className="mx-auto flex max-w-2xl flex-col gap-5 p-6">
+      <HeroStat
+        value={`${healed}/${SKILLS.length}`}
+        label={`kỹ năng đã chữa — tuần ${cur.week}`}
+        hint={`Tuần ${idx + 1} trên ${weeks.length} — kéo thanh trượt để xem lại`}
+      />
       <PageHeader
         kicker="Tiến độ"
         title="Hành trình hồi phục"
-        sub={`Tuần ${cur.week} — ${idx + 1}/${weeks.length}`}
+        sub="Mỗi lần quét thêm một tuần vào hành trình của bạn."
       />
       <div className="arena-card mt-4 flex items-center gap-3 rounded-2xl p-3">
         <button

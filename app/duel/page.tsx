@@ -80,20 +80,7 @@ export default function DuelLobbyPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
-      <PageHeader
-        kicker="Thách đấu theo đề"
-        title={<>Sảnh <span className="arena-title">thách đấu</span></>}
-        sub="Cùng phần, cùng đề. Điểm cao hơn thắng — hòa thì ai nhanh hơn thắng. Tính hạng ELO."
-        right={
-          <Link href="/exam" className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-zinc-200">
-            Mọi kỳ thi
-          </Link>
-        }
-      />
-      {error ? (
-        <p role="alert" className="arena-card rounded-2xl p-4 text-center text-sm text-red-300">{error}</p>
-      ) : null}
-      <div className="arena-card flex flex-col gap-3 rounded-2xl p-6">
+      <div className="arena-card flex flex-col gap-3 rounded-2xl border-l-2 border-l-red-500 p-6">
         <h2 className="font-display text-lg font-extrabold text-zinc-100">Tạo trận thách đấu</h2>
         <label className="flex flex-col gap-1 text-sm text-zinc-400">
           Kỳ thi
@@ -133,6 +120,19 @@ export default function DuelLobbyPage() {
           {busy ? "Đang tạo…" : "Tạo trận"}
         </button>
       </div>
+      <PageHeader
+        kicker="Thách đấu theo đề"
+        title={<>Sảnh <span className="arena-title">thách đấu</span></>}
+        sub="Cùng phần, cùng đề. Điểm cao hơn thắng — hòa thì ai nhanh hơn thắng. Tính hạng ELO."
+        right={
+          <Link href="/exam" className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-zinc-200">
+            Mọi kỳ thi
+          </Link>
+        }
+      />
+      {error ? (
+        <p role="alert" className="arena-card rounded-2xl p-4 text-center text-sm text-red-300">{error}</p>
+      ) : null}
       <div className="arena-card flex flex-col gap-3 rounded-2xl p-6">
         <h2 className="font-display text-lg font-extrabold text-zinc-100">Vào bằng mã trận</h2>
         <div className="flex gap-2">

@@ -33,7 +33,7 @@ import {
   skillSubject,
   SKILL_IDS,
 } from "../lib/graph/skills.ts";
-import { buildMock } from "../lib/agents/thpt.ts";
+import { buildMock, MockQuestion } from "../lib/agents/thpt.ts";
 import { recompute } from "../lib/verify/math-verifier.ts";
 import {
   buildPhysicsMock,
@@ -319,5 +319,28 @@ ok(JSON.stringify(stripped).indexOf("answer_numeric") === -1, "serialized drill 
 // Short/empty sets degrade gracefully.
 ok(interleavePhysicsDrills([], 10).length === 0, "no sets give no questions");
 ok(interleavePhysicsDrills([{ skill_tag: "phy_dc_circuits", questions: [mkBoss(1, 3)] }], 5).length === 1, "short set gives what it has");
+
+// ---- Route contract: /api/physics/mock serves the physics pool only (no DB) ----
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+ok(DAY_RE.test("2026-11-19") && !DAY_RE.test("19-11-2026") && !DAY_RE.test("2026/11/19"), "day param accepts YYYY-MM-DD only");
+ok(pool.every((id) => id.startsWith("phy_")), "pool is phy_ prefixed only");
+ok(pool.every((id) => skillGrade(id) >= 10 && skillGrade(id) <= 12), "pool is grades 10-12 only");
+ok(!pool.includes("limit_laws") && !pool.includes("che_atomic_structure") && !pool.includes("eng_tenses"), "math/chemistry/english skills stay out of the pool");
+ok(
+  PHYSICS_MOCK_CONFIG.skillsPerMock * PHYSICS_MOCK_CONFIG.perSkill === PHYSICS_MOCK_COUNT,
+  "config counts multiply to 40",
+);
+ok(pool.length >= PHYSICS_MOCK_CONFIG.skillsPerMock, "full pool clears the warming-up threshold");
+ok([pool[0]].length < PHYSICS_MOCK_CONFIG.skillsPerMock, "short pool trips the warming-up threshold");
+ok(MockQuestion.array().safeParse(mock).success, "assembled rows parse as MockQuestion");
+ok(!MockQuestion.array().safeParse([{ level: 9 }]).success, "malformed rows fail MockQuestion");
+const routeBody = {
+  date: "2026-11-19",
+  total: mock.length,
+  skills: [...new Set(mock.map((q) => q.skill_tag))],
+  questions: mock,
+};
+ok(routeBody.total === 40 && routeBody.skills.length === 20, "response shape carries date/total/skills/questions");
+ok(routeBody.skills.every((id) => pool.includes(id)), "response skills stay inside the pool");
 
 console.log(`PHYSICS TESTS OK: ${n} assertions`);

@@ -5,6 +5,7 @@ import katex from "katex";
 import { SKILL_IDS, skillName } from "@/lib/graph/skills";
 import { FORMULAS } from "@/lib/game/formulas";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStat } from "@/components/ui/Hero";
 
 type Entry = { skill: string; patched: boolean };
 
@@ -76,10 +77,15 @@ export default function CardsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStat
+        value={unlocked === null || nowMs === 0 ? "…" : dueSkills.length}
+        label="thẻ đến hạn ôn"
+        hint={unlocked === null ? "Đang mở hộp thẻ…" : `${unlocked.length} thẻ đã mở — ôn lặp lại ngắt quãng`}
+      />
       <PageHeader
         kicker="Hộp thẻ thông minh"
         title="Lật thẻ trước khi quên"
-        sub="Ôn lặp lại ngắt quãng cho mọi công thức bạn đã mở."
+        sub="Chạm để lật, tự chấm nhớ hay chưa."
       />
       {error ? <p role="alert" className="text-sm text-red-400">{error}</p> : null}
       {(unlocked === null || nowMs === 0) && !error ? <p className="text-zinc-500">Đang mở hộp thẻ…</p> : null}

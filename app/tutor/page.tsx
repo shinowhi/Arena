@@ -200,11 +200,6 @@ function TutorInner() {
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-4 py-8">
-      <PageHeader
-        kicker="Gia sư AI"
-        title={<>Hỏi <span className="arena-title">gia sư</span></>}
-        sub={ctx.kind === "none" ? "Chat học bài miễn phí. Mình gợi mở — bạn tự giải." : "Gắn với câu bạn đang làm. Mình gợi mở — không bao giờ lộ đáp án."}
-      />
       <div className="flex flex-col gap-4 md:flex-row md:items-start">
         <aside aria-label="Các đoạn chat" className="arena-card w-full shrink-0 rounded-2xl p-4 md:w-64">
           <div className="flex items-center justify-between gap-2">
@@ -328,6 +323,11 @@ function TutorInner() {
           </div>
         </section>
       </div>
+      <PageHeader
+        kicker="Gia sư AI"
+        title={<>Hỏi <span className="arena-title">gia sư</span></>}
+        sub={ctx.kind === "none" ? "Chat học bài miễn phí. Mình gợi mở — bạn tự giải." : "Gắn với câu bạn đang làm. Mình gợi mở — không bao giờ lộ đáp án."}
+      />
     </main>
   );
 }

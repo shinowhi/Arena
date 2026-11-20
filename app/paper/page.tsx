@@ -3,6 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStatus } from "@/components/ui/Hero";
 import MathText from "@/components/MathText";
 import { BulbIcon, CheckIcon, XIcon } from "@/components/ui/icons";
 import { skillName } from "@/lib/graph/skills";
@@ -198,6 +199,9 @@ function PaperInner() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStatus label={exam ? (locked ? "Đã khóa bài" : started ? "Đang thi" : "Sẵn sàng") : "Đề luyện"}>
+        {exam && started ? (expired ? "Hết giờ" : formatExamClock(remaining)) : `10 câu — đúng ${score} câu`}
+      </HeroStatus>
       <PageHeader
         kicker={exam ? "Thi bấm giờ" : "Đề luyện"}
         title={<>Luyện <span className="arena-title">{skill ? skillName(skill) : "…"}</span></>}

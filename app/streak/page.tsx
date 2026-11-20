@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStat } from "@/components/ui/Hero";
 
 type StreakData = {
   streak: number;
@@ -32,21 +33,19 @@ export default function StreakPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStat
+        value={data ? data.streak : "…"}
+        label="ngày liên tiếp"
+        hint={data ? `Tổng ${data.totalActive} ngày hoạt động — đều đặn thắng nhồi nhét` : error ? "Không tải được chuỗi." : "Đang tải chuỗi của bạn…"}
+      />
       <PageHeader
         kicker="Chuỗi hồi phục"
         title="Mỗi ngày vá một ít"
-        sub="Đều đặn thắng nhồi nhét — ngày hoạt động nào cũng tính."
+        sub="Ngày hoạt động nào cũng tính."
       />
       {error ? <p role="alert" className="text-sm text-red-400">{error}</p> : null}
-      {!data && !error ? <p className="text-zinc-500">Đang tải chuỗi của bạn…</p> : null}
       {data ? (
         <>
-          <div className="arena-card rounded-2xl p-6 text-center">
-            <p className="font-display arena-num text-5xl font-black text-emerald-300">{data.streak}</p>
-            <p className="mt-1 text-sm tabular-nums text-zinc-400">
-              ngày liên tiếp — tổng {data.totalActive} ngày hoạt động
-            </p>
-          </div>
           <div className="arena-card overflow-x-auto rounded-2xl p-4">
             <div className="grid min-w-max grid-flow-col grid-rows-7 gap-1" role="img" aria-label={`Chuỗi ${data.streak} ngày, tổng ${data.totalActive} ngày hoạt động`}>
               {data.heatmap.map((d) => (

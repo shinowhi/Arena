@@ -19,7 +19,7 @@ export async function GET(req: Request) {
       .eq("player_id", playerId)
       .order("created_at", { ascending: false })
       .limit(20);
-    if (error) throw new Error("Could not load scan history.");
+    if (error) throw new Error("Không tải được lịch sử quét bài.");
     const rows = (data ?? []) as Array<{
       weak_skill: string;
       root_cause: string;
@@ -27,13 +27,13 @@ export async function GET(req: Request) {
       created_at: string;
     }>;
     if (rows.length === 0) {
-      return NextResponse.json({ error: "Scan your work first — the plan is built from your real gaps." }, { status: 404 });
+      return NextResponse.json({ error: "Hãy quét bài làm trước — kế hoạch được dựng từ lỗ hổng thật của bạn." }, { status: 404 });
     }
     const plan = await buildPlan(rows);
     return NextResponse.json(plan);
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Plan failed." },
+      { error: err instanceof Error ? err.message : "Dựng kế hoạch thất bại." },
       { status: 422 },
     );
   }

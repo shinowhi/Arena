@@ -3,6 +3,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStatus } from "@/components/ui/Hero";
 import MathText from "@/components/MathText";
 import { BulbIcon, CheckIcon, XIcon } from "@/components/ui/icons";
 import { PVP_START_HP } from "@/lib/game/pvp";
@@ -166,8 +167,16 @@ function PvpInner() {
   const sideB = room.fighters.filter((f) => f.side === "B");
   const msgColor = msg.startsWith("Trúng") ? "text-emerald-400 font-semibold" : msg.startsWith("Trượt") ? "text-red-400" : "text-zinc-400";
 
+  const hpA = sideA.reduce((a, f) => a + Math.max(0, f.hp), 0);
+  const hpB = sideB.reduce((a, f) => a + Math.max(0, f.hp), 0);
+
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStatus label={room.finished ? "Trận đã xong" : !room.your_side ? "Chọn phe" : "Đang đấu"}>
+        <span className="text-red-300">A {hpA}</span>
+        <span aria-hidden="true" className="text-zinc-600">—</span>
+        <span className="text-sky-300">B {hpB}</span>
+      </HeroStatus>
       <PageHeader
         kicker="Đấu PvP"
         title={room.skill_name}

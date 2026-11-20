@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import MathText from "@/components/MathText";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroEntity } from "@/components/ui/Hero";
 import { BulbIcon, TrophyIcon } from "@/components/ui/icons";
 import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
@@ -344,6 +345,11 @@ function BossInner() {
       {intro && boss.status === "ALIVE" ? (
         <BossIntro name={bossName} onSkip={() => setIntro(false)} />
       ) : null}
+      <HeroEntity
+        eyebrow={boss.status === "ALIVE" ? "Boss trực tiếp" : boss.status === "DEAD" ? "Boss đã gục" : "Trận đã kết thúc"}
+        name={bossName}
+        meta={`HP ${boss.current_hp}/${boss.max_hp} — ${skillName(boss.skill_tag)}`}
+      />
       <PageHeader
         kicker="Đánh boss"
         title={bossName}

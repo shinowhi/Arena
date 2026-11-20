@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { chatJson, MetaLLMError } from "../llm/meta";
 import { BossOutput, type BossQuestion } from "./boss-generator";
+import { generateEnglishBossOutput } from "./english-generator";
 import { isValidSkill, skillGradeLabel, skillName, skillSubject } from "../graph/skills";
 import { verifyAnswer } from "../verify/math-verifier";
 import { verifyPhysicsAnswer } from "../verify/physics-verifier";
@@ -102,7 +103,16 @@ Reply JSON only: {"questions": [{"level": 1, "prompt_latex": "...", "answer_nume
 export async function generateRevengeQuestions(skill_tag: string, avoid: string[]): Promise<BossQuestion[]> {
   if (!isValidSkill(skill_tag)) throw new MetaLLMError(`Invalid skill_tag: ${skill_tag}`);
   const subject = skillSubject(skill_tag);
-  if (subject === "english") throw new MetaLLMError(`Subject not wired to revenge dispatch: ${subject}`);
+  const gradeHint =
+    subject === "k12" || subject === "physics" || subject === "chemistry" || subject === "english"
+      ? ` Grade: ${skillGradeLabel(skill_tag)}.`
+      : "";
+  // English rematch: rule-verified MCQ drafts via the numeric adapter, with
+  // the player's seen prompts passed as avoid stems (rematch rule).
+  if (subject === "english") {
+    const out = await generateEnglishBossOutput(skill_tag, avoid);
+    return out.questions;
+  }
   const system =
     subject === "mechanics"
       ? MECHANICS_SYSTEM
@@ -113,10 +123,6 @@ export async function generateRevengeQuestions(skill_tag: string, avoid: string[
           : subject === "chemistry"
             ? CHEMISTRY_REVENGE_SYSTEM
             : SYSTEM;
-  const gradeHint =
-    subject === "k12" || subject === "physics" || subject === "chemistry"
-      ? ` Grade: ${skillGradeLabel(skill_tag)}.`
-      : "";
   const avoidBlock = avoid.length > 0 ? `\nAVOID (already seen, never repeat):\n${avoid.map((p, i) => `${i + 1}. ${p}`).join("\n")}` : "";
   let failed: BossQuestion[] = [];
   for (let round = 0; round < 3; round++) {

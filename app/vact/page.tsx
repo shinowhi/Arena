@@ -3,6 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStatus } from "@/components/ui/Hero";
 import MathText from "@/components/MathText";
 import StickyTimer from "@/components/education/StickyTimer";
 import { CheckIcon, XIcon } from "@/components/ui/icons";
@@ -189,10 +190,13 @@ function VactInner() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 overflow-x-clip px-4 py-8">
+      <HeroStatus label={locked ? "Đã nộp bài" : started ? "Đang thi" : "Sẵn sàng"}>
+        {locked ? `Đúng ${score}/${total}` : started ? (expired ? "Hết giờ" : formatExamClock(remaining)) : `120 câu — đề ${date || "…"}`}
+      </HeroStatus>
       <PageHeader
         kicker="Thi thử V-ACT"
         title={<>Bài thi <span className="arena-title">{date || "…"}</span></>}
-        sub="120 câu, 150 phút, máy chấm. Cùng một đề trong 2 ngày — tải lại sau khi đổi đề để có đề mới. Chỉ để luyện tập: điểm là số câu đúng, không phải điểm V-ACT chính thức (thi thật dùng IRT)."
+        sub="150 phút, máy chấm. Cùng một đề trong 2 ngày. Chỉ để luyện tập: điểm là số câu đúng, không phải điểm V-ACT chính thức (thi thật dùng IRT)."
         right={
           started ? (
             <span role="timer" aria-label="Thời gian còn lại" className={`shrink-0 font-mono text-sm tabular-nums ${expired ? "font-bold text-red-400" : urgent ? "arena-urgent font-bold" : "text-zinc-400"}`}>

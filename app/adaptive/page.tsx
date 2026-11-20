@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStat } from "@/components/ui/Hero";
 import MathText from "@/components/MathText";
 import { CheckIcon } from "@/components/ui/icons";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
@@ -145,11 +146,15 @@ export default function AdaptivePage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStat
+        value={streak}
+        label="câu đúng liên tiếp"
+        hint={cur ? `${cur.skill_name} — cấp tiếp theo: Cấp ${levelForRating(cur.rating)}` : "Kỹ năng yếu nhất trước, cấp độ theo trình độ của bạn"}
+      />
       <PageHeader
         kicker="Luyện thích ứng"
         title={<>Đúng <span className="arena-title">trình độ</span> của bạn</>}
-        sub="Kỹ năng yếu nhất trước, cấp độ theo điểm trình độ của bạn. Câu làm sai sẽ quay lại đúng hẹn."
-        right={<span className="arena-num shrink-0 text-sm text-zinc-400 tabular-nums">Chuỗi <span className="font-bold text-amber-300">{streak}</span></span>}
+        sub="Câu làm sai sẽ quay lại đúng hẹn."
       />
       {error ? (
         <div className="arena-card rounded-2xl p-4 text-center">

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStat } from "@/components/ui/Hero";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
 type Report = {
@@ -42,10 +43,15 @@ export default function TransparencyPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStat
+        value={rep ? rep.examSections.verifiedQ : "…"}
+        label="câu thi đã kiểm chứng"
+        hint={rep ? `${rep.examSections.draftQ} câu do AI soạn — số liệu trực tiếp, không số liệu giả` : "Đang tải báo cáo…"}
+      />
       <PageHeader
         kicker="Tin được vì đo được"
         title={<>Minh bạch <span className="arena-title">AI</span></>}
-        sub="Số liệu trực tiếp từ ngân hàng câu hỏi — không số liệu giả. Tải lại trang sau mỗi lần nạp đề mới để thấy số nhảy."
+        sub="Tải lại trang sau mỗi lần nạp đề mới để thấy số nhảy."
       />
       {error ? (
         <p role="alert" className="arena-card rounded-2xl p-4 text-center text-sm text-red-300">{error}</p>

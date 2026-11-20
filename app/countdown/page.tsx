@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStatus } from "@/components/ui/Hero";
 import { CheckIcon } from "@/components/ui/icons";
 
 type Weak = { tag: string; name: string; misses: number; healed: boolean };
@@ -83,10 +84,13 @@ export default function CountdownPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStatus label={exam ? `Ngày thi ${exam}` : "Ngày thi"}>
+        {daysLeft === null ? "Chưa đặt ngày" : daysLeft < 0 ? "Ngày đó đã qua" : daysLeft === 0 ? "Chính là hôm nay" : `Còn ${daysLeft} ngày`}
+      </HeroStatus>
       <PageHeader
         kicker="Đếm ngược ngày thi"
         title="Sẵn sàng trước giờ G"
-        sub="Mỗi ngày chữa một kỹ năng yếu cho đến ngày thi."
+        sub="Mỗi ngày chữa một kỹ năng yếu."
       />
       {error ? <p role="alert" className="text-sm text-red-400">{error}</p> : null}
       <div className="arena-card flex flex-wrap items-center gap-3 rounded-2xl p-4">

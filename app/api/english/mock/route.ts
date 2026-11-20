@@ -1,0 +1,54 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
+import { getPlayerId } from "@/lib/game/player";
+import { skillName } from "@/lib/graph/skills";
+import { buildMock, MockQuestion } from "@/lib/agents/thpt";
+import { ENGLISH_MOCK_CONFIG, poolEnglishSkills } from "@/lib/english/mock";
+import { hasAccess, paywallBody } from "@/lib/billing/access";
+import { logFunnel } from "@/lib/funnel";
+
+// Daily THPT English mock: 40 questions from 20 cached sets (eng_ grades
+// 10-12). Reads the 7-day cache window — prime forges eng_ through the
+// shared dispatcher adapter, so cache rows are numeric BossQuestion shapes
+// (option picks as 0-3 answers) and assemble exactly like math. Zero LLM.
+const SEVEN_DAYS_MS = 7 * 24 * 3600 * 1000;
+
+export async function GET(req: Request) {
+  try {
+    const day = new URL(req.url).searchParams.get("day") ?? new Date().toISOString().slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return NextResponse.json({ error: "Bad day param." }, { status: 400 });
+    const pool = poolEnglishSkills();
+    const supabase = await createClient();
+    const gate = await hasAccess(supabase, await getPlayerId().catch(() => null), "B");
+    if (!gate.ok) return NextResponse.json(paywallBody(), { status: 402 });
+    const since = new Date(Date.now() - SEVEN_DAYS_MS).toISOString();
+    const { data, error } = await supabase
+      .from("boss_question_cache")
+      .select("skill_tag, questions")
+      .eq("set_version", 1)
+      .gte("fetched_at", since)
+      .in("skill_tag", pool);
+    if (error || !data) return NextResponse.json({ error: "Mock failed — retry." }, { status: 500 });
+    const sets = (
+      data as Array<{ skill_tag: string; questions: Array<{ level: number; prompt_latex: string; hint: string; tolerance: number; check: unknown }> }>
+    )
+      .filter((r) => Array.isArray(r.questions) && r.questions.length >= 5)
+      .map((r) => ({ skill_tag: r.skill_tag, skill_name: skillName(r.skill_tag), questions: r.questions }));
+    if (sets.length < ENGLISH_MOCK_CONFIG.skillsPerMock) {
+      return NextResponse.json({ error: `Warming up: ${sets.length}/${ENGLISH_MOCK_CONFIG.skillsPerMock} skills cached.` }, { status: 503 });
+    }
+    const questions = buildMock(sets, day, ENGLISH_MOCK_CONFIG);
+    const parsed = z.array(MockQuestion).safeParse(questions);
+    if (!parsed.success) return NextResponse.json({ error: "Mock failed — retry." }, { status: 500 });
+    await logFunnel(supabase, null, "exam_started", { exam: "english" });
+    return NextResponse.json({
+      date: day,
+      total: parsed.data.length,
+      skills: [...new Set(parsed.data.map((q) => q.skill_tag))],
+      questions: parsed.data,
+    });
+  } catch {
+    return NextResponse.json({ error: "Mock failed — retry." }, { status: 500 });
+  }
+}

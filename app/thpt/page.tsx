@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStatus } from "@/components/ui/Hero";
 import MathText from "@/components/MathText";
 import StickyTimer from "@/components/education/StickyTimer";
 import { CheckIcon, QuestionIcon } from "@/components/ui/icons";
@@ -290,10 +291,13 @@ function ThptInner() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 overflow-x-clip px-4 py-8">
+      <HeroStatus label={submitted ? "Đã nộp bài" : started && mode === "exam" ? "Đang thi" : started ? "Đang luyện" : "Sẵn sàng"}>
+        {submitted ? `Điểm ${score}/${total}` : started && mode === "exam" ? (expired ? "Hết giờ" : formatExamClock(remaining)) : `50 câu — đề ${date || "…"}`}
+      </HeroStatus>
       <PageHeader
         kicker="Đề thi THPT"
         title={<>Luyện thi <span className="arena-title">{date || "…"}</span></>}
-        sub="50 câu Toán điền số, máy chấm. Mỗi ngày 1 đề — mai có đề mới. Chỉ để luyện tập: khác đề chính thức, điểm không tương đương."
+        sub="Toán điền số, máy chấm. Mỗi ngày 1 đề — mai có đề mới. Chỉ để luyện tập: khác đề chính thức, điểm không tương đương."
         right={
           started && mode === "exam" ? (
             <span role="timer" aria-label="Thời gian còn lại" className={`shrink-0 font-mono text-sm tabular-nums ${expired ? "font-bold text-red-400" : urgent ? "arena-urgent font-bold" : "text-zinc-400"}`}>

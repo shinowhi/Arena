@@ -3,6 +3,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStatus } from "@/components/ui/Hero";
 import MathText from "@/components/MathText";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
@@ -137,10 +138,13 @@ function RoyaleArenaInner() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStatus label={finished ? "Trận đã xong" : view?.status === "lobby" ? "Sảnh chờ" : "Đang đấu"}>
+        {view ? `Vòng ${Math.min(view.round + 1, view.totalRounds)}/${view.totalRounds} — ${view.roster.filter((p) => p.alive).length} còn lại` : "Đang tải…"}
+      </HeroStatus>
       <PageHeader
         kicker="Đấu sinh tồn"
         title={<>{view?.section.name ?? "…"} <span className="arena-title">sinh tồn</span></>}
-        sub={view ? `Vòng ${Math.min(view.round + 1, view.totalRounds)}/${view.totalRounds} — ${view.roster.filter((p) => p.alive).length} người còn lại` : "Đang tải phòng…"}
+        sub={view ? `${view.roster.length} người trong phòng` : "Đang tải phòng…"}
         right={
           view?.status === "live" && !finished ? (
             <span role="timer" aria-label="Thời gian còn lại của vòng" className={`arena-num shrink-0 font-mono text-sm tabular-nums ${left <= 5 ? "font-bold text-red-400" : "text-zinc-400"}`}>

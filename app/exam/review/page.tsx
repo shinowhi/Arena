@@ -3,6 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStat } from "@/components/ui/Hero";
 import MathText from "@/components/MathText";
 import { CheckIcon, XIcon } from "@/components/ui/icons";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
@@ -118,10 +119,15 @@ function ReviewInner() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStat
+        value={sections ? `${score}/${total}` : "…"}
+        label="câu đúng"
+        hint="Xanh là đúng — đỏ là câu bạn đã chọn nhầm"
+      />
       <PageHeader
         kicker="Chữa bài"
         title={<>Chữa bài <span className="arena-title">{day || "…"}</span></>}
-        sub="Đáp án của bạn so với đáp án đúng. Xanh là đúng — đỏ là câu bạn đã chọn nhầm. Chỉ để luyện tập: điểm này không tương đương điểm thi chính thức."
+        sub="Đáp án của bạn so với đáp án đúng. Chỉ để luyện tập: điểm này không tương đương điểm thi chính thức."
         right={
           <Link href={backHref} className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-zinc-200 transition-colors hover:text-white">
             Về bài thi
@@ -147,9 +153,6 @@ function ReviewInner() {
       ) : null}
       {sections ? (
         <>
-          <p className="text-center text-sm text-zinc-400 tabular-nums">
-            Điểm <span className="arena-num font-bold text-emerald-300">{score}</span>/{total} câu đúng
-          </p>
           <div className="flex flex-wrap justify-center gap-2" role="tablist" aria-label="Các phần thi">
             {sections.map((s, a) => (
               <button

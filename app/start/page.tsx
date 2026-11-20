@@ -15,6 +15,7 @@ import {
   type TargetExam,
 } from "@/lib/profile/types";
 import { loadProfile, saveProfile } from "@/lib/profile/storage";
+import { HeroStatus } from "@/components/ui/Hero";
 import { track } from "@/lib/tracking/events";
 
 const STEPS = ["Bạn là ai?", "Mục tiêu", "Môn học"];
@@ -103,10 +104,10 @@ export default function StartPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-10">
+      <HeroStatus label={`Bước ${step + 1} trên ${STEPS.length}`}>
+        {STEPS[step]}
+      </HeroStatus>
       <div>
-        <p className="text-xs font-medium text-zinc-500">
-          Bước {step + 1}/{STEPS.length} — {STEPS[step]}
-        </p>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-white">
           Cho <span translate="no">BossLearn</span> biết bạn là ai
         </h1>

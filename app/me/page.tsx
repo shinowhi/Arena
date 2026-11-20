@@ -4,6 +4,7 @@ import { createAuthClient } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthUser } from "@/lib/auth/session";
 import { SUPPORT_CONTACT } from "@/lib/auth/support";
+import { HeroEntity } from "@/components/ui/Hero";
 import MeActions from "./me-actions";
 
 // Phase-2a account page (server shell + Suspense like /vip: the status block
@@ -52,30 +53,36 @@ function shortId(id: string): string {
 
 async function AccountStatus() {
   const s = await loadStatus();
+  const roleLabel = s.role === "student" ? "Học sinh" : s.role === "parent" ? "Phụ huynh" : s.role === "teacher" ? "Giáo viên" : null;
   if (!s.authed) {
     return (
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Bạn đang dùng ẩn danh</p>
-        <p className="mt-1 text-sm text-zinc-400">
-          Đăng nhập để đồng bộ tiến độ giữa các thiết bị và quản lý dữ liệu.
-        </p>
-        <Link
-          href="/login"
-          className="arena-btn-primary mt-4 inline-block rounded-full px-6 py-2.5 font-bold text-white"
+      <div className="mt-6">
+        <HeroEntity
+          eyebrow="Chế độ ẩn danh"
+          name="Bạn là khách"
+          meta="Đăng nhập để đồng bộ tiến độ giữa các thiết bị"
         >
-          Đăng nhập
-        </Link>
-      </section>
+          <Link
+            href="/login"
+            className="arena-btn-primary inline-block rounded-full px-6 py-2.5 font-bold text-white"
+          >
+            Đăng nhập
+          </Link>
+        </HeroEntity>
+      </div>
     );
   }
   return (
     <>
+      <div className="mt-6">
+        <HeroEntity
+          eyebrow="Đã đăng nhập"
+          name={s.email ?? "—"}
+          meta={roleLabel ?? (s.playerId ? `Nhân vật ${shortId(s.playerId)}` : "Chưa liên kết nhân vật")}
+        />
+      </div>
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <dl className="space-y-3 text-sm">
-          <div className="flex items-baseline justify-between gap-4">
-            <dt className="text-zinc-400">Email</dt>
-            <dd className="font-semibold break-all text-zinc-100">{s.email ?? "—"}</dd>
-          </div>
           <div className="flex items-baseline justify-between gap-4">
             <dt className="text-zinc-400">Nhân vật đã liên kết</dt>
             <dd className="font-mono font-semibold text-zinc-100">
@@ -85,7 +92,7 @@ async function AccountStatus() {
           <div className="flex items-baseline justify-between gap-4">
             <dt className="text-zinc-400">Vai trò</dt>
             <dd className="font-semibold text-zinc-100">
-              {s.role === "student" ? "Học sinh" : s.role === "parent" ? "Phụ huynh" : s.role === "teacher" ? "Giáo viên" : "—"}
+              {roleLabel ?? "—"}
             </dd>
           </div>
         </dl>

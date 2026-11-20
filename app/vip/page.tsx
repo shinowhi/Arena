@@ -102,12 +102,12 @@ async function VipStatus() {
 export default function VipPage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
-      <p className="text-xs font-bold tracking-widest text-amber-400">VIP</p>
-      <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">Lên VIP</h1>
-
-      <Suspense fallback={<p className="mt-6 text-sm text-zinc-500">Đang tải trạng thái…</p>}>
+      <Suspense fallback={<p className="text-sm text-zinc-500">Đang tải trạng thái…</p>}>
         <VipStatus />
       </Suspense>
+
+      <p className="mt-6 text-xs font-bold tracking-widest text-amber-400">VIP</p>
+      <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">Lên VIP</h1>
 
       <section className="mt-6 rounded-2xl border border-amber-700/60 bg-amber-950/20 p-5">
         <h2 className="text-sm font-semibold text-amber-200">VIP mở những gì</h2>

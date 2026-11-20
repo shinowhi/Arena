@@ -18,7 +18,7 @@ export async function GET() {
       supabase.from("boss_question_cache").select("skill_tag, questions, fetched_at").eq("set_version", 2).limit(5000),
     ]);
     if (v1.error || v2.error || !v1.data || !v2.data) {
-      return NextResponse.json({ error: "Report failed — retry." }, { status: 500 });
+      return NextResponse.json({ error: "Tải báo cáo thất bại — thử lại." }, { status: 500 });
     }
     const now = Date.now();
     const v1rows = v1.data as Array<{ skill_tag: string; fetched_at: string }>;
@@ -51,13 +51,13 @@ export async function GET() {
       },
       newestFetch: newest ? new Date(newest).toISOString() : null,
       method: [
-        "Math: forged numeric, recomputed by a math engine before entering the bank.",
-        "Math multiple-choice: 3 distractors, each proven wrong and distinct by arithmetic.",
-        "Other subjects: schema check, independent cross-answer, rule checks — 3 layers.",
-        "Rejects retry 3x, then the previous paper keeps serving. Papers refresh every 2 days.",
+        "Toán: câu số do máy rèn, được máy tính kiểm tra lại trước khi vào ngân hàng đề.",
+        "Toán trắc nghiệm: 3 đáp án nhiễu, mỗi đáp án đều được chứng minh sai và khác nhau bằng phép tính.",
+        "Môn khác: kiểm tra khung đề, chấm chéo độc lập, soát quy tắc — 3 lớp.",
+        "Câu hỏng được thử lại 3 lần, nếu vẫn hỏng thì đề cũ tiếp tục chạy. Đề mới nạp mỗi 2 ngày.",
       ],
     });
   } catch {
-    return NextResponse.json({ error: "Report failed — retry." }, { status: 500 });
+    return NextResponse.json({ error: "Tải báo cáo thất bại — thử lại." }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStat } from "@/components/ui/Hero";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
 type BadgeView = { id: string; name: string; desc: string; earned: boolean; progress: number; target: number };
@@ -61,17 +62,15 @@ export default function BadgesPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStat
+        value={badges ? `${earned}/${badges.length}` : "…"}
+        label="huy hiệu tuần này"
+        hint="Quét, đánh trúng và hạ boss để gom hết"
+      />
       <PageHeader
         kicker="Tuần này"
         title={<>Huy hiệu <span className="arena-title">tuần</span></>}
-        sub="Sáu huy hiệu trong 7 ngày qua. Quét, đánh trúng và hạ boss để gom hết."
-        right={
-          badges ? (
-            <span className="arena-num shrink-0 text-sm tabular-nums text-zinc-400" aria-label={`Đã đạt ${earned} trên ${badges.length} huy hiệu`}>
-              <span className="font-bold text-amber-300">{earned}</span>/{badges.length}
-            </span>
-          ) : undefined
-        }
+        sub="Sáu huy hiệu trong 7 ngày qua."
       />
       {error ? (
         <div className="arena-card rounded-2xl p-6 text-center">

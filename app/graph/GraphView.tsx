@@ -57,15 +57,6 @@ export default function GraphView() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-4 py-8">
       <div className="arena-enter">
-        <PageHeader
-          kicker={`${SKILL_IDS.length} kỹ năng — nền tảng ở bên trái`}
-          title={
-            <>
-              Sơ đồ <span className="arena-title">kỹ năng</span>
-            </>
-          }
-          sub="Kỹ năng yếu sáng đỏ, gốc rễ sáng vàng. Cuộn ngang để đi theo chuỗi."
-        />
         <div className="mt-2 flex gap-4 text-xs text-zinc-400">
           {weak ? (
             <span>
@@ -131,6 +122,15 @@ export default function GraphView() {
           </div>
         ))}
       </div>
+      <PageHeader
+        kicker={`${SKILL_IDS.length} kỹ năng — nền tảng ở bên trái`}
+        title={
+          <>
+            Sơ đồ <span className="arena-title">kỹ năng</span>
+          </>
+        }
+        sub="Kỹ năng yếu sáng đỏ, gốc rễ sáng vàng."
+      />
       <nav className="flex gap-4 text-sm text-zinc-400">
         <Link href="/scan" className="transition-colors hover:text-white">
           ← Về quét bài

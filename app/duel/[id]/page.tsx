@@ -3,6 +3,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStatus } from "@/components/ui/Hero";
 import MathText from "@/components/MathText";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
@@ -114,6 +115,9 @@ function DuelBattleInner() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStatus label={finished ? "Trận đã xong" : view?.p2 ? "Đang đấu" : "Chờ đối thủ"}>
+        {finished && view ? `${view.p1.score ?? "–"} — ${view.p2?.score ?? "–"}` : foe ? (foe.done ? "Đối thủ đã xong" : "Đối thủ đang đánh…") : "Gửi mã trận cho bạn"}
+      </HeroStatus>
       <PageHeader
         kicker="Thách đấu theo đề"
         title={<>{view?.section.name ?? "…"} <span className="arena-title">thách đấu</span></>}

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroList } from "@/components/ui/Hero";
 import { CheckIcon } from "@/components/ui/icons";
 
 type Entry = {
@@ -36,6 +37,15 @@ export default function DiaryPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroList
+        count={entries ? entries.filter((e) => e.patched).length : "…"}
+        label={entries ? `gốc đã vá trên ${entries.length} trận đã đánh` : "Đang mở nhật ký…"}
+        action={
+          <Link href="/scan" className="arena-btn-ghost rounded-full px-4 py-1.5 text-xs font-semibold text-zinc-200">
+            Quét bài mới
+          </Link>
+        }
+      />
       <PageHeader
         kicker="Nhật ký gốc"
         title="Mọi gốc rễ bạn đã vá"

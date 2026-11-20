@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroStat } from "@/components/ui/Hero";
 import MathText from "@/components/MathText";
 import { BulbIcon, CheckIcon } from "@/components/ui/icons";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
@@ -80,17 +81,15 @@ export default function MissesPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroStat
+        value={items ? `${cleared}/${items.length}` : "…"}
+        label="câu sai đã chữa"
+        hint="Đúng những câu bạn đã làm sai — chữa hết chúng nhé"
+      />
       <PageHeader
         kicker="Cơ hội thứ hai"
         title={<>Hàng đợi <span className="arena-title">câu sai</span></>}
-        sub="Đúng những câu bạn đã làm sai, xếp hàng chờ phục thù. Chữa hết chúng nhé."
-        right={
-          items ? (
-            <span className="arena-num shrink-0 text-sm text-zinc-400 tabular-nums" aria-label={`Đã chữa ${cleared} trên ${items.length} câu`}>
-              <span className="font-bold text-emerald-300">{cleared}</span>/{items.length}
-            </span>
-          ) : undefined
-        }
+        sub="Xếp hàng chờ phục thù."
       />
       {error ? (
         <div className="arena-card rounded-2xl p-6 text-center">

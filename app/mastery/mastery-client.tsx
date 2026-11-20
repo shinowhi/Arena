@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import RaidBanner from "@/components/raid/RaidBanner";
+import { HeroStat } from "@/components/ui/Hero";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
 type Skill = {
@@ -100,8 +101,17 @@ export default function MasteryClient() {
     );
   }
 
+  const known = skills.filter((s) => s.mastery !== null);
+  const avg = known.length > 0 ? Math.round(known.reduce((a, s) => a + (s.mastery ?? 0), 0) / known.length) : null;
+  const weakCount = skills.filter((s) => s.status === "weak").length;
+
   return (
     <>
+      <HeroStat
+        value={avg === null ? "Mới" : `${avg}%`}
+        label="độ thành thạo trung bình"
+        hint={weakCount > 0 ? `${weakCount} kỹ năng cần cố gắng — luyện điểm yếu để kéo cột điểm lên` : "Không còn điểm yếu nào — giữ phong độ nhé"}
+      />
       <RaidBanner />
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-bold tracking-widest text-zinc-500">Luyện hôm nay</h2>

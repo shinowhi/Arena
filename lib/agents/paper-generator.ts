@@ -8,6 +8,7 @@
 import { z } from "zod";
 import { chatJson, MetaLLMError } from "../llm/meta";
 import { BossOutput, BossQuestion } from "./boss-generator";
+import { englishDraftToBossQuestion, generateEnglishBossQuestions } from "./english-generator";
 import { isValidSkill, skillGradeLabel, skillName, skillSubject } from "../graph/skills";
 import { verifyAnswer } from "../verify/math-verifier";
 import { verifyPhysicsAnswer } from "../verify/physics-verifier";
@@ -98,7 +99,23 @@ async function genSet(skill_tag: string, system: string, avoid: string, gradeHin
 export async function generatePaper(skill_tag: string): Promise<PaperOutput> {
   if (!isValidSkill(skill_tag)) throw new MetaLLMError(`Invalid skill_tag: ${skill_tag}`);
   const subject = skillSubject(skill_tag);
-  if (subject === "english") throw new MetaLLMError(`Subject not wired to paper dispatch: ${subject}`);
+  const gradeHint =
+    subject === "k12" || subject === "physics" || subject === "chemistry" || subject === "english"
+      ? ` Grade: ${skillGradeLabel(skill_tag)}.`
+      : "";
+  // English rides the numeric contract via the MCQ→index adapter (same as
+  // boss-generator): two rule-verified 5-sets, set B steered off set-A stems.
+  if (subject === "english") {
+    const engA = await generateEnglishBossQuestions(skill_tag);
+    const engB = await generateEnglishBossQuestions(
+      skill_tag,
+      engA.questions.map((q) => q.prompt_latex),
+    );
+    const questions = [...engA.questions, ...engB.questions]
+      .map(englishDraftToBossQuestion)
+      .sort((a, b) => a.level - b.level);
+    return PaperOutput.parse({ questions });
+  }
   const system =
     subject === "mechanics"
       ? MECHANICS_SYSTEM
@@ -109,10 +126,6 @@ export async function generatePaper(skill_tag: string): Promise<PaperOutput> {
           : subject === "chemistry"
             ? CHEMISTRY_PAPER_SYSTEM
             : SYSTEM;
-  const gradeHint =
-    subject === "k12" || subject === "physics" || subject === "chemistry"
-      ? ` Grade: ${skillGradeLabel(skill_tag)}.`
-      : "";
   const setA = await genSet(skill_tag, system, "", gradeHint);
   const avoid =
     `\nWrite a SECOND set of 5 with different numbers and givens from the first set (do not repeat them). Reply JSON only, no explanations. First set for reference: ${setA.map((q) => `L${q.level}:${q.prompt_latex.slice(0, 80)}`).join(" / ").slice(0, 900)}`;

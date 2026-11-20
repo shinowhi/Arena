@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
+import { HeroAction } from "@/components/ui/Hero";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
 export default function GauntletPage() {
@@ -62,10 +63,23 @@ export default function GauntletPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
+      <HeroAction
+        title="Một boss, năm kỹ năng"
+        sub={skills ? "Mỗi cấp kiểm tra một lỗ hổng khác nhau — triệu hồi ngay lập tức." : "Đang chọn năm kỹ năng của bạn…"}
+      >
+        <button
+          type="button"
+          onClick={summon}
+          disabled={summoning || !skills}
+          className="arena-btn-primary rounded-full px-6 py-2.5 font-bold text-white disabled:opacity-40 disabled:shadow-none"
+        >
+          {summoning ? "Đang rèn gauntlet…" : "Triệu hồi boss gauntlet"}
+        </button>
+      </HeroAction>
       <PageHeader
         kicker="Ôn tổng hợp"
         title={<>Boss <span className="arena-title">gauntlet</span></>}
-        sub="Một boss, năm kỹ năng — cấp i kiểm tra lỗ hổng yếu thứ i của bạn. Dựng từ bộ câu có sẵn nên triệu hồi ngay lập tức."
+        sub="Cấp i kiểm tra lỗ hổng yếu thứ i của bạn."
       />
       {skills === undefined && !error ? (
         <div className="flex flex-col gap-3" role="status" aria-label="Đang chọn năm kỹ năng">
@@ -100,14 +114,6 @@ export default function GauntletPage() {
               </li>
             ))}
           </ol>
-          <button
-            type="button"
-            onClick={summon}
-            disabled={summoning}
-            className="arena-btn-primary mt-4 rounded-full px-6 py-2.5 font-bold text-white disabled:opacity-40 disabled:shadow-none"
-          >
-            {summoning ? "Đang rèn gauntlet…" : "Triệu hồi boss gauntlet"}
-          </button>
           {error ? (
             <p role="alert" className="mt-2 text-sm text-red-400">
               {error}
