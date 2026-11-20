@@ -14,7 +14,7 @@ export default function PageHeader({
     <div className="arena-enter flex items-end justify-between gap-3">
       <div>
         <p className="arena-kicker">{kicker}</p>
-        <h1 className="font-display mt-1 text-3xl font-extrabold tracking-tight text-zinc-100">
+        <h1 className="font-display mt-1 text-3xl font-extrabold tracking-tight text-zinc-100 text-wrap-balance">
           {title}
         </h1>
         {sub ? <p className="mt-1 max-w-xl text-sm text-zinc-400">{sub}</p> : null}

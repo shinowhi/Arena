@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import CharRig from "@/components/CharRig";
+import { XIcon } from "@/components/ui/icons";
 import { SPECIES, type AvatarSpec, type Species } from "@/lib/game/avatar";
 
 export default function AvatarBuilder({
@@ -21,11 +22,11 @@ export default function AvatarBuilder({
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-bold tracking-widest text-red-400 uppercase">Create your hero</p>
-            <h2 className="text-xl font-black">Choose your fighter</h2>
+            <p className="text-xs font-bold tracking-widest text-red-400">Tạo anh hùng</p>
+            <h2 className="text-xl font-black">Chọn chiến binh của bạn</h2>
           </div>
-          <button onClick={onClose} aria-label="Close" className="arena-btn-ghost rounded-full px-3 py-1 text-sm">
-            {"\u2715"}
+          <button onClick={onClose} aria-label="Đóng" className="arena-btn-ghost rounded-full px-3 py-1 text-sm">
+            <XIcon className="h-4 w-4" />
           </button>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-3">
@@ -51,7 +52,7 @@ export default function AvatarBuilder({
           })}
         </div>
         <button onClick={() => onSave({ species })} className="arena-btn-primary mt-4 w-full rounded-full py-2.5 font-bold text-white">
-          Save hero
+          Lưu anh hùng
         </button>
       </div>
     </div>

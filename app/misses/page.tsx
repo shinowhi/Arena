@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
 import MathText from "@/components/MathText";
+import { BulbIcon, CheckIcon } from "@/components/ui/icons";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
 type Item = {
@@ -25,6 +26,7 @@ export default function MissesPage() {
   const [marks, setMarks] = useState<Mark[]>([]);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
+  const [gradeNote, setGradeNote] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -36,8 +38,8 @@ export default function MissesPage() {
     });
     fetch("/api/misses")
       .then(async (r) => {
-        if (!r.ok) throw new Error(await readApiError(r, "Miss queue failed."));
-        return readApiJson<{ items: Item[] }>(r, "Miss queue failed.");
+        if (!r.ok) throw new Error(await readApiError(r, "Không tải được danh sách câu sai."));
+        return readApiJson<{ items: Item[] }>(r, "Không tải được danh sách câu sai.");
       })
       .then((d) => {
         if (!alive) return;
@@ -46,7 +48,7 @@ export default function MissesPage() {
         setMarks(d.items.map(() => "idle" as Mark));
       })
       .catch((e) => {
-        if (alive) setError(e instanceof Error ? e.message : "Miss queue failed.");
+        if (alive) setError(e instanceof Error ? e.message : "Không tải được danh sách câu sai.");
       });
     return () => {
       alive = false;
@@ -59,16 +61,18 @@ export default function MissesPage() {
     const n = Number(answers[i]);
     if ((answers[i] ?? "").trim() === "" || !Number.isFinite(n)) return;
     setMarks((m) => m.map((v, k) => (k === i ? "checking" : v)));
+    setGradeNote("");
     try {
       const r = await fetch("/api/paper/grade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ check: q.check, tolerance: q.tolerance, answer: n }),
       });
-      const d = await readApiJson<{ correct: boolean }>(r, "Grade failed.");
+      const d = await readApiJson<{ correct: boolean }>(r, "Chấm thất bại.");
       setMarks((m) => m.map((v, k) => (k === i ? (d.correct ? "right" : "wrong") : v)));
     } catch {
       setMarks((m) => m.map((v, k) => (k === i ? "idle" : v)));
+      setGradeNote("Chấm thất bại, thử lại nhé.");
     }
   }
 
@@ -77,12 +81,12 @@ export default function MissesPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Second chance"
-        title={<>Miss <span className="arena-title">queue</span></>}
-        sub="The exact questions you missed, lined up for a rematch. Clear them all."
+        kicker="Cơ hội thứ hai"
+        title={<>Hàng đợi <span className="arena-title">câu sai</span></>}
+        sub="Đúng những câu bạn đã làm sai, xếp hàng chờ phục thù. Chữa hết chúng nhé."
         right={
           items ? (
-            <span className="arena-num shrink-0 text-sm text-zinc-400" aria-label={`${cleared} of ${items.length} cleared`}>
+            <span className="arena-num shrink-0 text-sm text-zinc-400 tabular-nums" aria-label={`Đã chữa ${cleared} trên ${items.length} câu`}>
               <span className="font-bold text-emerald-300">{cleared}</span>/{items.length}
             </span>
           ) : undefined
@@ -96,33 +100,36 @@ export default function MissesPage() {
           <button
             type="button"
             onClick={() => setRetry((r) => r + 1)}
-            className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
+            className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white"
           >
-            Retry
+            Thử lại
           </button>
         </div>
       ) : null}
+      {gradeNote ? (
+        <p role="status" className="rounded-2xl border border-amber-500/50 bg-amber-950/40 p-3 text-center text-sm text-amber-200">{gradeNote}</p>
+      ) : null}
       {!items && !error ? (
-        <div className="flex flex-col gap-3" role="status" aria-label="Loading misses">
+        <div className="flex flex-col gap-3" role="status" aria-label="Đang tải câu sai">
           <div className="arena-shimmer h-24 rounded-2xl" />
         </div>
       ) : null}
       {items && items.length === 0 ? (
         <div className="arena-card flex flex-col items-center gap-3 rounded-2xl p-6 text-center">
-          <p className="font-display text-xl font-extrabold text-zinc-100">Queue empty.</p>
-          <p className="text-sm text-zinc-400">No misses on record — fight a boss to fill it.</p>
+          <h2 className="font-display text-xl font-extrabold text-zinc-100">Hàng đợi trống.</h2>
+          <p className="text-sm text-zinc-400">Chưa ghi nhận câu sai nào — đánh boss để lấp đầy nhé.</p>
           <Link href="/arena" className="arena-btn-primary rounded-full px-5 py-2 text-sm font-bold text-white">
-            Find a boss
+            Tìm boss
           </Link>
         </div>
       ) : null}
       {items?.map((q, i) => (
         <div key={`${q.boss_id}:${q.question_index}`} className={`arena-card rounded-2xl p-5 ${marks[i] === "right" ? "border-emerald-700" : marks[i] === "wrong" ? "border-red-800" : ""}`}>
-          <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">
-            {q.skill_name} · <span className="font-bold text-amber-300">Lv {q.level}</span>
+          <p className="text-xs font-bold text-zinc-500">
+            {q.skill_name} — <span className="font-bold text-amber-300">Cấp {q.level}</span>
           </p>
           <MathText text={q.prompt_latex} className="mt-1 overflow-x-auto text-lg text-zinc-100" />
-          <p className="mt-1 text-sm text-zinc-400"><span aria-hidden="true">💡</span> Hint: {q.hint}</p>
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-zinc-400"><BulbIcon className="h-4 w-4 text-amber-300" /> Gợi ý: {q.hint}</p>
           <div className="mt-3 flex gap-2">
             <input
               type="number"
@@ -132,17 +139,17 @@ export default function MissesPage() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") void grade(i);
               }}
-              placeholder="Your numeric answer"
-              aria-label={`Answer for missed question ${i + 1}`}
+              placeholder="Đáp số của bạn"
+              aria-label={`Đáp án câu sai thứ ${i + 1}`}
               disabled={marks[i] === "right"}
               className="arena-input arena-num min-w-0 flex-1 rounded-xl px-4 py-2 text-zinc-100 placeholder:text-zinc-600 disabled:opacity-50"
             />
             <Link
               href={`/tutor?ctx=miss&boss=${encodeURIComponent(q.boss_id)}&idx=${q.question_index}`}
-              aria-label={`Ask the tutor about missed question ${i + 1}`}
-              className="arena-btn-ghost shrink-0 rounded-full px-5 py-2 text-sm font-bold text-zinc-200"
+              aria-label={`Hỏi gia sư về câu sai thứ ${i + 1}`}
+              className="arena-btn-ghost shrink-0 rounded-full px-5 py-2 text-sm font-bold text-zinc-200 transition-colors hover:text-white"
             >
-              Ask tutor
+              Hỏi gia sư
             </Link>
             <button
               type="button"
@@ -150,16 +157,16 @@ export default function MissesPage() {
               disabled={marks[i] === "checking" || marks[i] === "right"}
               aria-label={
                 marks[i] === "checking"
-                  ? `Checking answer ${i + 1}`
+                  ? `Đang chấm câu ${i + 1}`
                   : marks[i] === "right"
-                    ? `Question ${i + 1} cleared`
+                    ? `Câu ${i + 1} đã chữa xong`
                     : marks[i] === "wrong"
-                      ? `Question ${i + 1} incorrect, retry`
-                      : `Check answer ${i + 1}`
+                      ? `Câu ${i + 1} sai, thử lại`
+                      : `Chấm câu ${i + 1}`
               }
-              className="arena-btn-primary shrink-0 rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
+              className="arena-btn-primary inline-flex shrink-0 items-center gap-1 rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
             >
-              {marks[i] === "checking" ? "…" : marks[i] === "right" ? "Cleared ✓" : marks[i] === "wrong" ? "Retry" : "Check"}
+              {marks[i] === "checking" ? "Đang chấm…" : marks[i] === "right" ? <><CheckIcon className="h-4 w-4" label="Đã xong" /> Đã chữa</> : marks[i] === "wrong" ? "Thử lại" : "Chấm"}
             </button>
           </div>
         </div>

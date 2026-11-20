@@ -9,19 +9,19 @@ import AuthNavButton from "@/components/auth/AuthNavButton";
 // Rendered once in app/layout.tsx so every page has navigation —
 // new players reach Friends without a home round-trip.
 const TABS = [
-  { href: "/", label: "Home", Icon: HomeIcon },
-  { href: "/scan", label: "Scan", Icon: ScanIcon },
-  { href: "/arena", label: "Arena", Icon: ArenaIcon },
-  { href: "/friends", label: "Friends", Icon: FriendsIcon },
-  { href: "/chat", label: "Chat", Icon: ChatIcon },
+  { href: "/", label: "Trang chủ", Icon: HomeIcon },
+  { href: "/scan", label: "Quét bài", Icon: ScanIcon },
+  { href: "/arena", label: "Đấu trường", Icon: ArenaIcon },
+  { href: "/friends", label: "Bạn bè", Icon: FriendsIcon },
+  { href: "/chat", label: "Nhắn tin", Icon: ChatIcon },
 ];
 
 const NAV = [
-  { href: "/scan", label: "Scan" },
-  { href: "/arena", label: "Arena" },
-  { href: "/graph", label: "Skills" },
-  { href: "/friends", label: "Friends" },
-  { href: "/chat", label: "Chat" },
+  { href: "/scan", label: "Quét bài" },
+  { href: "/arena", label: "Đấu trường" },
+  { href: "/graph", label: "Kỹ năng" },
+  { href: "/friends", label: "Bạn bè" },
+  { href: "/chat", label: "Nhắn tin" },
 ];
 
 function isActive(path: string, href: string): boolean {
@@ -37,14 +37,14 @@ export function SiteHeader() {
   if (path === "/") return null; // Home renders its own hero header.
   return (
     <header className="mx-auto flex w-full max-w-5xl items-center gap-2 px-4 py-4 text-base">
-      <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="BossLearn home">
+      <Link href="/" className="flex shrink-0 items-center gap-2" aria-label="Trang chủ BossLearn">
         <span
           aria-hidden="true"
           className="inline-block h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]"
         />
-        <span className="text-lg font-black tracking-wide">BOSSLEARN</span>
+        <span translate="no" className="text-lg font-black tracking-wide">BOSSLEARN</span>
       </Link>
-      <nav className="ml-auto hidden gap-5 whitespace-nowrap text-zinc-400 md:flex" aria-label="Primary">
+      <nav className="ml-auto hidden gap-5 whitespace-nowrap text-zinc-400 md:flex" aria-label="Chính">
         {NAV.map((n) => {
           const active = isActive(path, n.href);
           return (
@@ -58,14 +58,14 @@ export function SiteHeader() {
             </Link>
           );
         })}
-        <AuthNavButton loginLabel="Log in" accountLabel="Account" className="transition-colors hover:text-white" />
+        <AuthNavButton loginLabel="Đăng nhập" accountLabel="Tài khoản" className="transition-colors hover:text-white" />
       </nav>
-      <AuthNavButton loginLabel="Log in" accountLabel="Account" className="ml-auto whitespace-nowrap text-zinc-400 md:hidden" />
+      <AuthNavButton loginLabel="Đăng nhập" accountLabel="Tài khoản" className="ml-auto whitespace-nowrap text-zinc-400 transition-colors hover:text-white md:hidden" />
       <Link
         href="/scan"
         className="arena-btn-primary rounded-full px-4 py-1.5 font-semibold text-white md:hidden"
       >
-        + Scan
+        + Quét
       </Link>
     </header>
   );
@@ -77,7 +77,7 @@ export function TabBar() {
     <>
       <div aria-hidden="true" className="h-16 md:hidden" />
       <nav
-        aria-label="Primary"
+        aria-label="Chính"
         className="arena-tabbar fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/90 backdrop-blur md:hidden"
       >
         <ul className="mx-auto grid max-w-md grid-cols-5">

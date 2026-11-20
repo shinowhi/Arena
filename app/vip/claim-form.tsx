@@ -24,14 +24,14 @@ export default function ClaimForm() {
       });
       const d = (await res.json().catch(() => null)) as { vip_until?: string; error?: string } | null;
       if (!res.ok || !d?.vip_until) {
-        setMsg({ ok: false, text: d?.error ?? "Claim failed — retry." });
+        setMsg({ ok: false, text: d?.error ?? "Nhận mã thất bại — thử lại." });
       } else {
         setCode("");
-        setMsg({ ok: true, text: `VIP active until ${new Date(d.vip_until).toLocaleDateString()}.` });
+        setMsg({ ok: true, text: `VIP đến ${new Date(d.vip_until).toLocaleDateString("vi-VN")}.` });
         router.refresh();
       }
     } catch {
-      setMsg({ ok: false, text: "Claim failed — retry." });
+      setMsg({ ok: false, text: "Nhận mã thất bại — thử lại." });
     } finally {
       setBusy(false);
     }
@@ -40,13 +40,13 @@ export default function ClaimForm() {
   return (
     <form onSubmit={submit} className="mt-4 flex flex-col gap-2 sm:flex-row">
       <label htmlFor="vip-code" className="sr-only">
-        VIP code
+        Mã VIP
       </label>
       <input
         id="vip-code"
         value={code}
         onChange={(e) => setCode(e.target.value)}
-        placeholder="Enter your VIP code"
+        placeholder="Nhập mã VIP của bạn"
         autoComplete="off"
         maxLength={32}
         className="flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600"
@@ -56,7 +56,7 @@ export default function ClaimForm() {
         disabled={busy}
         className="rounded-lg bg-amber-500 px-5 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
       >
-        {busy ? "Claiming…" : "Claim VIP"}
+        {busy ? "Đang nhận…" : "Nhận VIP"}
       </button>
       {msg && (
         <p role="status" className={`text-sm ${msg.ok ? "text-emerald-300" : "text-red-400"}`}>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
+import { CheckIcon } from "@/components/ui/icons";
 
 type Entry = {
   skill: string;
@@ -16,7 +17,7 @@ function shortDate(iso: string): string {
   const d = new Date(iso);
   return Number.isNaN(d.getTime())
     ? iso.slice(0, 10)
-    : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    : d.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric" });
 }
 
 export default function DiaryPage() {
@@ -36,14 +37,14 @@ export default function DiaryPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Root diary"
-        title="Every root you patched"
-        sub="Your battle history, skill by skill."
+        kicker="Nhật ký gốc"
+        title="Mọi gốc rễ bạn đã vá"
+        sub="Lịch sử trận đánh của bạn, theo từng kỹ năng."
       />
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
-      {!entries && !error ? <p className="text-zinc-500">Opening your diary…</p> : null}
+      {error ? <p role="alert" className="text-sm text-red-400">{error}</p> : null}
+      {!entries && !error ? <p className="text-zinc-500">Đang mở nhật ký…</p> : null}
       {entries && entries.length === 0 ? (
-        <p className="text-zinc-500">No battles yet. Slay your first boss and it lands here.</p>
+        <p className="text-zinc-500">Chưa đánh trận nào. Hạ boss đầu tiên, trận đó sẽ nằm ở đây.</p>
       ) : null}
       {entries && entries.length > 0 ? (
         <ol className="flex flex-col gap-3">
@@ -54,16 +55,16 @@ export default function DiaryPage() {
                   e.patched ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"
                 }`}
               >
-                {e.patched ? "✓" : "…"}
+                {e.patched ? <CheckIcon className="h-4 w-4" /> : <span aria-hidden="true" className="h-2 w-2 rounded-full bg-current" />}
               </span>
               <div>
-                <p className="font-semibold text-zinc-100">{e.name}</p>
-                <p className="text-sm text-zinc-400">
+                <h2 className="font-semibold text-zinc-100">{e.name}</h2>
+                <p className="text-sm tabular-nums text-zinc-400">
                   {e.patched && e.slainAt
-                    ? `${shortDate(e.slainAt)}: slew it ${
-                        e.fails > 0 ? `after ${e.fails} ${e.fails === 1 ? "fail" : "fails"}` : "flawless — first try!"
+                    ? `${shortDate(e.slainAt)}: hạ được ${
+                        e.fails > 0 ? `sau ${e.fails} lần trượt` : "ngay lần đầu — không trượt phát nào!"
                       }`
-                    : `Still fighting — ${e.hits} ${e.hits === 1 ? "hit" : "hits"} so far.`}
+                    : `Đang đánh — đã trúng ${e.hits} đòn.`}
                 </p>
               </div>
             </li>
@@ -71,11 +72,11 @@ export default function DiaryPage() {
         </ol>
       ) : null}
       <nav className="flex gap-4 text-sm">
-        <Link href="/streak" className="underline text-zinc-300">
-          Your streak
+        <Link href="/streak" className="underline text-zinc-300 hover:text-white">
+          Chuỗi của bạn
         </Link>
-        <Link href="/scan" className="underline text-zinc-300">
-          Scan new work
+        <Link href="/scan" className="underline text-zinc-300 hover:text-white">
+          Quét bài mới
         </Link>
       </nav>
     </main>

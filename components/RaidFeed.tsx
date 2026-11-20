@@ -11,8 +11,8 @@ type Hit = {
 
 function ago(iso: string, now: number): string {
   const s = Math.max(0, Math.floor((now - new Date(iso).getTime()) / 1000));
-  if (s < 60) return s + "s ago";
-  return Math.floor(s / 60) + "m ago";
+  if (s < 60) return s + " giây trước";
+  return Math.floor(s / 60) + " phút trước";
 }
 
 // Live raid feed for a shared boss. Hidden until migration 0004 is run.
@@ -59,7 +59,7 @@ export default function RaidFeed({ bossId }: { bossId: string }) {
     try {
       await navigator.clipboard.writeText(link);
     } catch {
-      window.prompt("Copy your raid link:", link);
+      window.prompt("Chép link raid của bạn:", link);
       return;
     }
     setCopied(true);
@@ -70,21 +70,21 @@ export default function RaidFeed({ bossId }: { bossId: string }) {
   return (
     <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-bold tracking-widest text-orange-300 uppercase">Raid feed</p>
-        <button onClick={copyRaid} className="rounded-full border border-zinc-700 px-3 py-1 text-xs font-semibold text-zinc-200">
-          {copied ? "Link copied!" : "Copy raid link"}
+        <h2 className="text-xs font-bold tracking-widest text-orange-300">Nhật ký raid</h2>
+        <button onClick={copyRaid} className="rounded-full border border-zinc-700 px-3 py-1 text-xs font-semibold text-zinc-200 transition-colors hover:bg-zinc-800">
+          {copied ? "Đã chép link!" : "Chép link raid"}
         </button>
       </div>
       {hits.length === 0 ? (
-        <p className="mt-2 text-sm text-zinc-500">No slashes yet — land the first hit.</p>
+        <p className="mt-2 text-sm text-zinc-500">Chưa có đòn nào — hãy ra đòn đầu tiên.</p>
       ) : (
         <ul className="mt-2 flex max-h-44 flex-col gap-1 overflow-y-auto text-sm">
           {hits.map((h, i) => (
             <li key={h.created_at + i} className="text-zinc-300">
               <span className="font-semibold text-zinc-100">
-                {h.player_id === me ? "You" : (h.players?.display_name ?? "Hunter #" + h.player_id.slice(0, 4))}
+                {h.player_id === me ? "Bạn" : (h.players?.display_name ?? "Thợ săn #" + h.player_id.slice(0, 4))}
               </span>{" "}
-              slashed {h.damage} HP <span className="text-zinc-500">· {ago(h.created_at, now)}</span>
+              chém {h.damage} HP <span className="text-zinc-500 tabular-nums">— {ago(h.created_at, now)}</span>
             </li>
           ))}
         </ul>

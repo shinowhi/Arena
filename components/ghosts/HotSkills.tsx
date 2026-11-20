@@ -7,7 +7,7 @@ export type HotSkill = { tag: string; name: string; count: number };
 export default function HotSkills({ skills }: { skills: HotSkill[] }) {
   return (
     <section aria-label="Kỹ năng đang nóng" className="arena-card rounded-2xl p-4">
-      <p className="text-sm font-semibold text-zinc-300">Đang nóng</p>
+      <h2 className="text-sm font-semibold text-zinc-300">Đang nóng</h2>
       {skills.length === 0 ? (
         <p className="mt-1 text-sm text-zinc-500">Chưa có kỹ năng nào nóng — bạn đốt lửa nhé.</p>
       ) : (
@@ -22,7 +22,7 @@ export default function HotSkills({ skills }: { skills: HotSkill[] }) {
                   {s.name}
                 </span>
                 <span className="block text-xs text-zinc-500 tabular-nums">
-                  {s.count} lượt giải · 15 phút
+                  {s.count} lượt giải — 15 phút qua
                 </span>
               </span>
               <span className="flex shrink-0 gap-2 text-xs">

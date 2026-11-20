@@ -10,21 +10,21 @@ export default function BossIntro({ name, onSkip }: { name: string; onSkip: () =
 @keyframes bintro-fadein { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
 .bintro-fadein { animation: bintro-fadein 0.5s ease-out 0.4s both; }
 @media (prefers-reduced-motion: reduce) { .bintro-backdrop, .bintro-slam, .bintro-fadein { animation: none; } }`}</style>
-      <p className="bintro-fadein text-xs font-bold tracking-widest text-red-400 uppercase">
-        Boss battle
+      <p className="bintro-fadein text-xs font-bold tracking-widest text-red-400">
+        Đánh boss
       </p>
       <h2 className="bintro-slam text-4xl font-black tracking-tight text-zinc-100 sm:text-5xl">
         {name}
       </h2>
       <p className="bintro-fadein max-w-sm text-sm text-zinc-400">
-        Five questions stand between you and glory. Answer them all to slay this boss.
+        5 câu hỏi ngăn bạn đến vinh quang. Trả lời đúng hết để hạ boss này.
       </p>
       <button
         type="button"
         onClick={onSkip}
         className="bintro-fadein mt-2 rounded-full border border-zinc-700 px-5 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-800"
       >
-        Enter the fight
+        Vào trận
       </button>
     </div>
   );

@@ -101,10 +101,10 @@ export default function GhostsPage() {
             <p className="font-display arena-num text-5xl font-black text-zinc-100">{total}</p>
             <p className="mt-1 text-sm text-zinc-400">
               {data.youTonight ? (
-                <>Bạn đang là 1 trong {total} ghost</>
+                <>Bạn là 1 trong {total} ma đang cày</>
               ) : (
                 <>
-                  {data.ghosts} ghost đang cày trong 15 phút qua
+                  {data.ghosts} ma đang cày trong 15 phút qua
                 </>
               )}
             </p>
@@ -125,7 +125,7 @@ export default function GhostsPage() {
               aria-valuemax={100}
             >
               <div
-                className="h-full bg-sky-500 transition-all motion-reduce:transition-none"
+                className="h-full bg-sky-500 transition-[width] motion-reduce:transition-none"
                 style={{ width: `${pct}%` }}
               />
             </div>

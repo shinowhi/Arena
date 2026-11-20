@@ -5,6 +5,7 @@ import Link from "next/link";
 import graph from "@/lib/graph/skill-graph.json";
 import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
+import { PauseIcon, PlayIcon } from "@/components/ui/icons";
 
 type Week = { week: string; skills: Record<string, "red" | "green"> };
 type Timeline = { ready: boolean; timeline?: Week[] };
@@ -42,6 +43,21 @@ export default function ProgressPage() {
   useEffect(() => {
     if (!playing || !data?.timeline?.length) return;
     const len = data.timeline.length;
+    // Reduced motion: skip the animated replay and show the final week at once.
+    try {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        const last = len - 1;
+        idxRef.current = last;
+        // Microtask keeps the no-sync-setState lint rule happy.
+        queueMicrotask(() => {
+          setIdx(last);
+          setPlaying(false);
+        });
+        return;
+      }
+    } catch {
+      // matchMedia unavailable: fall through to the animated replay.
+    }
     timer.current = setInterval(() => {
       const n = Math.min(idxRef.current + 1, len - 1);
       idxRef.current = n;
@@ -59,17 +75,24 @@ export default function ProgressPage() {
   if (failed)
     return (
       <main className="mx-auto max-w-2xl p-6 text-center">
-        <p className="arena-kicker">Progress</p>
-        <h1 className="font-display mt-1 text-2xl font-extrabold">Your healing story</h1>
-        <p className="mt-4 text-zinc-400">Could not load progress. Try again later.</p>
+        <p className="arena-kicker">Tiến độ</p>
+        <h1 className="font-display mt-1 text-2xl font-extrabold">Hành trình hồi phục</h1>
+        <p role="alert" className="mt-4 text-zinc-400">Không tải được tiến độ. Kiểm tra mạng rồi thử lại nhé.</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="arena-btn-ghost mt-4 rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
+        >
+          Thử lại
+        </button>
       </main>
     );
   if (!data)
     return (
       <main className="mx-auto max-w-2xl p-6 text-center">
-        <p className="arena-kicker">Progress</p>
-        <h1 className="font-display mt-1 text-2xl font-extrabold">Your healing story</h1>
-        <div className="mx-auto mt-6 grid max-w-md grid-cols-9 gap-2" aria-label="Loading your time-lapse">
+        <p className="arena-kicker">Tiến độ</p>
+        <h1 className="font-display mt-1 text-2xl font-extrabold">Hành trình hồi phục</h1>
+        <div className="mx-auto mt-6 grid max-w-md grid-cols-9 gap-2" aria-label="Đang tải hành trình của bạn">
           {Array.from({ length: 18 }).map((_, i) => (
             <div key={i} className="arena-shimmer aspect-square rounded-lg" />
           ))}
@@ -80,15 +103,15 @@ export default function ProgressPage() {
     return (
       <main className="mx-auto max-w-2xl p-6">
         <PageHeader
-          kicker="Progress"
-          title="Your healing story"
-          sub="Every scan adds a week to your time-lapse."
+          kicker="Tiến độ"
+          title="Hành trình hồi phục"
+          sub="Mỗi lần quét thêm một tuần vào hành trình của bạn."
         />
         <div className="mt-6">
           <EmptyState
-            title="Your story starts here."
-            body="Keep scanning — every scan adds a week to your time-lapse."
-            actionLabel="Scan your first exam"
+            title="Hành trình bắt đầu từ đây."
+            body="Chăm quét bài nhé — mỗi lần quét thêm một tuần vào hành trình."
+            actionLabel="Quét bài đầu tiên"
             actionHref="/scan"
           />
         </div>
@@ -100,9 +123,9 @@ export default function ProgressPage() {
   return (
     <main className="mx-auto max-w-2xl p-6">
       <PageHeader
-        kicker="Progress"
-        title="Your healing story"
-        sub={`Week of ${cur.week} · ${idx + 1} of ${weeks.length}`}
+        kicker="Tiến độ"
+        title="Hành trình hồi phục"
+        sub={`Tuần ${cur.week} — ${idx + 1}/${weeks.length}`}
       />
       <div className="arena-card mt-4 flex items-center gap-3 rounded-2xl p-3">
         <button
@@ -115,17 +138,18 @@ export default function ProgressPage() {
               setPlaying(true);
             }
           }}
-          aria-label={playing ? "Pause replay" : "Replay healing story"}
-          className="arena-btn-primary shrink-0 rounded-full px-5 py-2 text-sm font-bold text-white"
+          aria-label={playing ? "Tạm dừng" : "Xem lại hành trình hồi phục"}
+          className="arena-btn-primary inline-flex shrink-0 items-center gap-2 rounded-full px-5 py-2 text-sm font-bold text-white"
         >
-          {playing ? "❚❚ Pause" : "▶ Replay"}
+          {playing ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
+          {playing ? "Tạm dừng" : "Xem lại"}
         </button>
         <input
           type="range"
           min={0}
           max={weeks.length - 1}
           value={idx}
-          aria-label="Week"
+          aria-label="Tuần"
           onChange={(e) => {
             setPlaying(false);
             idxRef.current = Number(e.target.value);
@@ -138,17 +162,17 @@ export default function ProgressPage() {
         {SKILLS.map((s) => {
           const st = cur.skills[s.id] ?? "gray";
           return (
-            <div key={s.id} title={s.name} className={`aspect-square rounded-lg transition-transform hover:scale-110 ${DOT[st]}`} />
+            <div key={s.id} title={s.name} className={`aspect-square rounded-lg transition-transform motion-safe:hover:scale-110 motion-reduce:transition-none ${DOT[st]}`} />
           );
         })}
       </div>
       <div className="mt-4 flex justify-center gap-6 text-sm text-zinc-400">
-        <span><span className="mr-1 inline-block h-3 w-3 rounded bg-red-500" />Weak</span>
-        <span><span className="mr-1 inline-block h-3 w-3 rounded bg-emerald-400" />Healed</span>
-        <span><span className="mr-1 inline-block h-3 w-3 rounded bg-zinc-700" />Unknown</span>
+        <span><span className="mr-1 inline-block h-3 w-3 rounded bg-red-500" />Yếu</span>
+        <span><span className="mr-1 inline-block h-3 w-3 rounded bg-emerald-400" />Đã chữa</span>
+        <span><span className="mr-1 inline-block h-3 w-3 rounded bg-zinc-700" />Chưa rõ</span>
       </div>
       <div className="mt-6 text-center">
-        <Link href="/graph" className="arena-btn-ghost inline-block rounded-full px-5 py-2 text-sm font-medium text-zinc-200">Open full skill tree</Link>
+        <Link href="/graph" className="arena-btn-ghost inline-block rounded-full px-5 py-2 text-sm font-medium text-zinc-200">Mở cây kỹ năng</Link>
       </div>
     </main>
   );

@@ -45,10 +45,10 @@ type VipCode = {
 function Shell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
-      <p className="text-xs font-bold uppercase tracking-widest text-amber-400">Admin</p>
+      <p className="text-xs font-bold tracking-widest text-amber-400">Quản trị</p>
       <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">{title}</h1>
-      <a href="/admin/billing" className="mt-2 inline-block text-sm text-amber-400 underline">Billing desk</a>
-      <a href="/admin/centers" className="mt-2 ml-4 inline-block text-sm text-amber-400 underline">Centers</a>
+      <a href="/admin/billing" className="mt-2 inline-block text-sm text-amber-400 underline hover:text-amber-300">Quầy thanh toán</a>
+      <a href="/admin/centers" className="mt-2 ml-4 inline-block text-sm text-amber-400 underline hover:text-amber-300">Trung tâm</a>
       <div className="mt-6">{children}</div>
     </main>
   );
@@ -121,7 +121,7 @@ async function AdminBody({ searchParams }: { searchParams: Promise<{ err?: strin
         className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"
       >
         <label className="block text-xs text-zinc-400">
-          Admin key
+          Khóa quản trị
           <input
             type="password"
             name="key"
@@ -129,12 +129,12 @@ async function AdminBody({ searchParams }: { searchParams: Promise<{ err?: strin
             className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
           />
         </label>
-        {err && <p className="mt-2 text-sm text-red-400">Wrong key — try again.</p>}
+        {err && <p role="alert" className="mt-2 text-sm text-red-400">Sai khóa — thử lại.</p>}
         <button
           type="submit"
           className="mt-4 rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400"
         >
-          Unlock
+          Mở khóa
         </button>
       </form>
     );
@@ -146,17 +146,17 @@ async function AdminBody({ searchParams }: { searchParams: Promise<{ err?: strin
     <>
       {missing && (
         <p className="rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
-          No funnel data yet — run migration supabase/migrations/0011_funnel.sql in Supabase, then
-          events will appear here.
+          Chưa có dữ liệu phễu — chạy migration supabase/migrations/0011_funnel.sql trong Supabase,
+          sự kiện sẽ hiện ở đây.
         </p>
       )}
 
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Events (7d / 30d)</p>
+        <h2 className="text-sm font-semibold text-zinc-200">Sự kiện (7 ngày / 30 ngày)</h2>
         <table className="mt-3 w-full text-sm">
           <thead>
             <tr className="text-left text-xs text-zinc-500">
-              <th className="py-1 font-semibold">Event</th>
+              <th className="py-1 font-semibold">Sự kiện</th>
               <th className="py-1 text-right font-semibold">7d</th>
               <th className="py-1 text-right font-semibold">30d</th>
             </tr>
@@ -174,7 +174,7 @@ async function AdminBody({ searchParams }: { searchParams: Promise<{ err?: strin
       </section>
 
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Funnel conversion (30d)</p>
+        <h2 className="text-sm font-semibold text-zinc-200">Tỉ lệ chuyển đổi phễu (30 ngày)</h2>
         <ol className="mt-3 space-y-1.5 text-sm">
           {FUNNEL.map((e, i) => {
             const n = c30.get(e) ?? 0;
@@ -187,7 +187,7 @@ async function AdminBody({ searchParams }: { searchParams: Promise<{ err?: strin
                 </span>
                 <span className="tabular-nums">
                   {n}
-                  {pct !== null && <span className="ml-2 text-xs text-zinc-500">{pct} of previous</span>}
+                  {pct !== null && <span className="ml-2 text-xs text-zinc-500">{pct} so với bước trước</span>}
                 </span>
               </li>
             );
@@ -196,18 +196,18 @@ async function AdminBody({ searchParams }: { searchParams: Promise<{ err?: strin
       </section>
 
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Recent events (50)</p>
+        <h2 className="text-sm font-semibold text-zinc-200">Sự kiện gần đây (50)</h2>
         {recent.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-500">Nothing logged yet.</p>
+          <p className="mt-2 text-sm text-zinc-500">Chưa ghi nhận gì.</p>
         ) : (
           <div className="mt-3 max-h-96 overflow-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-left text-zinc-500">
-                  <th className="py-1 font-semibold">Time</th>
-                  <th className="py-1 font-semibold">Event</th>
-                  <th className="py-1 font-semibold">Player</th>
-                  <th className="py-1 font-semibold">Meta</th>
+                  <th className="py-1 font-semibold">Thời gian</th>
+                  <th className="py-1 font-semibold">Sự kiện</th>
+                  <th className="py-1 font-semibold">Người chơi</th>
+                  <th className="py-1 font-semibold">Dữ liệu</th>
                 </tr>
               </thead>
               <tbody>
@@ -230,21 +230,21 @@ async function AdminBody({ searchParams }: { searchParams: Promise<{ err?: strin
       </section>
 
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">VIP codes</p>
+        <h2 className="text-sm font-semibold text-zinc-200">Mã VIP</h2>
         {vipMissing ? (
           <p className="mt-2 text-sm text-amber-200">
-            No VIP data yet — run migration supabase/migrations/0012_vip.sql in Supabase.
+            Chưa có dữ liệu VIP — chạy migration supabase/migrations/0012_vip.sql trong Supabase.
           </p>
         ) : codes.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-500">No codes yet — create one below.</p>
+          <p className="mt-2 text-sm text-zinc-500">Chưa có mã nào — tạo ở dưới.</p>
         ) : (
           <table className="mt-3 w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-zinc-500">
-                <th className="py-1 font-semibold">Code</th>
-                <th className="py-1 text-right font-semibold">Used</th>
-                <th className="py-1 text-right font-semibold">Expires</th>
-                <th className="py-1 font-semibold">Note</th>
+                <th className="py-1 font-semibold">Mã</th>
+                <th className="py-1 text-right font-semibold">Đã dùng</th>
+                <th className="py-1 text-right font-semibold">Hết hạn</th>
+                <th className="py-1 font-semibold">Ghi chú</th>
               </tr>
             </thead>
             <tbody>
@@ -276,16 +276,16 @@ export default function AdminPage({
 }) {
   if (!process.env.ADMIN_SECRET) {
     return (
-      <Shell title="Funnel dashboard">
+      <Shell title="Bảng điều khiển phễu">
         <p className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
-          Admin is not configured — set ADMIN_SECRET on the server first.
+          Chưa cấu hình quản trị — cần đặt ADMIN_SECRET trên máy chủ trước.
         </p>
       </Shell>
     );
   }
   return (
-    <Shell title="Funnel dashboard">
-      <Suspense fallback={<p className="text-sm text-zinc-500">Loading dashboard…</p>}>
+    <Shell title="Bảng điều khiển phễu">
+      <Suspense fallback={<p className="text-sm text-zinc-500">Đang tải bảng điều khiển…</p>}>
         <AdminBody searchParams={searchParams} />
       </Suspense>
     </Shell>

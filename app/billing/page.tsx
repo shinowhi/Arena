@@ -33,35 +33,35 @@ async function GateNote() {
 export default function BillingPage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
-      <p className="text-xs font-bold uppercase tracking-widest text-amber-400">Billing</p>
-      <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">Packs &amp; payment</h1>
+      <p className="text-xs font-bold tracking-widest text-amber-400">Thanh toán</p>
+      <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">Gói &amp; thanh toán</h1>
       <p className="mt-2 text-sm text-zinc-400">
-        Your first 3 gap fixes are free. After that, pick a pack, transfer by bank with your memo,
-        and your pack activates after the admin confirms payment — usually within 24h.
+        3 lần vá lỗ hổng đầu tiên miễn phí. Sau đó, bạn chọn gói, chuyển khoản kèm mã đơn,
+        và gói sẽ mở sau khi quản trị xác nhận — thường trong 24 giờ.
       </p>
 
-      <Suspense fallback={<p className="mt-6 text-sm text-zinc-500">Loading your status…</p>}>
+      <Suspense fallback={<p className="mt-6 text-sm text-zinc-500">Đang tải trạng thái…</p>}>
         <GateNote />
       </Suspense>
 
       <div className="mt-6">
-        <Suspense fallback={<p className="text-sm text-zinc-500">Loading billing…</p>}>
+        <Suspense fallback={<p className="text-sm text-zinc-500">Đang tải thanh toán…</p>}>
           <BillingClient />
         </Suspense>
       </div>
 
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">How manual payment works</p>
+        <h2 className="text-sm font-semibold text-zinc-200">Thanh toán thủ công thế nào</h2>
         <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-zinc-400">
-          <li>Create an order above and copy your memo (e.g. ARENA-X7KQ2P).</li>
-          <li>Transfer the exact amount with the memo in the transfer note.</li>
-          <li>Your pack unlocks after the admin confirms payment, usually within 24h.</li>
+          <li>Tạo đơn ở trên và chép mã đơn của bạn (vd. ARENA-X7KQ2P).</li>
+          <li>Chuyển đúng số tiền, ghi mã đơn vào nội dung chuyển khoản.</li>
+          <li>Gói sẽ mở sau khi quản trị xác nhận thanh toán, thường trong 24 giờ.</li>
         </ol>
         <p className="mt-3 text-xs text-zinc-500">
-          Changed your mind? Refunds are available within {REFUND_DAYS} days of your first purchase
-          — contact support with your memo. Have a VIP code instead?{" "}
+          Đổi ý? Bạn được hoàn tiền trong {REFUND_DAYS} ngày từ lần mua đầu —
+          liên hệ hỗ trợ kèm mã đơn. Có mã VIP?{" "}
           <Link href="/vip" className="underline hover:text-zinc-300">
-            Claim it here
+            Nhận tại đây
           </Link>
           .
         </p>

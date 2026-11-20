@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
+import { CheckIcon, GiftIcon } from "@/components/ui/icons";
 
 interface WeakEntry {
   tag: string;
@@ -52,14 +53,14 @@ export default function RoadmapPage() {
         const data = (await res.json().catch(() => null)) as { weak?: WeakEntry[]; error?: string } | null;
         if (!alive) return;
         if (!res.ok || !data || !Array.isArray(data.weak)) {
-          throw new Error(data?.error ?? "Could not load your plan.");
+          throw new Error(data?.error ?? "Không tải được lộ trình.");
         }
         setWeak(data.weak);
         setChecks(loadChecks());
         setLoaded(true);
       } catch (e) {
         if (alive) {
-          setError(e instanceof Error ? e.message : "Could not load your plan.");
+          setError(e instanceof Error ? e.message : "Không tải được lộ trình.");
           setLoaded(true);
         }
       }
@@ -95,10 +96,10 @@ export default function RoadmapPage() {
         body: JSON.stringify({ skill_tag: tag }),
       });
       const data = (await res.json().catch(() => null)) as { boss_id?: string; error?: string } | null;
-      if (!res.ok || !data?.boss_id) throw new Error(data?.error ?? "Summon failed.");
+      if (!res.ok || !data?.boss_id) throw new Error(data?.error ?? "Gọi boss thất bại.");
       router.push(`/boss/${data.boss_id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Summon failed.");
+      setError(e instanceof Error ? e.message : "Gọi boss thất bại.");
       setSummoning("");
     }
   }
@@ -117,35 +118,36 @@ export default function RoadmapPage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
       <PageHeader
-        kicker="30-day plan"
-        title="Roadmap"
-        sub="Built from your scan history, weakest skill first. Fight one focus a day, check it off, and watch the list shrink."
+        kicker="Kế hoạch 30 ngày"
+        title="Lộ trình"
+        sub="Dựng từ lịch sử quét bài của bạn, kỹ năng yếu nhất trước. Mỗi ngày đánh một mục tiêu, đánh dấu xong, rồi xem danh sách ngắn lại."
       />
 
       {loaded && focusList.length === 0 && !error && (
         <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 text-center">
-          <p className="text-zinc-200">No weak skills yet — the roadmap needs data first.</p>
+          <p className="text-zinc-200">Chưa có kỹ năng yếu nào — lộ trình cần dữ liệu trước.</p>
           <Link
             href="/scan"
             className="mt-3 inline-block rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400"
           >
-            Scan homework to begin
+            Quét bài tập để bắt đầu
           </Link>
         </div>
       )}
 
-      {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
+      {error && <p role="alert" className="mt-4 text-sm text-red-400">{error}</p>}
 
       {loaded && todayMs > 0 && focusList.length > 0 && (
         <>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-            <span className={`rounded-full px-3 py-1 font-semibold ${todayDone ? "bg-emerald-500/20 text-emerald-300" : "bg-zinc-800 text-zinc-300"}`}>
-              {todayDone ? "✓ Today checked — streak protected" : "○ Today not checked yet"}
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-semibold ${todayDone ? "bg-emerald-500/20 text-emerald-300" : "bg-zinc-800 text-zinc-300"}`}>
+              {todayDone ? <><CheckIcon className="h-4 w-4" /> Hôm nay đã đánh dấu — chuỗi an toàn</> : "Hôm nay chưa đánh dấu"}
             </span>
-            <span className="text-zinc-400">
-              {checkedCount}/{DAYS} days checked · {open.length} open weakness{open.length === 1 ? "" : "es"}
-              {open.length === 0 && " — review mode 🎉"}
+            <span className="text-zinc-400 tabular-nums">
+              {checkedCount}/{DAYS} ngày đã đánh dấu — {open.length} điểm yếu
+              {open.length === 0 && " — chế độ ôn lại"}
             </span>
+            {open.length === 0 && <GiftIcon className="h-4 w-4 text-amber-300" />}
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -159,30 +161,32 @@ export default function RoadmapPage() {
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-bold text-zinc-400">
-                      {i === 0 ? "Today" : d.date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      {i === 0 ? "Hôm nay" : d.date.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric" })}
                     </p>
                     <button
                       onClick={() => toggleCheck(d.key)}
-                      title={done ? "Uncheck" : "Check in"}
+                      title={done ? "Bỏ đánh dấu" : "Đánh dấu"}
+                      aria-label={done ? "Bỏ đánh dấu ngày" : "Đánh dấu ngày"}
+                      aria-pressed={done}
                       className={`flex h-6 w-6 items-center justify-center rounded-full border text-sm ${done ? "border-emerald-500 bg-emerald-500/20 text-emerald-300" : "border-zinc-700 text-zinc-600 hover:border-zinc-500"}`}
                     >
-                      {done ? "✓" : ""}
+                      {done ? <CheckIcon className="h-3.5 w-3.5" /> : ""}
                     </button>
                   </div>
                   {d.focus && (
                     <>
                       <p className="mt-2 min-h-8 text-sm font-semibold text-zinc-100">
-                        {d.focus.healed ? "↻ " : ""}{d.focus.name}
+                        {d.focus.name}
                       </p>
-                      <p className="text-xs text-zinc-500">
-                        {d.focus.healed ? "review" : `${d.focus.misses} miss${d.focus.misses === 1 ? "" : "es"}`}
+                      <p className="text-xs tabular-nums text-zinc-500">
+                        {d.focus.healed ? "ôn lại" : `${d.focus.misses} câu sai`}
                       </p>
                       <button
                         onClick={() => void summon(d.focus!.tag)}
                         disabled={summoning !== ""}
                         className="mt-2 w-full rounded-lg bg-red-600/80 px-2 py-1 text-xs font-bold text-white hover:bg-red-500 disabled:opacity-50"
                       >
-                        {summoning === d.focus.tag ? "Summoning…" : "⚔ Fight"}
+                        {summoning === d.focus.tag ? "Đang gọi…" : "Đánh"}
                       </button>
                     </>
                   )}

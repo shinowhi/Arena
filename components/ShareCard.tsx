@@ -79,7 +79,7 @@ function draw(ctx: CanvasRenderingContext2D, kicker: string, title: string, stat
   ctx.fillText("ARENA", W / 2, H - 140);
   ctx.fillStyle = "#71717a";
   ctx.font = "500 34px system-ui, sans-serif";
-  ctx.fillText("Scan anything. Slay the boss.", W / 2, H - 80);
+  ctx.fillText("Quét bài. Hạ boss.", W / 2, H - 80);
 }
 
 export default function ShareCard({ kicker, title, stats, filename }: Props) {
@@ -98,7 +98,7 @@ export default function ShareCard({ kicker, title, stats, filename }: Props) {
       if (blob && typeof nav.canShare === "function" && typeof nav.share === "function") {
         const file = new File([blob], name, { type: "image/png" });
         if (nav.canShare({ files: [file] })) {
-          await nav.share({ files: [file], title: "Arena victory" });
+          await nav.share({ files: [file], title: "Chiến thắng đấu trường" });
           setDone(true);
           return;
         }
@@ -116,7 +116,7 @@ export default function ShareCard({ kicker, title, stats, filename }: Props) {
     <span className="inline-flex items-center gap-2">
       <canvas ref={ref} width={W} height={H} className="hidden" aria-hidden="true" />
       <button type="button" onClick={share} className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-semibold text-zinc-200">
-        {done ? "Shared — GG!" : "Share victory"}
+        {done ? "Đã chia sẻ — GG!" : "Chia sẻ chiến thắng"}
       </button>
     </span>
   );

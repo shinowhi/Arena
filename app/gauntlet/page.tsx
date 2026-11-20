@@ -22,15 +22,15 @@ export default function GauntletPage() {
     });
     fetch("/api/boss/gauntlet")
       .then(async (r) => {
-        if (!r.ok) throw new Error(await readApiError(r, "Gauntlet lookup failed."));
-        return readApiJson<{ skills: string[]; names: string[] }>(r, "Gauntlet lookup failed.");
+        if (!r.ok) throw new Error(await readApiError(r, "Không tìm được thử thách gauntlet."));
+        return readApiJson<{ skills: string[]; names: string[] }>(r, "Không tìm được thử thách gauntlet.");
       })
       .then((d) => {
         if (alive) setSkills(d);
       })
       .catch((e) => {
         if (alive) {
-          setError(e instanceof Error ? e.message : "Gauntlet lookup failed.");
+          setError(e instanceof Error ? e.message : "Không tìm được thử thách gauntlet.");
           setSkills(null);
         }
       });
@@ -50,11 +50,11 @@ export default function GauntletPage() {
     setError("");
     try {
       const r = await fetch("/api/boss/gauntlet", { method: "POST" });
-      if (!r.ok) throw new Error(await readApiError(r, "Gauntlet summon failed."));
-      const d = await readApiJson<{ boss_id: string }>(r, "Gauntlet summon failed.");
+      if (!r.ok) throw new Error(await readApiError(r, "Triệu hồi boss gauntlet thất bại."));
+      const d = await readApiJson<{ boss_id: string }>(r, "Triệu hồi boss gauntlet thất bại.");
       router.push(`/boss/${d.boss_id}?gauntlet=1`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gauntlet summon failed.");
+      setError(e instanceof Error ? e.message : "Triệu hồi boss gauntlet thất bại.");
       setSummoning(false);
       summonRef.current = false;
     }
@@ -63,14 +63,14 @@ export default function GauntletPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Mixed review"
-        title={<>Gauntlet <span className="arena-title">boss</span></>}
-        sub="One boss, five skills — level i tests your i-th weakest gap. Built from cached sets, so it summons instantly."
+        kicker="Ôn tổng hợp"
+        title={<>Boss <span className="arena-title">gauntlet</span></>}
+        sub="Một boss, năm kỹ năng — cấp i kiểm tra lỗ hổng yếu thứ i của bạn. Dựng từ bộ câu có sẵn nên triệu hồi ngay lập tức."
       />
       {skills === undefined && !error ? (
-        <div className="flex flex-col gap-3" role="status" aria-label="Picking your five skills">
+        <div className="flex flex-col gap-3" role="status" aria-label="Đang chọn năm kỹ năng">
           <div className="arena-shimmer h-24 rounded-2xl" />
-          <p className="text-center text-sm text-zinc-500">Picking your five skills…</p>
+          <p className="text-center text-sm text-zinc-500">Đang chọn năm kỹ năng của bạn…</p>
         </div>
       ) : null}
       {error && !skills ? (
@@ -83,17 +83,17 @@ export default function GauntletPage() {
             onClick={() => setRetry((r) => r + 1)}
             className="arena-btn-primary mt-3 rounded-full px-5 py-2 text-sm font-bold text-white"
           >
-            Retry lookup
+            Tìm lại
           </button>
         </div>
       ) : null}
       {skills ? (
         <div className="arena-enter arena-card relative overflow-hidden rounded-2xl p-6 text-center">
-          <p className="text-xs font-bold tracking-widest text-amber-300 uppercase">Tonight&apos;s five</p>
+          <p className="text-xs font-bold text-amber-300">Năm kỹ năng tối nay</p>
           <ol className="mx-auto mt-2 flex w-fit flex-col gap-1 text-left">
             {skills.names.map((n, i) => (
               <li key={skills.skills[i]} className="flex items-center gap-2 text-sm text-zinc-200">
-                <span className="arena-num flex h-5 w-5 items-center justify-center rounded-full bg-zinc-800 text-[11px] font-bold text-amber-300">
+                <span className="arena-num flex h-5 w-5 items-center justify-center rounded-full bg-zinc-800 text-[11px] font-bold text-amber-300 tabular-nums">
                   {i + 1}
                 </span>
                 {n}
@@ -106,7 +106,7 @@ export default function GauntletPage() {
             disabled={summoning}
             className="arena-btn-primary mt-4 rounded-full px-6 py-2.5 font-bold text-white disabled:opacity-40 disabled:shadow-none"
           >
-            {summoning ? "Forging gauntlet…" : "Summon gauntlet boss"}
+            {summoning ? "Đang rèn gauntlet…" : "Triệu hồi boss gauntlet"}
           </button>
           {error ? (
             <p role="alert" className="mt-2 text-sm text-red-400">
@@ -115,8 +115,8 @@ export default function GauntletPage() {
           ) : null}
         </div>
       ) : null}
-      <Link href="/arena" className="arena-btn-ghost mx-auto w-fit rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
-        Back to arena
+      <Link href="/arena" className="arena-btn-ghost mx-auto w-fit rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white">
+        Về đấu trường
       </Link>
     </main>
   );

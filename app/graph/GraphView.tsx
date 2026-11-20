@@ -8,6 +8,13 @@ import PageHeader from "@/components/ui/PageHeader";
 
 type Node = { id: string; name: string; description: string; prereqs: string[]; subject?: string };
 
+// Display-only Vietnamese labels (filter values and node subjects stay as API codes).
+const SUBJECT_LABEL: Record<"all" | "calculus" | "mechanics", string> = {
+  all: "Tất cả",
+  calculus: "Giải tích",
+  mechanics: "Cơ học",
+};
+
 // Group nodes by depth (longest prereq chain) so the graph reads left to right.
 function levels(nodes: Node[]): Node[][] {
   const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -51,25 +58,25 @@ export default function GraphView() {
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-4 py-8">
       <div className="arena-enter">
         <PageHeader
-          kicker={`${SKILL_IDS.length} skills · foundations left`}
+          kicker={`${SKILL_IDS.length} kỹ năng — nền tảng ở bên trái`}
           title={
             <>
-              Skill <span className="arena-title">graph</span>
+              Sơ đồ <span className="arena-title">kỹ năng</span>
             </>
           }
-          sub="Weak skills glow red, root causes glow gold. Scroll sideways to walk the chain."
+          sub="Kỹ năng yếu sáng đỏ, gốc rễ sáng vàng. Cuộn ngang để đi theo chuỗi."
         />
         <div className="mt-2 flex gap-4 text-xs text-zinc-400">
           {weak ? (
             <span>
               <span className="mr-1 inline-block h-2 w-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
-              Weak: {skillName(weak)}
+              Yếu: {skillName(weak)}
             </span>
           ) : null}
           {root ? (
             <span>
               <span className="mr-1 inline-block h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]" />
-              Root: {skillName(root)}
+              Gốc: {skillName(root)}
             </span>
           ) : null}
         </div>
@@ -79,44 +86,45 @@ export default function GraphView() {
               key={s}
               type="button"
               onClick={() => setSubject(s)}
-              className={`rounded-full px-3 py-1 font-semibold capitalize transition-colors ${subject === s ? "bg-zinc-100 text-zinc-900" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
+              aria-label={`Lọc môn: ${SUBJECT_LABEL[s]}`}
+              className={`rounded-full px-3 py-1 font-semibold transition-colors ${subject === s ? "bg-zinc-100 text-zinc-900" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
             >
-              {s}
+              {SUBJECT_LABEL[s]}
             </button>
           ))}
           <span className="ml-2 text-zinc-500">
             <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />
-            calc
+            Giải tích
             <span className="mr-1 ml-3 inline-block h-2 w-2 rounded-full bg-sky-400" />
-            mech
+            Cơ học
           </span>
         </div>
       </div>
       <p className="text-xs text-zinc-500 md:hidden" aria-hidden="true">
-        ← Swipe sideways to explore every level →
+        ← Vuốt ngang để xem mọi cấp →
       </p>
       <div
         role="region"
-        aria-label="Skill levels, scroll sideways"
+        aria-label="Các cấp kỹ năng, cuộn ngang để xem"
         tabIndex={0}
         className="arena-enter arena-d1 arena-scrollx flex gap-3 overflow-x-auto pb-4"
       >
         {cols.map((col, d) => (
           <div key={d} className="flex w-56 shrink-0 flex-col gap-2">
-            <p className="arena-num text-xs font-bold tracking-widest text-zinc-500 uppercase">Level {d}</p>
+            <h2 className="arena-num text-xs font-bold tracking-widest text-zinc-500">Cấp {d}</h2>
             {col.map((n) => (
-              <div key={n.id} className={`arena-card rounded-xl border p-2.5 transition-transform hover:-translate-y-0.5 ${ring(n.id)} ${dim(n.subject)}`}>
+              <div key={n.id} className={`arena-card rounded-xl border p-2.5 transition-transform motion-safe:hover:-translate-y-0.5 motion-reduce:transition-none ${ring(n.id)} ${dim(n.subject)}`}>
                 <p className="text-sm font-semibold text-zinc-100">
                   <span className={`mr-1.5 inline-block h-2 w-2 rounded-full ${dot(n.subject)}`} />
                   {n.name}
                 </p>
                 <p className="text-xs text-zinc-500">
-                  <code>{n.id}</code>
+                  {(n.subject ?? "calculus") === "mechanics" ? "Cơ học" : "Giải tích"}
                 </p>
                 {n.prereqs.length > 0 ? (
-                  <p className="mt-1 text-xs text-zinc-500">needs: {n.prereqs.join(", ")}</p>
+                  <p className="mt-1 text-xs text-zinc-500">Cần: {n.prereqs.map((p) => skillName(p)).join(", ")}</p>
                 ) : (
-                  <p className="mt-1 text-xs text-zinc-600">foundation</p>
+                  <p className="mt-1 text-xs text-zinc-600">Nền tảng</p>
                 )}
               </div>
             ))}
@@ -125,10 +133,10 @@ export default function GraphView() {
       </div>
       <nav className="flex gap-4 text-sm text-zinc-400">
         <Link href="/scan" className="transition-colors hover:text-white">
-          ← Back to scan
+          ← Về quét bài
         </Link>
         <Link href="/arena" className="transition-colors hover:text-white">
-          Enter arena
+          Vào đấu trường
         </Link>
       </nav>
     </main>

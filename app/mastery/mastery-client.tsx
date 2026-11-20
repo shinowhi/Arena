@@ -18,38 +18,38 @@ type Skill = {
 type TodayItem = { label: string; href: string; reason: "due" | "weak" | "shaky" | "new" };
 
 const GROUPS = [
-  { status: "weak", title: "Needs work" },
-  { status: "shaky", title: "Almost solid" },
-  { status: "solid", title: "Solid" },
-  { status: "new", title: "New" },
+  { status: "weak", title: "Cần cố gắng" },
+  { status: "shaky", title: "Gần vững" },
+  { status: "solid", title: "Vững" },
+  { status: "new", title: "Mới" },
 ] as const;
 
 const REASON_LABEL: Record<TodayItem["reason"], string> = {
-  due: "Due for review",
-  weak: "Needs work",
-  shaky: "Almost solid",
-  new: "New",
+  due: "Đến hạn ôn",
+  weak: "Cần cố gắng",
+  shaky: "Gần vững",
+  new: "Mới",
 };
 
 const TREND = {
-  up: { glyph: "↑", label: "trending up", cls: "text-emerald-300" },
-  flat: { glyph: "→", label: "steady", cls: "text-zinc-500" },
-  down: { glyph: "↓", label: "trending down", cls: "text-red-300" },
+  up: { glyph: "Tăng", label: "đang lên", cls: "text-emerald-300" },
+  flat: { glyph: "Ổn định", label: "ổn định", cls: "text-zinc-500" },
+  down: { glyph: "Giảm", label: "đang xuống", cls: "text-red-300" },
 } as const;
 
 function relativeTime(iso: string | null): string {
-  if (!iso) return "Not yet practiced";
+  if (!iso) return "Chưa luyện";
   const ms = Date.now() - new Date(iso).getTime();
-  if (Number.isNaN(ms)) return "Not yet practiced";
-  if (ms < 0) return "Just now";
+  if (Number.isNaN(ms)) return "Chưa luyện";
+  if (ms < 0) return "Vừa xong";
   const min = Math.floor(ms / 60_000);
-  if (min < 1) return "Just now";
-  if (min < 60) return `${min}m ago`;
+  if (min < 1) return "Vừa xong";
+  if (min < 60) return `${min} phút trước`;
   const h = Math.floor(min / 60);
-  if (h < 24) return `${h}h ago`;
+  if (h < 24) return `${h} giờ trước`;
   const d = Math.floor(h / 24);
-  if (d < 30) return `${d}d ago`;
-  return new Date(iso).toLocaleDateString("en-US");
+  if (d < 30) return `${d} ngày trước`;
+  return new Date(iso).toLocaleDateString("vi-VN");
 }
 
 export default function MasteryClient() {
@@ -61,12 +61,12 @@ export default function MasteryClient() {
     let alive = true;
     Promise.all([
       fetch("/api/mastery").then(async (r) => {
-        if (!r.ok) throw new Error(await readApiError(r, "Could not load mastery."));
-        return readApiJson<{ skills: Skill[] }>(r, "Could not load mastery.");
+        if (!r.ok) throw new Error(await readApiError(r, "Không tải được bảng thành thạo."));
+        return readApiJson<{ skills: Skill[] }>(r, "Không tải được bảng thành thạo.");
       }),
       fetch("/api/mastery/today").then(async (r) => {
-        if (!r.ok) throw new Error(await readApiError(r, "Could not load today's practice."));
-        return readApiJson<{ items: TodayItem[] }>(r, "Could not load today's practice.");
+        if (!r.ok) throw new Error(await readApiError(r, "Không tải được bài luyện hôm nay."));
+        return readApiJson<{ items: TodayItem[] }>(r, "Không tải được bài luyện hôm nay.");
       }),
     ])
       .then(([m, t]) => {
@@ -75,7 +75,7 @@ export default function MasteryClient() {
         setItems(t.items);
       })
       .catch((e) => {
-        if (alive) setError(e instanceof Error ? e.message : "Could not load mastery.");
+        if (alive) setError(e instanceof Error ? e.message : "Không tải được bảng thành thạo.");
       });
     return () => {
       alive = false;
@@ -92,7 +92,7 @@ export default function MasteryClient() {
 
   if (skills === null || items === null) {
     return (
-      <div className="flex flex-col gap-3" role="status" aria-label="Loading mastery">
+      <div className="flex flex-col gap-3" role="status" aria-label="Đang tải bảng thành thạo">
         <div className="arena-shimmer h-24 rounded-2xl" />
         <div className="arena-shimmer h-16 rounded-2xl" />
         <div className="arena-shimmer h-16 rounded-2xl" />
@@ -104,7 +104,7 @@ export default function MasteryClient() {
     <>
       <RaidBanner />
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-bold tracking-widest text-zinc-500 uppercase">Practice today</h2>
+        <h2 className="text-sm font-bold tracking-widest text-zinc-500">Luyện hôm nay</h2>
         {items.map((it) => (
           <Link
             key={`${it.reason}:${it.href}`}
@@ -122,13 +122,13 @@ export default function MasteryClient() {
       {skills.length === 0 ? (
         <div className="arena-card flex flex-col gap-3 rounded-2xl p-5">
           <p className="text-sm text-zinc-400">
-            No practice data yet — forge a drill to start building mastery.
+            Chưa có dữ liệu luyện tập — tạo bộ luyện để bắt đầu tích thành thạo.
           </p>
           <Link
             href="/drill"
             className="arena-btn-primary inline-block min-h-[48px] rounded-full px-5 py-3 text-center text-sm font-bold text-white"
           >
-            Start a drill
+            Bắt đầu luyện
           </Link>
         </div>
       ) : null}
@@ -138,8 +138,8 @@ export default function MasteryClient() {
         if (rows.length === 0) return null;
         return (
           <section key={g.status} className="flex flex-col gap-3">
-            <h2 className="text-sm font-bold tracking-widest text-zinc-500 uppercase">
-              {g.title} · {rows.length}
+            <h2 className="text-sm font-bold tracking-widest tabular-nums text-zinc-500">
+              {g.title} — {rows.length}
             </h2>
             {rows.map((s) => {
               const t = TREND[s.trend];
@@ -148,18 +148,18 @@ export default function MasteryClient() {
                   <div className="flex items-center justify-between gap-3">
                     <p className="min-w-0 truncate text-sm font-semibold text-zinc-100">{s.name}</p>
                     <p className="flex shrink-0 items-center gap-2">
-                      <span aria-label={t.label} title={t.label} className={`text-base font-bold ${t.cls}`}>
+                      <span aria-label={t.label} title={t.label} className={`text-xs font-bold ${t.cls}`}>
                         {t.glyph}
                       </span>
-                      <span className="arena-num text-sm font-bold text-zinc-100">
-                        {s.mastery === null ? "New" : `${s.mastery}%`}
+                      <span className="arena-num text-sm font-bold tabular-nums text-zinc-100">
+                        {s.mastery === null ? "Mới" : `${s.mastery}%`}
                       </span>
                     </p>
                   </div>
                   <div
                     className="h-2 overflow-hidden rounded-full bg-zinc-800"
                     role="progressbar"
-                    aria-label={`${s.name} mastery`}
+                    aria-label={`${s.name} — độ thành thạo`}
                     aria-valuenow={s.mastery ?? 0}
                     aria-valuemin={0}
                     aria-valuemax={100}
@@ -170,15 +170,15 @@ export default function MasteryClient() {
                     />
                   </div>
                   <div className="flex min-h-[48px] items-center justify-between gap-3">
-                    <p className="text-xs text-zinc-500">
-                      {s.right}/{s.total} right · {relativeTime(s.last_at)}
+                    <p className="text-xs tabular-nums text-zinc-500">
+                      {s.right}/{s.total} đúng — {relativeTime(s.last_at)}
                     </p>
                     {s.status === "weak" ? (
                       <Link
                         href={`/drill?skill=${encodeURIComponent(s.tag)}`}
                         className="arena-btn-primary inline-block min-h-[48px] rounded-full px-5 py-3 text-center text-xs font-bold text-white"
                       >
-                        Practice
+                        Luyện ngay
                       </Link>
                     ) : null}
                   </div>

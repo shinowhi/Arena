@@ -43,14 +43,14 @@ export default function BadgesPage() {
     });
     fetch("/api/badges")
       .then(async (r) => {
-        if (!r.ok) throw new Error(await readApiError(r, "Badges failed."));
-        return readApiJson<{ badges: BadgeView[] }>(r, "Badges failed.");
+        if (!r.ok) throw new Error(await readApiError(r, "Không tải được huy hiệu."));
+        return readApiJson<{ badges: BadgeView[] }>(r, "Không tải được huy hiệu.");
       })
       .then((d) => {
         if (alive) setBadges(d.badges);
       })
       .catch((e) => {
-        if (alive) setError(e instanceof Error ? e.message : "Badges failed.");
+        if (alive) setError(e instanceof Error ? e.message : "Không tải được huy hiệu.");
       });
     return () => {
       alive = false;
@@ -62,12 +62,12 @@ export default function BadgesPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="This week"
-        title={<>Weekly <span className="arena-title">badges</span></>}
-        sub="Six badges over the trailing 7 days. Scan, hit, and slay to earn them all."
+        kicker="Tuần này"
+        title={<>Huy hiệu <span className="arena-title">tuần</span></>}
+        sub="Sáu huy hiệu trong 7 ngày qua. Quét, đánh trúng và hạ boss để gom hết."
         right={
           badges ? (
-            <span className="arena-num shrink-0 text-sm text-zinc-400" aria-label={`${earned} of ${badges.length} badges earned`}>
+            <span className="arena-num shrink-0 text-sm tabular-nums text-zinc-400" aria-label={`Đã đạt ${earned} trên ${badges.length} huy hiệu`}>
               <span className="font-bold text-amber-300">{earned}</span>/{badges.length}
             </span>
           ) : undefined
@@ -83,12 +83,12 @@ export default function BadgesPage() {
             onClick={() => setRetry((r) => r + 1)}
             className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
           >
-            Retry
+            Thử lại
           </button>
         </div>
       ) : null}
       {!badges && !error ? (
-        <div className="flex flex-col gap-3" role="status" aria-label="Loading badges">
+        <div className="flex flex-col gap-3" role="status" aria-label="Đang tải huy hiệu">
           <div className="arena-shimmer h-24 rounded-2xl" />
         </div>
       ) : null}
@@ -105,13 +105,13 @@ export default function BadgesPage() {
                 <p className={`font-display text-base font-extrabold ${b.earned ? "text-zinc-50" : "text-zinc-400"}`}>{b.name}</p>
                 <p className="min-h-8 text-xs text-zinc-500">{b.desc}</p>
                 {b.earned ? (
-                  <p className="arena-num mt-1 rounded-full bg-amber-500/15 px-3 py-0.5 text-xs font-bold text-amber-300">Earned</p>
+                  <p className="arena-num mt-1 rounded-full bg-amber-500/15 px-3 py-0.5 text-xs font-bold text-amber-300">Đã đạt</p>
                 ) : (
                   <div className="mt-1 w-full">
-                    <div className="h-1 overflow-hidden rounded-full bg-zinc-800" role="progressbar" aria-valuenow={b.progress} aria-valuemax={b.target} aria-valuetext={`${b.progress} of ${b.target}`} aria-label={`${b.name} progress`}>
+                    <div className="h-1 overflow-hidden rounded-full bg-zinc-800" role="progressbar" aria-valuenow={b.progress} aria-valuemax={b.target} aria-valuetext={`${b.progress} trên ${b.target}`} aria-label={`${b.name} — tiến độ`}>
                       <div className="h-full rounded-full bg-amber-400/70" style={{ width: `${pct}%` }} />
                     </div>
-                    <p className="arena-num mt-1 text-xs text-zinc-500">
+                    <p className="arena-num mt-1 text-xs tabular-nums text-zinc-500">
                       {b.progress}/{b.target}
                     </p>
                   </div>
@@ -122,7 +122,7 @@ export default function BadgesPage() {
         </div>
       ) : null}
       <Link href="/arena" className="arena-btn-ghost mx-auto w-fit rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
-        Earn them in the arena
+        Vào đấu trường săn huy hiệu
       </Link>
     </main>
   );

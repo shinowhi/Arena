@@ -61,13 +61,13 @@ export default function TonightStrip() {
   return (
     <p aria-live="polite" className="arena-enter arena-d3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-zinc-400">
       <span className="arena-livedot" aria-hidden="true" />
-      <span className="font-semibold text-zinc-200 tabular-nums">{bosses} {bosses === 1 ? "boss" : "bosses"} alive</span>
+      <span className="font-semibold text-zinc-200 tabular-nums">{bosses} boss đang sống</span>
       {ghosts ? (
         <>
-          <span aria-hidden="true">·</span>
-          <span className="tabular-nums">{ghosts.hunters} {ghosts.hunters === 1 ? "hunter" : "hunters"} grinding</span>
-          <span aria-hidden="true">·</span>
-          <span className="tabular-nums">{ghosts.solved} solved tonight</span>
+          <span aria-hidden="true">—</span>
+          <span className="tabular-nums">{ghosts.hunters} thợ săn đang cày</span>
+          <span aria-hidden="true">—</span>
+          <span className="tabular-nums">{ghosts.solved} lượt giải tối nay</span>
         </>
       ) : null}
     </p>

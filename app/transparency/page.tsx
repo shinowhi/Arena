@@ -19,14 +19,14 @@ export default function TransparencyPage() {
     let alive = true;
     fetch("/api/transparency")
       .then(async (r) => {
-        if (!r.ok) throw new Error(await readApiError(r, "Report failed."));
-        return readApiJson<Report>(r, "Report failed.");
+        if (!r.ok) throw new Error(await readApiError(r, "Không tải được báo cáo."));
+        return readApiJson<Report>(r, "Không tải được báo cáo.");
       })
       .then((d) => {
         if (alive) setRep(d);
       })
       .catch((e) => {
-        if (alive) setError(e instanceof Error ? e.message : "Report failed.");
+        if (alive) setError(e instanceof Error ? e.message : "Không tải được báo cáo.");
       });
     return () => {
       alive = false;
@@ -43,15 +43,15 @@ export default function TransparencyPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Trust, measured"
-        title={<>AI <span className="arena-title">transparency</span></>}
-        sub="Live numbers from the question bank. No mock data — reload and watch them move after each prime."
+        kicker="Tin được vì đo được"
+        title={<>Minh bạch <span className="arena-title">AI</span></>}
+        sub="Số liệu trực tiếp từ ngân hàng câu hỏi — không số liệu giả. Tải lại trang sau mỗi lần nạp đề mới để thấy số nhảy."
       />
       {error ? (
         <p role="alert" className="arena-card rounded-2xl p-4 text-center text-sm text-red-300">{error}</p>
       ) : null}
       {!rep && !error ? (
-        <div className="grid grid-cols-2 gap-3" role="status" aria-label="Loading report">
+        <div className="grid grid-cols-2 gap-3" role="status" aria-label="Đang tải báo cáo">
           <div className="arena-shimmer h-24 rounded-2xl" />
           <div className="arena-shimmer h-24 rounded-2xl" />
         </div>
@@ -59,17 +59,17 @@ export default function TransparencyPage() {
       {rep ? (
         <>
           <div className="grid grid-cols-2 gap-3">
-            {stat("Boss sets cached", rep.bossSets.total)}
-            {stat(`Fresh (${rep.windows.bossH}h)`, rep.bossSets.fresh12h)}
-            {stat("Verified exam Qs", rep.examSections.verifiedQ)}
-            {stat("AI-draft exam Qs", rep.examSections.draftQ)}
+            {stat("Bộ boss đã lưu", rep.bossSets.total)}
+            {stat(`Còn mới (${rep.windows.bossH} giờ)`, rep.bossSets.fresh12h)}
+            {stat("Câu thi đã kiểm chứng", rep.examSections.verifiedQ)}
+            {stat("Câu thi do AI soạn", rep.examSections.draftQ)}
           </div>
           <p className="text-center text-xs text-zinc-500">
-            Exam sections {rep.examSections.fresh48h}/{rep.examSections.total} fresh ({rep.windows.examH}h)
-            {rep.newestFetch ? ` · newest fetch ${rep.newestFetch.slice(0, 10)}` : ""}
+            Đề thi còn mới {rep.examSections.fresh48h}/{rep.examSections.total} ({rep.windows.examH} giờ)
+            {rep.newestFetch ? ` — lần nạp mới nhất ${rep.newestFetch.slice(0, 10)}` : ""}
           </p>
           <div className="arena-card rounded-2xl p-5">
-            <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">How a question earns its place</p>
+            <h2 className="text-sm font-bold text-zinc-200">Một câu hỏi được duyệt như thế nào</h2>
             <ol className="mt-2 flex list-decimal flex-col gap-2 pl-5 text-sm text-zinc-300">
               {rep.method.map((m, i) => (
                 <li key={i}>{m}</li>

@@ -29,7 +29,7 @@ export default function CharRig({
       className={`charrig ${attacking ? "attacking" : ""} ${className}`}
       style={{ width: size, height: size }}
       role="img"
-      aria-label={`${spec.species} hero`}
+      aria-label={`Anh hùng ${spec.species}`}
     >
       <style>{`@keyframes charrig-bob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3%) scale(1.012); } }
 @keyframes charrig-sway-l { 0%, 100% { transform: rotate(7deg); } 50% { transform: rotate(-9deg); } }

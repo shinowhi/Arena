@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import MathText from "@/components/MathText";
+import { CheckIcon, XIcon } from "@/components/ui/icons";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 
 type RQ = {
@@ -69,20 +70,20 @@ function ReviewInner() {
         // instead of keys.
         if (r.status === 403) {
           const d = (await r.json().catch(() => null)) as { error?: unknown; retryAfterSec?: unknown } | null;
-          const msg = typeof d?.error === "string" && d.error ? d.error : "This paper is still running.";
+          const msg = typeof d?.error === "string" && d.error ? d.error : "Bài thi vẫn đang diễn ra.";
           const secs = typeof d?.retryAfterSec === "number" && Number.isFinite(d.retryAfterSec) ? d.retryAfterSec : 0;
-          const wait = secs > 0 ? ` Try again in ${Math.ceil(secs / 60)} min.` : "";
+          const wait = secs > 0 ? ` Thử lại sau ${Math.ceil(secs / 60)} phút.` : "";
           throw new Error(`${msg}${wait}`);
         }
-        if (!r.ok) throw new Error(await readApiError(r, "Review failed."));
-        return readApiJson<{ sections: RSection[] }>(r, "Review failed.");
+        if (!r.ok) throw new Error(await readApiError(r, "Không tải được bài chữa."));
+        return readApiJson<{ sections: RSection[] }>(r, "Không tải được bài chữa.");
       })
       .then((d) => {
         if (!alive) return;
         setSections(d.sections);
       })
       .catch((e) => {
-        if (alive) setError(e instanceof Error ? e.message : "Review failed.");
+        if (alive) setError(e instanceof Error ? e.message : "Không tải được bài chữa.");
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -98,20 +99,37 @@ function ReviewInner() {
   const cur = sections?.[tab] ?? null;
   const backHref = exam === "hsa" ? "/hsa" : "/vact";
 
+  // ARIA tabs keyboard pattern (mirrors app/friends onTabKeyDown): arrows
+  // move between tabs, Home/End jump. Click/Tab+Enter keeps working.
+  function onTabKeyDown(e: React.KeyboardEvent, idx: number) {
+    const n = sections?.length ?? 0;
+    if (n < 2) return;
+    const last = n - 1;
+    const next =
+      e.key === "ArrowRight" ? (idx + 1) % n
+      : e.key === "ArrowLeft" ? (idx + last) % n
+      : e.key === "Home" ? 0
+      : e.key === "End" ? last
+      : -1;
+    if (next < 0) return;
+    e.preventDefault();
+    setTab(next);
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Answer review"
-        title={<>Review <span className="arena-title">{day || "…"}</span></>}
-        sub="Your picks against the key. Green is correct — red is what you chose instead. Practice only: this score is not equivalent to the official exam."
+        kicker="Chữa bài"
+        title={<>Chữa bài <span className="arena-title">{day || "…"}</span></>}
+        sub="Đáp án của bạn so với đáp án đúng. Xanh là đúng — đỏ là câu bạn đã chọn nhầm. Chỉ để luyện tập: điểm này không tương đương điểm thi chính thức."
         right={
-          <Link href={backHref} className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-zinc-200">
-            Back to exam
+          <Link href={backHref} className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-zinc-200 transition-colors hover:text-white">
+            Về bài thi
           </Link>
         }
       />
       {loading ? (
-        <div className="flex flex-col gap-3" role="status" aria-label="Loading review">
+        <div className="flex flex-col gap-3" role="status" aria-label="Đang tải bài chữa">
           <div className="arena-shimmer h-24 rounded-2xl" />
         </div>
       ) : null}
@@ -121,18 +139,18 @@ function ReviewInner() {
           <button
             type="button"
             onClick={() => setRetry((r) => r + 1)}
-            className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
+            className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white"
           >
-            Retry
+            Thử lại
           </button>
         </div>
       ) : null}
       {sections ? (
         <>
-          <p className="text-center text-sm text-zinc-400">
-            Score <span className="arena-num font-bold text-emerald-300">{score}</span>/{total} correct
+          <p className="text-center text-sm text-zinc-400 tabular-nums">
+            Điểm <span className="arena-num font-bold text-emerald-300">{score}</span>/{total} câu đúng
           </p>
-          <div className="flex flex-wrap justify-center gap-2" role="tablist" aria-label="Sections">
+          <div className="flex flex-wrap justify-center gap-2" role="tablist" aria-label="Các phần thi">
             {sections.map((s, a) => (
               <button
                 key={s.id}
@@ -140,7 +158,8 @@ function ReviewInner() {
                 role="tab"
                 aria-selected={tab === a}
                 onClick={() => setTab(a)}
-                className={`rounded-full px-4 py-1.5 text-sm font-bold ${tab === a ? "arena-btn-primary text-white" : "arena-btn-ghost text-zinc-300"}`}
+                onKeyDown={(e) => onTabKeyDown(e, a)}
+                className={`rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${tab === a ? "arena-btn-primary text-white" : "arena-btn-ghost text-zinc-300 hover:text-white"}`}
               >
                 {s.name}
               </button>
@@ -155,16 +174,16 @@ function ReviewInner() {
             return (
               <div key={q.no} className={`arena-card rounded-2xl p-5 ${pick < 0 ? "" : hit ? "border-emerald-700" : "border-red-800"}`}>
                 <p className="text-xs text-zinc-500">
-                  Q{q.no} · {cur.name} ·{" "}
+                  Câu {q.no} — {cur.name} —{" "}
                   {q.tier === "verified" ? (
-                    <span className="font-bold text-emerald-300">Verified</span>
+                    <span className="font-bold text-emerald-300">Đã kiểm chứng</span>
                   ) : (
-                    <span className="font-bold text-amber-300">AI draft</span>
+                    <span className="font-bold text-amber-300">AI soạn</span>
                   )}{" "}
-                  · {pick < 0 ? <span className="text-zinc-400">Not answered</span> : hit ? <span className="font-bold text-emerald-300">You ✓</span> : <span className="font-bold text-red-300">You ✗</span>}
+                  — {pick < 0 ? <span className="text-zinc-400">Chưa trả lời</span> : hit ? <span className="inline-flex items-center gap-1 font-bold text-emerald-300"><CheckIcon className="h-3.5 w-3.5" label="Đúng" /> Bạn đúng</span> : <span className="inline-flex items-center gap-1 font-bold text-red-300"><XIcon className="h-3.5 w-3.5" label="Sai" /> Bạn sai</span>}
                 </p>
                 <MathText text={q.prompt_latex} className="mt-1 overflow-x-auto text-lg text-zinc-100" />
-                <div className="mt-3 flex flex-col gap-2" aria-label={`Answer key for question ${q.no}`}>
+                <div className="mt-3 flex flex-col gap-2" role="group" aria-label={`Đáp án đúng câu ${q.no}`}>
                   {q.options.map((o, k) => {
                     const isKey = k === q.answer_index;
                     const isPick = k === pick;
@@ -175,8 +194,8 @@ function ReviewInner() {
                       >
                         <span className="arena-num font-bold">{LETTERS[k]}</span>
                         <MathText text={o} className="min-w-0 flex-1" />
-                        {isKey ? <span className="text-xs font-bold text-emerald-300">Key</span> : null}
-                        {isPick && !isKey ? <span className="text-xs font-bold text-red-300">You</span> : null}
+                        {isKey ? <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-300"><CheckIcon className="h-3.5 w-3.5" /> Đáp án</span> : null}
+                        {isPick && !isKey ? <span className="text-xs font-bold text-red-300">Bạn chọn</span> : null}
                       </div>
                     );
                   })}
@@ -184,10 +203,10 @@ function ReviewInner() {
                 <div className="mt-3 flex justify-end">
                   <Link
                     href={`/tutor?ctx=exam&section=${encodeURIComponent(cur.id)}&index=${i}&as_of=${encodeURIComponent(cur.as_of)}`}
-                    aria-label={`Ask the tutor about question ${q.no}`}
-                    className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-bold text-zinc-200"
+                    aria-label={`Hỏi gia sư về câu ${q.no}`}
+                    className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-bold text-zinc-200 transition-colors hover:text-white"
                   >
-                    Ask tutor
+                    Hỏi gia sư
                   </Link>
                 </div>
               </div>

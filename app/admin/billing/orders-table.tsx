@@ -38,43 +38,43 @@ export default function OrdersTable({ orders }: { orders: PendingOrder[] }) {
         error?: string;
       } | null;
       if (!res.ok || !d?.order_id) {
-        setMsg({ ok: false, text: d?.error ?? `Could not ${action} order.` });
+        setMsg({ ok: false, text: d?.error ?? `Không ${action === "approve" ? "duyệt" : "từ chối"} được đơn.` });
       } else {
         setMsg({
           ok: true,
           text:
             action === "approve"
-              ? `Approved — subscription ${String(d.subscription_id).slice(0, 8)}…`
-              : "Rejected.",
+              ? `Đã duyệt — gói ${String(d.subscription_id).slice(0, 8)}…`
+              : "Đã từ chối.",
         });
         router.refresh();
       }
     } catch {
-      setMsg({ ok: false, text: `Could not ${action} order.` });
+      setMsg({ ok: false, text: `Không ${action === "approve" ? "duyệt" : "từ chối"} được đơn.` });
     } finally {
       setBusy(null);
     }
   }
 
   if (orders.length === 0) {
-    return <p className="mt-2 text-sm text-zinc-500">No pending orders.</p>;
+    return <p className="mt-2 text-sm text-zinc-500">Không có đơn chờ duyệt.</p>;
   }
   return (
     <div className="mt-3 overflow-auto">
       {msg && (
-        <p className={`mb-3 text-sm ${msg.ok ? "text-emerald-300" : "text-red-400"}`}>{msg.text}</p>
+        <p role="status" className={`mb-3 text-sm ${msg.ok ? "text-emerald-300" : "text-red-400"}`}>{msg.text}</p>
       )}
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-xs text-zinc-500">
-            <th className="py-1 font-semibold">Time</th>
-            <th className="py-1 font-semibold">Memo</th>
-            <th className="py-1 font-semibold">Payer ref</th>
-            <th className="py-1 font-semibold">Device</th>
-            <th className="py-1 font-semibold">Plan</th>
-            <th className="py-1 text-right font-semibold">Amount</th>
-            <th className="py-1 font-semibold">Player</th>
-            <th className="py-1 text-right font-semibold">Decision</th>
+            <th className="py-1 font-semibold">Thời gian</th>
+            <th className="py-1 font-semibold">Mã đơn</th>
+            <th className="py-1 font-semibold">Người chuyển</th>
+            <th className="py-1 font-semibold">Thiết bị</th>
+            <th className="py-1 font-semibold">Gói</th>
+            <th className="py-1 text-right font-semibold">Số tiền</th>
+            <th className="py-1 font-semibold">Người chơi</th>
+            <th className="py-1 text-right font-semibold">Quyết định</th>
           </tr>
         </thead>
         <tbody>
@@ -90,7 +90,7 @@ export default function OrdersTable({ orders }: { orders: PendingOrder[] }) {
               </td>
               <td className="py-1.5 pr-2 font-mono text-xs">{o.plan_code}</td>
               <td className="py-1.5 pr-2 text-right tabular-nums">
-                {Number(o.amount_vnd).toLocaleString("en-US")}
+                {Number(o.amount_vnd).toLocaleString("vi-VN")}
               </td>
               <td className="py-1.5 pr-2 font-mono text-xs">{o.player_id.slice(0, 8)}…</td>
               <td className="py-1.5 text-right">
@@ -100,7 +100,7 @@ export default function OrdersTable({ orders }: { orders: PendingOrder[] }) {
                   onClick={() => decide(o.id, "approve")}
                   className="rounded-lg bg-emerald-600 px-3 py-1 text-xs font-bold text-white hover:bg-emerald-500 disabled:opacity-50"
                 >
-                  Approve
+                  Duyệt
                 </button>{" "}
                 <button
                   type="button"
@@ -108,7 +108,7 @@ export default function OrdersTable({ orders }: { orders: PendingOrder[] }) {
                   onClick={() => decide(o.id, "reject")}
                   className="rounded-lg bg-zinc-700 px-3 py-1 text-xs font-bold text-zinc-100 hover:bg-zinc-600 disabled:opacity-50"
                 >
-                  Reject
+                  Từ chối
                 </button>
               </td>
             </tr>

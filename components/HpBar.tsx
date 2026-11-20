@@ -16,7 +16,7 @@ export default function HpBar({
         : "from-red-400 to-red-700 shadow-[0_0_12px_rgba(239,68,68,0.8)]";
   return (
     <div className={`h-4 overflow-hidden rounded-full border border-zinc-700 bg-zinc-900 ${flash ? "arena-hitflash" : ""}`}>
-      <div className={`h-full bg-gradient-to-r ${fill} transition-all duration-500`} style={{ width: `${pct}%` }} />
+      <div className={`h-full bg-gradient-to-r ${fill} transition-[width] duration-500 motion-reduce:transition-none`} style={{ width: `${pct}%` }} />
     </div>
   );
 }

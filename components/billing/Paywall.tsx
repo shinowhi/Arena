@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { TrophyIcon } from "@/components/ui/icons";
 
 // P4 slice-2 paywall surfaces (client). Paywall is the reason-aware upgrade
 // card shown on gated surfaces; BillingClient is the interactive /billing
@@ -13,16 +14,16 @@ type Reason = "free" | "entitled" | "paywall";
 
 const COPY: Record<Reason, { title: string; body: string }> = {
   paywall: {
-    title: "You fixed your 3 free gaps",
-    body: "Nice work. Upgrade to keep fixing gaps and unlock full exam packs — manual bank transfer, usually activated within 24 hours.",
+    title: "Bạn đã vá xong 3 lỗ hổng miễn phí",
+    body: "Giỏi lắm. Nâng cấp để vá tiếp và mở khóa trọn bộ đề thi thử — chuyển khoản thủ công, thường được kích hoạt trong 24 giờ.",
   },
   free: {
-    title: "3 free gap fixes",
-    body: "Fix your first 3 skill gaps free, then pick a pack to keep going. No card needed — pay by bank transfer.",
+    title: "Vá 3 lỗ hổng đầu tiên miễn phí",
+    body: "Vá miễn phí 3 lỗ hổng kỹ năng đầu tiên, rồi chọn gói để học tiếp. Không cần thẻ — thanh toán bằng chuyển khoản.",
   },
   entitled: {
-    title: "You are unlocked",
-    body: "Your pack is active. Keep fixing gaps — every slain boss counts toward exam readiness.",
+    title: "Bạn đã được mở khóa",
+    body: "Gói của bạn đang hoạt động. Cứ vá tiếp nhé — mỗi con boss bị hạ đều giúp bạn sẵn sàng hơn cho kỳ thi.",
   },
 };
 
@@ -30,25 +31,25 @@ export default function Paywall({ reason = "paywall" }: { reason?: Reason }) {
   const copy = COPY[reason] ?? COPY.paywall;
   return (
     <section className="rounded-2xl border border-amber-700/60 bg-amber-950/20 p-5">
-      <p className="text-xs font-bold uppercase tracking-widest text-amber-400">Go unlimited</p>
+      <p className="text-xs font-semibold text-amber-400">Mở khóa không giới hạn</p>
       <h2 className="mt-1 text-xl font-extrabold text-zinc-100">{copy.title}</h2>
       <p className="mt-1 text-sm text-zinc-300">{copy.body}</p>
       <div className="mt-4 flex flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-bold text-zinc-100">
-            Bundle <span className="ml-1 rounded bg-amber-500 px-1.5 py-0.5 text-xs text-black">BEST</span>
+            Combo <span className="ml-1 rounded bg-amber-500 px-1.5 py-0.5 text-xs text-black">Nên chọn</span>
           </p>
-          <p className="text-sm text-zinc-400">Study Unlock + Exam Packs — 49,000 VND/month</p>
+          <p className="text-sm text-zinc-400">Mở khóa học tập + Gói thi thử — 49.000đ/tháng</p>
         </div>
         <Link
           href="/billing"
-          className="rounded-lg bg-amber-500 px-5 py-2 text-center text-sm font-bold text-black hover:bg-amber-400"
+          className="rounded-lg bg-amber-500 px-5 py-2 text-center text-sm font-bold text-black transition-colors hover:bg-amber-400"
         >
-          See plans
+          Xem các gói
         </Link>
       </div>
       <p className="mt-3 text-xs text-zinc-500">
-        Already VIP? <Link href="/vip" className="underline hover:text-zinc-300">Check your status</Link>
+        Đã là VIP? <Link href="/vip" className="underline hover:text-zinc-300">Xem trạng thái</Link>
       </p>
     </section>
   );
@@ -80,7 +81,7 @@ type OrderCreated = {
 };
 
 function formatVnd(n: number): string {
-  return `${n.toLocaleString("en-US")} VND`;
+  return `${n.toLocaleString("vi-VN")}đ`;
 }
 
 function VipBadge() {
@@ -101,11 +102,14 @@ function VipBadge() {
   }, []);
   if (vip !== true) return null;
   return (
-    <p className="rounded-xl border border-amber-700/60 bg-amber-950/20 px-4 py-2 text-sm font-semibold text-amber-300">
-      ★ VIP active — you already unlock everything.{" "}
-      <Link href="/vip" className="underline hover:text-amber-200">
-        View status
-      </Link>
+    <p className="flex items-center gap-2 rounded-xl border border-amber-700/60 bg-amber-950/20 px-4 py-2 text-sm font-semibold text-amber-300">
+      <TrophyIcon className="h-4 w-4" />
+      <span>
+        VIP đang hoạt động — bạn đã mở khóa mọi thứ.{" "}
+        <Link href="/vip" className="underline hover:text-amber-200">
+          Xem trạng thái
+        </Link>
+      </span>
     </p>
   );
 }
@@ -120,12 +124,12 @@ function PlansGrid({
   onSelect: (code: string) => void;
 }) {
   if (plans === null) {
-    return <p className="text-sm text-zinc-500">Loading plans…</p>;
+    return <p role="status" className="text-sm text-zinc-500">Đang tải các gói…</p>;
   }
   if (plans.length === 0) {
     return (
       <p className="text-sm text-zinc-500">
-        Plans are not available yet — billing setup is still in progress.
+        Chưa có gói nào — hệ thống thanh toán đang được thiết lập.
       </p>
     );
   }
@@ -149,12 +153,12 @@ function PlansGrid({
             <p className="flex items-center gap-2 text-sm font-bold text-zinc-100">
               {p.name}
               {hero && (
-                <span className="rounded bg-amber-500 px-1.5 py-0.5 text-xs text-black">BEST</span>
+                <span className="rounded bg-amber-500 px-1.5 py-0.5 text-xs text-black">Nên chọn</span>
               )}
             </p>
             <p className="mt-1 text-lg font-extrabold text-amber-300">{formatVnd(p.price_vnd)}</p>
             <p className="text-xs text-zinc-500">
-              {p.period_days} days · {p.product === "bundle" ? "Study + Exams" : p.product === "A" ? "Study" : "Exams"}
+              {p.period_days} ngày — {p.product === "bundle" ? "Học tập + Thi thử" : p.product === "A" ? "Học tập" : "Thi thử"}
             </p>
           </button>
         );
@@ -191,12 +195,12 @@ function OrderForm({
       });
       const d = (await res.json().catch(() => null)) as (OrderCreated & { error?: string }) | null;
       if (!res.ok || !d?.memo) {
-        setError(d?.error ?? "Could not create order — retry.");
+        setError(d?.error ?? "Không tạo được đơn hàng — hãy thử lại.");
       } else {
         setCreated(d);
       }
     } catch {
-      setError("Could not create order — retry.");
+      setError("Không tạo được đơn hàng — hãy thử lại.");
     } finally {
       setBusy(false);
     }
@@ -206,7 +210,7 @@ function OrderForm({
     <div className="mt-6">
       <form onSubmit={submit} className="flex flex-col gap-2">
         <label htmlFor="plan" className="text-sm font-semibold text-zinc-200">
-          1. Pick a plan
+          1. Chọn gói
         </label>
         <select
           id="plan"
@@ -216,18 +220,18 @@ function OrderForm({
         >
           {plans.map((p) => (
             <option key={p.code} value={p.code}>
-              {p.name} — {formatVnd(p.price_vnd)} / {p.period_days}d
+              {p.name} — {formatVnd(p.price_vnd)} / {p.period_days} ngày
             </option>
           ))}
         </select>
         <label htmlFor="payer-ref" className="mt-2 text-sm font-semibold text-zinc-200">
-          2. Your transfer note (optional)
+          2. Nội dung chuyển khoản của bạn (không bắt buộc)
         </label>
         <input
           id="payer-ref"
           value={payerRef}
           onChange={(e) => setPayerRef(e.target.value)}
-          placeholder="Phone / MoMo / bank name for manual matching"
+          placeholder="Số điện thoại / MoMo / tên ngân hàng để đối chiếu"
           autoComplete="off"
           maxLength={64}
           className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600"
@@ -237,7 +241,7 @@ function OrderForm({
           disabled={busy || !planCode}
           className="mt-2 rounded-lg bg-amber-500 px-5 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
         >
-          {busy ? "Creating order…" : "Create order"}
+          {busy ? "Đang tạo đơn hàng…" : "Tạo đơn hàng"}
         </button>
       </form>
       {error && (
@@ -247,20 +251,20 @@ function OrderForm({
       )}
       {created && (
         <div role="status" className="mt-4 rounded-xl border border-emerald-700/60 bg-emerald-950/20 p-4">
-          <p className="text-sm font-bold text-emerald-300">Order created — transfer to activate</p>
+          <p className="text-sm font-bold text-emerald-300">Đã tạo đơn — chuyển khoản để kích hoạt</p>
           <dl className="mt-2 space-y-1 text-sm text-zinc-300">
             <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">Amount</dt>
+              <dt className="text-zinc-500">Số tiền</dt>
               <dd className="font-bold tabular-nums">{formatVnd(created.amount_vnd)}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-zinc-500">Memo</dt>
+              <dt className="text-zinc-500">Mã đơn</dt>
               <dd className="font-mono font-bold">{created.memo}</dd>
             </div>
           </dl>
           <p className="mt-2 text-sm text-zinc-300">{created.transfer_note}</p>
           <p className="mt-1 text-xs text-zinc-500">
-            Status: awaiting activation, usually within 24h. Keep your memo — support matches by it.
+            Trạng thái: chờ kích hoạt, thường trong 24 giờ. Giữ kỹ mã đơn — bộ phận hỗ trợ đối chiếu theo mã này.
           </p>
         </div>
       )}
@@ -284,11 +288,11 @@ function OrdersList() {
       live = false;
     };
   }, []);
-  if (orders === null) return <p className="text-sm text-zinc-500">Loading your orders…</p>;
+  if (orders === null) return <p role="status" className="text-sm text-zinc-500">Đang tải đơn hàng…</p>;
   if (orders.length === 0) return null;
   return (
     <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-      <p className="text-sm font-semibold text-zinc-200">Your orders</p>
+      <h2 className="text-sm font-semibold text-zinc-200">Đơn hàng của bạn</h2>
       <ul className="mt-3 space-y-2">
         {orders.map((o) => (
           <li
@@ -297,7 +301,7 @@ function OrdersList() {
           >
             <span className="font-mono text-zinc-200">{o.memo}</span>
             <span className="text-zinc-400">
-              {o.plan_code} · <span className="tabular-nums">{formatVnd(o.amount_vnd)}</span>
+              {o.plan_code} — <span className="tabular-nums">{formatVnd(o.amount_vnd)}</span>
             </span>
             <span
               className={
@@ -308,7 +312,7 @@ function OrdersList() {
                     : "font-semibold text-amber-300"
               }
             >
-              {o.status === "pending" ? "awaiting activation" : o.status}
+              {o.status === "pending" ? "chờ kích hoạt" : o.status === "approved" ? "đã duyệt" : o.status === "rejected" ? "bị từ chối" : o.status}
             </span>
           </li>
         ))}
@@ -344,7 +348,7 @@ function BillingPanels() {
     <div className="space-y-6">
       <VipBadge />
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Plans</p>
+        <h2 className="text-sm font-semibold text-zinc-200">Các gói</h2>
         <div className="mt-3">
           <PlansGrid plans={plans} selected={selected} onSelect={setSelected} />
         </div>
@@ -360,7 +364,7 @@ function BillingPanels() {
 // Interactive island for /billing: wrapped in Suspense by the server shell.
 export function BillingClient() {
   return (
-    <Suspense fallback={<p className="text-sm text-zinc-500">Loading billing…</p>}>
+    <Suspense fallback={<p className="text-sm text-zinc-500">Đang tải thanh toán…</p>}>
       <BillingPanels />
     </Suspense>
   );

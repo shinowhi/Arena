@@ -33,17 +33,17 @@ export default function CodesForm() {
       });
       const d = (await res.json().catch(() => null)) as { code?: string; error?: string } | null;
       if (!res.ok || !d?.code) {
-        setMsg({ ok: false, text: d?.error ?? "Could not create code." });
+        setMsg({ ok: false, text: d?.error ?? "Không tạo được mã." });
       } else {
         setCode("");
         setMaxUses("1");
         setExpires("");
         setNote("");
-        setMsg({ ok: true, text: `Created code ${d.code}.` });
+        setMsg({ ok: true, text: `Đã tạo mã ${d.code}.` });
         router.refresh();
       }
     } catch {
-      setMsg({ ok: false, text: "Could not create code." });
+      setMsg({ ok: false, text: "Không tạo được mã." });
     } finally {
       setBusy(false);
     }
@@ -54,18 +54,18 @@ export default function CodesForm() {
   return (
     <form onSubmit={submit} className="mt-4 grid gap-3 sm:grid-cols-2">
       <label className="block text-xs text-zinc-400">
-        Code (blank = auto-generate)
+        Mã (để trống = tự tạo)
         <input
           value={code}
           onChange={(e) => setCode(e.target.value)}
           maxLength={32}
           autoComplete="off"
-          placeholder="e.g. LAUNCH-100"
+          placeholder="vd. LAUNCH-100"
           className={input}
         />
       </label>
       <label className="block text-xs text-zinc-400">
-        Max uses
+        Số lượt dùng tối đa
         <input
           value={maxUses}
           onChange={(e) => setMaxUses(e.target.value)}
@@ -74,7 +74,7 @@ export default function CodesForm() {
         />
       </label>
       <label className="block text-xs text-zinc-400">
-        Expires (optional)
+        Hết hạn (không bắt buộc)
         <input
           type="date"
           value={expires}
@@ -83,12 +83,12 @@ export default function CodesForm() {
         />
       </label>
       <label className="block text-xs text-zinc-400">
-        Note (optional)
+        Ghi chú (không bắt buộc)
         <input
           value={note}
           onChange={(e) => setNote(e.target.value)}
           maxLength={200}
-          placeholder="e.g. launch batch"
+          placeholder="vd. đợt mở bán"
           className={input}
         />
       </label>
@@ -98,7 +98,7 @@ export default function CodesForm() {
           disabled={busy}
           className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
         >
-          {busy ? "Creating…" : "Create code"}
+          {busy ? "Đang tạo…" : "Tạo mã"}
         </button>
         {msg && (
           <p role="status" className={`mt-2 text-sm ${msg.ok ? "text-emerald-300" : "text-red-400"}`}>

@@ -7,13 +7,13 @@ export default function CenterPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Learning centers"
+        kicker="Trung tâm học tập"
         title={
           <>
-            Center <span className="arena-title">classes</span>
+            Lớp học <span className="arena-title">trung tâm</span>
           </>
         }
-        sub="Teachers run classes with join codes and assignments. Enrolled students get full VIP while their class is active."
+        sub="Thầy cô mở lớp bằng mã vào lớp và bài tập. Học sinh trong lớp đang mở được full VIP."
       />
       <CenterClient />
     </main>

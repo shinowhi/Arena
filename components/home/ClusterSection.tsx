@@ -146,7 +146,7 @@ export default function ClusterSection({
         <div className="min-h-0 overflow-hidden">
           <div
             className={
-              "space-y-3 px-4 pt-1 pb-4 transition-all duration-300 motion-reduce:transition-none " +
+              "space-y-3 px-4 pt-1 pb-4 transition-[transform,opacity] duration-300 motion-reduce:transition-none " +
               (open ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0")
             }
           >

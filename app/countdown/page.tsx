@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
+import { CheckIcon } from "@/components/ui/icons";
 
 type Weak = { tag: string; name: string; misses: number; healed: boolean };
 type Plan = { weak: Weak[]; totalWeak: number; healedWeak: number; readiness: number };
@@ -48,10 +49,10 @@ export default function CountdownPage() {
     fetch("/api/countdown")
       .then(async (r) => {
         const d = await r.json();
-        if (!r.ok) throw new Error(d.error ?? "Load failed.");
+        if (!r.ok) throw new Error(d.error ?? "Không tải được kế hoạch.");
         setPlan(d as Plan);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Load failed."));
+      .catch((e) => setError(e instanceof Error ? e.message : "Không tải được kế hoạch."));
   }, []);
 
   function saveExam(v: string) {
@@ -83,48 +84,48 @@ export default function CountdownPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Exam countdown"
-        title="Ready before the bell rings"
-        sub="One weak skill a day until exam day."
+        kicker="Đếm ngược ngày thi"
+        title="Sẵn sàng trước giờ G"
+        sub="Mỗi ngày chữa một kỹ năng yếu cho đến ngày thi."
       />
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-red-400">{error}</p> : null}
       <div className="arena-card flex flex-wrap items-center gap-3 rounded-2xl p-4">
         <label className="text-sm text-zinc-300">
-          Exam date{" "}
+          Ngày thi{" "}
           <input
             type="date"
             value={exam}
             onChange={(e) => saveExam(e.target.value)}
-            aria-label="Exam date"
+            aria-label="Ngày thi"
             className="arena-input ml-2 rounded-lg px-3 py-1.5 text-zinc-100"
           />
         </label>
         {daysLeft !== null ? (
-          <p className="text-sm font-semibold text-amber-300">
-            {daysLeft < 0 ? "That date passed — pick the next one." : `${daysLeft} days left`}
+          <p className="text-sm font-semibold text-amber-300 tabular-nums">
+            {daysLeft < 0 ? "Ngày đó đã qua — chọn ngày tiếp theo." : `Còn ${daysLeft} ngày`}
           </p>
         ) : null}
       </div>
-      {!plan && !error ? <p className="text-zinc-500">Drawing your battle plan…</p> : null}
+      {!plan && !error ? <p role="status" className="text-zinc-500">Đang vẽ kế hoạch ôn tập…</p> : null}
       {plan ? (
         <>
           <div className="arena-card rounded-2xl p-4">
             <div className="flex items-baseline justify-between">
-              <p className="text-sm text-zinc-400">Readiness</p>
-              <p className="font-display arena-num text-2xl font-black text-emerald-300">{plan.readiness}%</p>
+              <p className="text-sm text-zinc-400">Mức sẵn sàng</p>
+              <p className="font-display arena-num text-2xl font-black text-emerald-300 tabular-nums">{plan.readiness}%</p>
             </div>
             <div className="mt-2 h-3 overflow-hidden rounded-full bg-zinc-800">
-              <div className="h-full bg-emerald-500 transition-all" style={{ width: `${plan.readiness}%` }} />
+              <div className="h-full bg-emerald-500 transition-[width]" style={{ width: `${plan.readiness}%` }} />
             </div>
-            <p className="mt-1 text-xs text-zinc-500">
-              {plan.healedWeak}/{plan.totalWeak} weak skills healed
+            <p className="mt-1 text-xs text-zinc-500 tabular-nums">
+              Đã chữa {plan.healedWeak}/{plan.totalWeak} kỹ năng yếu
             </p>
           </div>
           {plan.totalWeak === 0 ? (
-            <p className="text-zinc-500">No weak skills on record — scan some work first.</p>
+            <p className="text-zinc-500">Chưa ghi nhận kỹ năng yếu nào — quét bài làm trước nhé.</p>
           ) : daysLeft !== null && daysLeft >= 0 && unhealed.length > daysLeft ? (
-            <p className="rounded-2xl border border-amber-500/50 bg-amber-950/40 p-3 text-sm text-amber-200">
-              {unhealed.length} skills left but only {daysLeft} days — double up: 2 skills some days.
+            <p className="rounded-2xl border border-amber-500/50 bg-amber-950/40 p-3 text-sm text-amber-200 tabular-nums">
+              Còn {unhealed.length} kỹ năng mà chỉ còn {daysLeft} ngày — tăng tốc: vài ngày làm 2 kỹ năng.
             </p>
           ) : null}
           {nowMs > 0 ? (
@@ -137,23 +138,23 @@ export default function CountdownPage() {
                   <button
                     type="button"
                     onClick={() => toggleDay(key)}
-                    aria-label={checked ? `Uncheck ${w.name}` : `Check ${w.name} done`}
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-sm font-bold ${
-                      checked ? "border-emerald-500 bg-emerald-500/20 text-emerald-300" : "border-zinc-600 text-zinc-500"
+                    aria-label={checked ? `Bỏ đánh dấu ${w.name}` : `Đánh dấu đã xong ${w.name}`}
+                    className={`relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-sm font-bold transition-colors after:absolute after:-inset-3 after:content-[''] ${
+                      checked ? "border-emerald-500 bg-emerald-500/20 text-emerald-300" : "border-zinc-600 text-zinc-500 hover:border-zinc-400 hover:text-zinc-300"
                     }`}
                   >
-                    {checked ? "✓" : ""}
+                    {checked ? <CheckIcon className="h-3.5 w-3.5" label="Đã xong" /> : ""}
                   </button>
                   <div className="min-w-0 flex-1">
                     <p className={`text-sm font-semibold ${checked ? "text-zinc-500 line-through" : "text-zinc-100"}`}>
-                      Day {i + 1} · {w.name}
+                      Ngày {i + 1} — {w.name}
                     </p>
-                    <p className="text-xs text-zinc-500">
-                      {key} · missed {w.misses}×
+                    <p className="text-xs text-zinc-500 tabular-nums">
+                      {key} — sai {w.misses} lần
                     </p>
                   </div>
-                  <Link href="/scan" className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-xs text-zinc-200">
-                    Practice
+                  <Link href="/scan" className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-xs text-zinc-200 transition-colors hover:text-white">
+                    Luyện tập
                   </Link>
                 </li>
               );

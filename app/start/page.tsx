@@ -104,11 +104,11 @@ export default function StartPage() {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-4 py-10">
       <div>
-        <p className="text-xs font-medium tracking-widest text-zinc-500 uppercase">
+        <p className="text-xs font-medium text-zinc-500">
           Bước {step + 1}/{STEPS.length} — {STEPS[step]}
         </p>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-white">
-          Cho BossLearn biết bạn là ai
+          Cho <span translate="no">BossLearn</span> biết bạn là ai
         </h1>
         <p className="mt-1 text-sm text-zinc-400">
           30 giây thôi — để vá đúng chỗ bạn yếu, không vá lung tung.
@@ -116,27 +116,34 @@ export default function StartPage() {
       </div>
 
       {step === 0 && (
-        <div className="grid gap-3" role="group" aria-label="Bạn là ai?">
-          {SEGMENTS.map((s) => (
-            <OptionButton key={s} selected={segment === s} onClick={() => setSegment(s)}>
-              {SEGMENT_LABEL[s]}
-            </OptionButton>
-          ))}
+        <div>
+          <h2 className="mb-3 text-lg font-bold text-zinc-100">Bạn là ai?</h2>
+          <div className="grid gap-3" role="group" aria-label="Bạn là ai?">
+            {SEGMENTS.map((s) => (
+              <OptionButton key={s} selected={segment === s} onClick={() => setSegment(s)}>
+                {SEGMENT_LABEL[s]}
+              </OptionButton>
+            ))}
+          </div>
         </div>
       )}
 
       {step === 1 && (
-        <div className="grid gap-3" role="group" aria-label="Mục tiêu">
-          {exams.map((e) => (
-            <OptionButton key={e} selected={targetExam === e} onClick={() => setTargetExam(e)}>
-              {TARGET_EXAM_LABEL[e]}
-            </OptionButton>
-          ))}
+        <div>
+          <h2 className="mb-3 text-lg font-bold text-zinc-100">Mục tiêu của bạn là gì?</h2>
+          <div className="grid gap-3" role="group" aria-label="Mục tiêu">
+            {exams.map((e) => (
+              <OptionButton key={e} selected={targetExam === e} onClick={() => setTargetExam(e)}>
+                {TARGET_EXAM_LABEL[e]}
+              </OptionButton>
+            ))}
+          </div>
         </div>
       )}
 
       {step === 2 && (
         <div className="flex flex-col gap-5">
+          <h2 className="text-lg font-bold text-zinc-100">Bạn học môn gì?</h2>
           <div className="grid grid-cols-2 gap-3" role="group" aria-label="Môn học">
             {SUBJECTS.map((s) => (
               <OptionButton key={s} selected={subjects.includes(s)} onClick={() => toggleSubject(s)}>
@@ -178,8 +185,9 @@ export default function StartPage() {
             <button
               type="button"
               disabled={!canNext()}
+              title={canNext() ? undefined : "Hãy chọn một mục ở trên để tiếp tục"}
               onClick={() => setStep((s) => s + 1)}
-              className="arena-btn-primary rounded-full px-7 py-3 text-sm font-semibold text-white disabled:opacity-40"
+              className="arena-btn-primary rounded-full px-7 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               Tiếp tục
             </button>
@@ -187,8 +195,9 @@ export default function StartPage() {
             <button
               type="button"
               disabled={!canNext()}
+              title={canNext() ? undefined : "Hãy chọn môn học và trình độ để tiếp tục"}
               onClick={finish}
-              className="arena-btn-primary rounded-full px-7 py-3 text-sm font-semibold text-white disabled:opacity-40"
+              className="arena-btn-primary rounded-full px-7 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               Xong, vào quét bài
             </button>

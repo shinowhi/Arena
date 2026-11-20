@@ -23,10 +23,10 @@ const DAY_MS = 86400_000;
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
-      <p className="text-xs font-bold uppercase tracking-widest text-amber-400">Admin</p>
-      <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">Billing desk</h1>
-      <a href="/admin" className="mt-2 inline-block text-sm text-amber-400 underline">
-        Back to dashboard
+      <p className="text-xs font-bold tracking-widest text-amber-400">Quản trị</p>
+      <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">Quầy thanh toán</h1>
+      <a href="/admin" className="mt-2 inline-block text-sm text-amber-400 underline hover:text-amber-300">
+        Về bảng điều khiển
       </a>
       <div className="mt-6">{children}</div>
     </main>
@@ -128,7 +128,7 @@ async function BillingBody() {
   if (!verifyAdmin(store.get("arena_admin")?.value)) {
     return (
       <p className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
-        Locked — <a href="/admin" className="text-amber-400 underline">unlock with the admin key</a> first.
+        Đang khóa — <a href="/admin" className="text-amber-400 underline hover:text-amber-300">mở bằng khóa quản trị</a> trước.
       </p>
     );
   }
@@ -136,24 +136,24 @@ async function BillingBody() {
   if (missing) {
     return (
       <p className="rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
-        No billing data yet — run migration supabase/migrations/0016_billing.sql in Supabase and set
-        SUPABASE_SERVICE_ROLE_KEY on the server.
+        Chưa có dữ liệu thanh toán — chạy migration supabase/migrations/0016_billing.sql trong Supabase
+        và đặt SUPABASE_SERVICE_ROLE_KEY trên máy chủ.
       </p>
     );
   }
   const cards: [string, string][] = [
-    ["Payers", String(metrics.payers)],
-    ["Players", String(metrics.totalPlayers)],
-    ["Conversion", `${(metrics.pct * 100).toFixed(1)}%`],
-    ["Revenue (VND)", metrics.revenueVnd.toLocaleString("en-US")],
-    ["Retention d1", metrics.d1 === null ? "—" : `${(metrics.d1 * 100).toFixed(1)}%`],
-    ["Retention d7", metrics.d7 === null ? "—" : `${(metrics.d7 * 100).toFixed(1)}%`],
-    ["Retention d30", metrics.d30 === null ? "—" : `${(metrics.d30 * 100).toFixed(1)}%`],
+    ["Người trả tiền", String(metrics.payers)],
+    ["Người chơi", String(metrics.totalPlayers)],
+    ["Chuyển đổi", `${(metrics.pct * 100).toFixed(1)}%`],
+    ["Doanh thu (đ)", metrics.revenueVnd.toLocaleString("vi-VN")],
+    ["Giữ chân 1 ngày", metrics.d1 === null ? "—" : `${(metrics.d1 * 100).toFixed(1)}%`],
+    ["Giữ chân 7 ngày", metrics.d7 === null ? "—" : `${(metrics.d7 * 100).toFixed(1)}%`],
+    ["Giữ chân 30 ngày", metrics.d30 === null ? "—" : `${(metrics.d30 * 100).toFixed(1)}%`],
   ];
   return (
     <>
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Metrics</p>
+        <h2 className="text-sm font-semibold text-zinc-200">Chỉ số</h2>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {cards.map(([label, value]) => (
             <div key={label} className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2">
@@ -164,7 +164,7 @@ async function BillingBody() {
         </div>
       </section>
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Pending orders</p>
+        <h2 className="text-sm font-semibold text-zinc-200">Đơn chờ duyệt</h2>
         <OrdersTable orders={orders} />
       </section>
     </>
@@ -176,14 +176,14 @@ export default function BillingPage() {
     return (
       <Shell>
         <p className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
-          Admin is not configured — set ADMIN_SECRET on the server first.
+          Chưa cấu hình quản trị — cần đặt ADMIN_SECRET trên máy chủ trước.
         </p>
       </Shell>
     );
   }
   return (
     <Shell>
-      <Suspense fallback={<p className="text-sm text-zinc-500">Loading billing…</p>}>
+      <Suspense fallback={<p className="text-sm text-zinc-500">Đang tải thanh toán…</p>}>
         <BillingBody />
       </Suspense>
     </Shell>

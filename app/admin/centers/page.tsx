@@ -11,10 +11,10 @@ import CentersTable, { type CenterClass } from "./centers-table";
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
-      <p className="text-xs font-bold uppercase tracking-widest text-amber-400">Admin</p>
-      <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">Center desk</h1>
-      <a href="/admin" className="mt-2 inline-block text-sm text-amber-400 underline">
-        Back to dashboard
+      <p className="text-xs font-bold tracking-widest text-amber-400">Quản trị</p>
+      <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">Quầy trung tâm</h1>
+      <a href="/admin" className="mt-2 inline-block text-sm text-amber-400 underline hover:text-amber-300">
+        Về bảng điều khiển
       </a>
       <div className="mt-6">{children}</div>
     </main>
@@ -60,7 +60,7 @@ async function CentersBody() {
   if (!verifyAdmin(store.get("arena_admin")?.value)) {
     return (
       <p className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
-        Locked — <a href="/admin" className="text-amber-400 underline">unlock with the admin key</a> first.
+        Đang khóa — <a href="/admin" className="text-amber-400 underline hover:text-amber-300">mở bằng khóa quản trị</a> trước.
       </p>
     );
   }
@@ -68,8 +68,8 @@ async function CentersBody() {
   if (missing) {
     return (
       <p className="rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
-        No center data yet — run migration supabase/migrations/0018_center.sql in Supabase and set
-        SUPABASE_SERVICE_ROLE_KEY on the server.
+        Chưa có dữ liệu trung tâm — chạy migration supabase/migrations/0018_center.sql trong Supabase
+        và đặt SUPABASE_SERVICE_ROLE_KEY trên máy chủ.
       </p>
     );
   }
@@ -77,9 +77,9 @@ async function CentersBody() {
   return (
     <>
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Centers ({centers.length})</p>
+        <h2 className="text-sm font-semibold tabular-nums text-zinc-200">Trung tâm ({centers.length})</h2>
         {centers.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-500">No centers yet.</p>
+          <p className="mt-2 text-sm text-zinc-500">Chưa có trung tâm nào.</p>
         ) : (
           <ul className="mt-2 space-y-1 text-sm text-zinc-300">
             {centers.map((c) => (
@@ -92,10 +92,10 @@ async function CentersBody() {
         )}
       </section>
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Classes ({classes.length})</p>
+        <h2 className="text-sm font-semibold tabular-nums text-zinc-200">Lớp học ({classes.length})</h2>
         <p className="mt-1 text-xs text-zinc-500">
-          Manual billing phase: flip an unpaid class to expired (students keep their rows but lose
-          enrollment VIP); flip back to active once paid.
+          Giai đoạn thu thủ công: chuyển lớp chưa đóng tiền sang hết hạn (học sinh giữ chỗ nhưng mất
+          VIP); chuyển lại sang đang mở khi đã đóng tiền.
         </p>
         <CentersTable classes={classes} centerName={Object.fromEntries(centerName)} />
       </section>
@@ -108,14 +108,14 @@ export default function CentersPage() {
     return (
       <Shell>
         <p className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400">
-          Admin is not configured — set ADMIN_SECRET on the server first.
+          Chưa cấu hình quản trị — cần đặt ADMIN_SECRET trên máy chủ trước.
         </p>
       </Shell>
     );
   }
   return (
     <Shell>
-      <Suspense fallback={<p className="text-sm text-zinc-500">Loading centers…</p>}>
+      <Suspense fallback={<p className="text-sm text-zinc-500">Đang tải trung tâm…</p>}>
         <CentersBody />
       </Suspense>
     </Shell>

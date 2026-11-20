@@ -13,13 +13,13 @@ const display = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "BossLearn — scan your work, slay the boss",
-  description: "Gamified math gap finder: scan homework, diagnose weak skills, defeat boss questions.",
+  title: "BossLearn — quét bài, diệt boss",
+  description: "Trợ thủ học tập gamified: quét bài tập, chẩn đoán kỹ năng yếu, đánh bại boss.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="vi" className="h-full antialiased">
       <body className={`min-h-full flex flex-col ${display.variable}`}>
         <div className="arena-bg" aria-hidden="true" />
         <ArenaBackdrop />

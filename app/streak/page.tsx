@@ -33,48 +33,48 @@ export default function StreakPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Healing streak"
-        title="Patch a little every day"
-        sub="Consistency beats cramming — every active day counts."
+        kicker="Chuỗi hồi phục"
+        title="Mỗi ngày vá một ít"
+        sub="Đều đặn thắng nhồi nhét — ngày hoạt động nào cũng tính."
       />
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
-      {!data && !error ? <p className="text-zinc-500">Loading your streak…</p> : null}
+      {error ? <p role="alert" className="text-sm text-red-400">{error}</p> : null}
+      {!data && !error ? <p className="text-zinc-500">Đang tải chuỗi của bạn…</p> : null}
       {data ? (
         <>
           <div className="arena-card rounded-2xl p-6 text-center">
             <p className="font-display arena-num text-5xl font-black text-emerald-300">{data.streak}</p>
-            <p className="mt-1 text-sm text-zinc-400">
-              {data.streak === 1 ? "day in a row" : "days in a row"} · {data.totalActive} active days total
+            <p className="mt-1 text-sm tabular-nums text-zinc-400">
+              ngày liên tiếp — tổng {data.totalActive} ngày hoạt động
             </p>
           </div>
           <div className="arena-card overflow-x-auto rounded-2xl p-4">
-            <div className="grid min-w-max grid-flow-col grid-rows-7 gap-1">
+            <div className="grid min-w-max grid-flow-col grid-rows-7 gap-1" role="img" aria-label={`Chuỗi ${data.streak} ngày, tổng ${data.totalActive} ngày hoạt động`}>
               {data.heatmap.map((d) => (
                 <div
                   key={d.date}
-                  title={`${d.date}: ${d.count} actions`}
+                  title={`${d.date}: ${d.count} hoạt động`}
                   className={`h-3 w-3 rounded-sm ${cellColor(d.count)}`}
                 />
               ))}
             </div>
             <div className="mt-3 flex items-center gap-2 text-xs text-zinc-500">
-              <span>Less</span>
+              <span>Ít</span>
               <span className="h-3 w-3 rounded-sm bg-zinc-800" />
               <span className="h-3 w-3 rounded-sm bg-emerald-900" />
               <span className="h-3 w-3 rounded-sm bg-emerald-700" />
               <span className="h-3 w-3 rounded-sm bg-emerald-400" />
-              <span>More</span>
+              <span>Nhiều</span>
             </div>
           </div>
           <nav className="flex gap-4 text-sm">
-            <Link href="/diary" className="underline text-zinc-300">
-              Root diary
+            <Link href="/diary" className="underline text-zinc-300 hover:text-white">
+              Nhật ký gốc
             </Link>
-            <Link href="/scan" className="underline text-zinc-300">
-              Scan to keep the streak
+            <Link href="/scan" className="underline text-zinc-300 hover:text-white">
+              Quét để giữ chuỗi
             </Link>
-            <Link href="/arena" className="underline text-zinc-300">
-              Back to arena
+            <Link href="/arena" className="underline text-zinc-300 hover:text-white">
+              Về đấu trường
             </Link>
           </nav>
         </>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import MathText from "@/components/MathText";
+import { CheckIcon } from "@/components/ui/icons";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
 import { levelForRating, sm2Next, START_RATING, updateRating } from "@/lib/game/adaptive";
 
@@ -24,6 +25,7 @@ export default function AdaptivePage() {
   const [streak, setStreak] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [gradeNote, setGradeNote] = useState("");
 
   useEffect(() => {
     try {
@@ -54,6 +56,7 @@ export default function AdaptivePage() {
   async function fetchNext(s: Record<string, Stat>, d: Due[]) {
     setLoading(true);
     setError("");
+    setGradeNote("");
     setAnswer("");
     setMark("idle");
     setTried(false);
@@ -76,12 +79,12 @@ export default function AdaptivePage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ stats: s }),
         });
-        if (!r.ok) throw new Error(await readApiError(r, "Next failed."));
-        const q = await readApiJson<NextQ>(r, "Next failed.");
+        if (!r.ok) throw new Error(await readApiError(r, "Không lấy được câu tiếp theo."));
+        const q = await readApiJson<NextQ>(r, "Không lấy được câu tiếp theo.");
         setCur({ ...q, mode: "drill", reviewKey: null });
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Next failed.");
+      setError(e instanceof Error ? e.message : "Không lấy được câu tiếp theo.");
     } finally {
       setLoading(false);
     }
@@ -90,14 +93,15 @@ export default function AdaptivePage() {
   async function check() {
     if (!cur || mark === "checking" || answer.trim() === "" || !Number.isFinite(Number(answer))) return;
     setMark("checking");
+    setGradeNote("");
     try {
       const r = await fetch("/api/paper/grade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ check: cur.question.check, tolerance: cur.question.tolerance, answer: Number(answer) }),
       });
-      if (!r.ok) throw new Error(await readApiError(r, "Grade failed."));
-      const d = await readApiJson<{ correct: boolean }>(r, "Grade failed.");
+      if (!r.ok) throw new Error(await readApiError(r, "Chấm thất bại."));
+      const d = await readApiJson<{ correct: boolean }>(r, "Chấm thất bại.");
       // First attempt counts; retries only change the display mark.
       const firstTry = !tried;
       setTried(true);
@@ -135,43 +139,52 @@ export default function AdaptivePage() {
       if (d.correct) setTimeout(() => void fetchNext(ns, nd), 900);
     } catch {
       setMark("idle");
+      setGradeNote("Chấm thất bại, thử lại nhé.");
     }
   }
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Adaptive drill"
-        title={<>Your <span className="arena-title">level</span></>}
-        sub="Weakest skill first, level matched to your rating. Misses come back on schedule."
-        right={<span className="arena-num shrink-0 text-sm text-zinc-400">Streak <span className="font-bold text-amber-300">{streak}</span></span>}
+        kicker="Luyện thích ứng"
+        title={<>Đúng <span className="arena-title">trình độ</span> của bạn</>}
+        sub="Kỹ năng yếu nhất trước, cấp độ theo điểm trình độ của bạn. Câu làm sai sẽ quay lại đúng hẹn."
+        right={<span className="arena-num shrink-0 text-sm text-zinc-400 tabular-nums">Chuỗi <span className="font-bold text-amber-300">{streak}</span></span>}
       />
       {error ? (
-        <p role="alert" className="arena-card rounded-2xl p-4 text-center text-sm text-red-300">{error}</p>
+        <div className="arena-card rounded-2xl p-4 text-center">
+          <p role="alert" className="text-sm text-red-300">{error}</p>
+          <button type="button" onClick={() => void fetchNext(stats, due)} className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white">
+            Thử lại
+          </button>
+        </div>
+      ) : null}
+      {gradeNote ? (
+        <p role="status" className="rounded-2xl border border-amber-500/50 bg-amber-950/40 p-3 text-center text-sm text-amber-200">{gradeNote}</p>
       ) : null}
       {!cur && !loading ? (
         <div className="arena-card flex flex-col items-center gap-3 rounded-2xl p-6 text-center">
-          <p className="font-display text-xl font-extrabold text-zinc-100">Ready when you are.</p>
+          <h2 className="font-display text-xl font-extrabold text-zinc-100">Sẵn sàng là luyện ngay.</h2>
           <button type="button" onClick={() => void fetchNext(stats, due)} className="arena-btn-primary rounded-full px-6 py-2.5 font-bold text-white">
-            Start drilling
+            Bắt đầu luyện
           </button>
         </div>
       ) : null}
       {loading ? (
-        <div className="flex flex-col gap-3" role="status" aria-label="Loading question">
+        <div className="flex flex-col gap-3" role="status" aria-label="Đang tải câu hỏi">
           <div className="arena-shimmer h-24 rounded-2xl" />
         </div>
       ) : null}
       {cur && !loading ? (
         <div className={`arena-card rounded-2xl p-5 ${mark === "right" ? "border-emerald-700" : mark === "wrong" ? "border-red-800" : ""}`}>
           <p className="text-xs text-zinc-500">
-            {cur.mode === "review" ? <span className="font-bold text-amber-300">Review</span> : <span className="font-bold text-sky-300">Drill</span>}
-            {" · "}{cur.skill_name} · <span className="font-bold text-amber-300">Lv {cur.level}</span>
-            {" · "}rating <span className="arena-num font-bold text-zinc-200">{cur.rating}</span>
-            {" → "}next Lv {levelForRating(cur.rating)}
+            {cur.mode === "review" ? <span className="font-bold text-amber-300">Ôn lại</span> : <span className="font-bold text-sky-300">Luyện</span>}
+            {" — "}{cur.skill_name} — <span className="font-bold text-amber-300">Cấp {cur.level}</span>
+            {" — "}điểm <span className="arena-num font-bold text-zinc-200 tabular-nums">{cur.rating}</span>
+            {" → "}cấp tiếp theo: Cấp {levelForRating(cur.rating)}
           </p>
           <MathText text={cur.question.prompt_latex} className="mt-1 overflow-x-auto text-lg text-zinc-100" />
-          <p className="mt-1 text-sm text-zinc-400">Hint: {cur.question.hint}</p>
+          <p className="mt-1 text-sm text-zinc-400">Gợi ý: {cur.question.hint}</p>
           <div className="mt-3 flex gap-2">
             <input
               type="number"
@@ -181,8 +194,8 @@ export default function AdaptivePage() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") void check();
               }}
-              placeholder="Your numeric answer"
-              aria-label="Adaptive drill answer"
+              placeholder="Đáp số của bạn"
+              aria-label="Đáp án bài luyện thích ứng"
               disabled={mark === "right"}
               className="arena-input arena-num min-w-0 flex-1 rounded-xl px-4 py-2 text-zinc-100 placeholder:text-zinc-600 disabled:opacity-50"
             />
@@ -190,14 +203,15 @@ export default function AdaptivePage() {
               type="button"
               onClick={() => void check()}
               disabled={mark === "checking" || mark === "right"}
-              className="arena-btn-primary shrink-0 rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
+              aria-label={mark === "checking" ? "Đang chấm" : mark === "right" ? "Đã đúng" : "Chấm đáp án"}
+              className="arena-btn-primary inline-flex shrink-0 items-center gap-1 rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
             >
-              {mark === "checking" ? "…" : mark === "right" ? "✓" : mark === "wrong" ? "Retry" : "Check"}
+              {mark === "checking" ? "Đang chấm…" : mark === "right" ? <><CheckIcon className="h-4 w-4" label="Đúng" /> Đúng</> : mark === "wrong" ? "Thử lại" : "Chấm"}
             </button>
           </div>
           {mark === "wrong" ? (
-            <button type="button" onClick={() => void fetchNext(stats, due)} className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-bold text-zinc-200">
-              Skip — next question
+            <button type="button" onClick={() => void fetchNext(stats, due)} className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-bold text-zinc-200 transition-colors hover:text-white">
+              Bỏ qua — câu tiếp theo
             </button>
           ) : null}
         </div>

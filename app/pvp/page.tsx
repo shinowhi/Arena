@@ -27,14 +27,14 @@ export default function PvpLobby() {
     });
     fetch("/api/pvp/rooms")
       .then(async (r) => {
-        if (!r.ok) throw new Error(await readApiError(r, "Rooms failed."));
-        return readApiJson<{ rooms: Room[] }>(r, "Rooms failed.");
+        if (!r.ok) throw new Error(await readApiError(r, "Không tải được phòng."));
+        return readApiJson<{ rooms: Room[] }>(r, "Không tải được phòng.");
       })
       .then((d) => {
         if (alive) setRooms(d.rooms);
       })
       .catch((e) => {
-        if (alive) setError(e instanceof Error ? e.message : "Rooms failed.");
+        if (alive) setError(e instanceof Error ? e.message : "Không tải được phòng.");
       });
     return () => {
       alive = false;
@@ -52,11 +52,11 @@ export default function PvpLobby() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ skill_tag: skill }),
       });
-      if (!r.ok) throw new Error(await readApiError(r, "Room creation failed."));
-      const d = await readApiJson<{ room_id: string }>(r, "Room creation failed.");
+      if (!r.ok) throw new Error(await readApiError(r, "Tạo phòng thất bại."));
+      const d = await readApiJson<{ room_id: string }>(r, "Tạo phòng thất bại.");
       router.push(`/pvp/${d.room_id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Room creation failed.");
+      setError(e instanceof Error ? e.message : "Tạo phòng thất bại.");
       setCreating(false);
       createRef.current = false;
     }
@@ -65,9 +65,9 @@ export default function PvpLobby() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Player vs player"
-        title={<>Duel <span className="arena-title">lobby</span></>}
-        sub="Same 5 questions, both sides at once. Correct hits hurt the enemy side, misses hurt you. Last side standing wins."
+        kicker="Người đấu người"
+        title={<>Sảnh <span className="arena-title">đấu PvP</span></>}
+        sub="Cùng 5 câu, hai phe đánh cùng lúc. Trúng thì phe địch mất máu, trượt thì mình mất máu. Phe còn lại cuối cùng thắng."
       />
       {error ? (
         <p role="alert" className="text-sm text-red-400">
@@ -75,12 +75,12 @@ export default function PvpLobby() {
         </p>
       ) : null}
       <div className="arena-card flex flex-col gap-3 rounded-2xl p-5">
-        <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Create a room</p>
+        <h2 className="text-xs font-bold tracking-widest text-zinc-500">Tạo phòng</h2>
         <div className="flex gap-2">
           <select
             value={skill}
             onChange={(e) => setSkill(e.target.value)}
-            aria-label="Room skill"
+            aria-label="Kỹ năng của phòng"
             className="arena-input min-w-0 flex-1 rounded-xl px-4 py-2.5 text-sm text-zinc-100"
           >
             {SKILL_IDS.map((id) => (
@@ -95,18 +95,18 @@ export default function PvpLobby() {
             disabled={creating}
             className="arena-btn-primary shrink-0 rounded-full px-6 py-2.5 font-bold text-white disabled:opacity-40 disabled:shadow-none"
           >
-            {creating ? "…" : "Create"}
+            {creating ? "Đang tạo…" : "Tạo phòng"}
           </button>
         </div>
       </div>
       <div className="arena-card flex flex-col gap-3 rounded-2xl p-5">
-        <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Join with a link</p>
+        <h2 className="text-xs font-bold tracking-widest text-zinc-500">Vào bằng link</h2>
         <div className="flex gap-2">
           <input
             value={joinId}
             onChange={(e) => setJoinId(e.target.value)}
-            placeholder="Paste room link or id"
-            aria-label="Room link or id"
+            placeholder="Dán link hoặc mã phòng"
+            aria-label="Link hoặc mã phòng"
             className="arena-input min-w-0 flex-1 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600"
           />
           <button
@@ -114,22 +114,22 @@ export default function PvpLobby() {
             onClick={() => {
               const m = joinId.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
               if (m) router.push(`/pvp/${m[0]}`);
-              else setError("That doesn't look like a room link.");
+              else setError("Link này không giống link phòng đấu.");
             }}
             className="arena-btn-ghost shrink-0 rounded-full px-6 py-2.5 text-sm font-bold text-zinc-200"
           >
-            Join
+            Vào phòng
           </button>
         </div>
       </div>
       <div className="arena-card flex flex-col gap-3 rounded-2xl p-5">
-        <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Your open rooms</p>
-        {!rooms && !error ? <div className="arena-shimmer h-12 rounded-xl" role="status" aria-label="Loading rooms" /> : null}
-        {rooms && rooms.length === 0 ? <p className="text-sm text-zinc-500">No open rooms — create one above.</p> : null}
+        <h2 className="text-xs font-bold tracking-widest text-zinc-500">Phòng đang mở của bạn</h2>
+        {!rooms && !error ? <div className="arena-shimmer h-12 rounded-xl" role="status" aria-label="Đang tải phòng" /> : null}
+        {rooms && rooms.length === 0 ? <p className="text-sm text-zinc-500">Chưa có phòng nào — tạo ở trên nhé.</p> : null}
         {rooms?.map((r) => (
-          <Link key={r.room_id} href={`/pvp/${r.room_id}`} className="flex items-center justify-between rounded-xl bg-zinc-900/70 px-4 py-2.5 text-sm">
+          <Link key={r.room_id} href={`/pvp/${r.room_id}`} className="flex items-center justify-between rounded-xl bg-zinc-900/70 px-4 py-2.5 text-sm transition-colors hover:bg-zinc-800">
             <span className="font-bold text-zinc-100">{r.skill_name}</span>
-            <span className="text-xs text-zinc-500">Enter →</span>
+            <span className="text-xs text-zinc-500">Vào →</span>
           </Link>
         ))}
       </div>

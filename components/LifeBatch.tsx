@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import MathText from "@/components/MathText";
+import { XIcon } from "@/components/ui/icons";
 import { skillName } from "@/lib/graph/skills";
 
 // Client-only: three.js stays out of the server bundle and initial JS.
@@ -41,12 +42,12 @@ export default function LifeBatch({
   return (
     <div className="arena-enter arena-d1 arena-card flex flex-col gap-3 rounded-2xl p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-zinc-200">
-          Real-life batch <span className="arena-num text-zinc-500">({jobs.length}/3)</span>
-        </p>
+        <h2 className="text-sm font-semibold text-zinc-200">
+          Chùm ảnh đời thường <span className="arena-num text-zinc-500 tabular-nums">({jobs.length}/3)</span>
+        </h2>
         <div className="flex gap-2">
           <label className="arena-btn-ghost cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium text-zinc-200">
-            Add photos
+            Thêm ảnh
             <input
               type="file"
               accept="image/*"
@@ -64,14 +65,14 @@ export default function LifeBatch({
             onClick={onScreen}
             className="arena-btn-ghost rounded-full px-4 py-1.5 text-sm font-medium text-zinc-200"
           >
-            Capture screen
+            Chụp màn hình
           </button>
         </div>
       </div>
 
       {jobs.length === 0 ? (
         <p className="rounded-xl border border-dashed border-zinc-700 px-4 py-6 text-center text-sm text-zinc-500">
-          Add up to 3 photos — pizza, stairs, bridges — each becomes its own boss fight.
+          Thêm tối đa 3 ảnh — pizza, cầu thang, cây cầu — mỗi ảnh thành một trận đánh boss.
         </p>
       ) : (
         <ol className="flex flex-col gap-2">
@@ -92,7 +93,7 @@ export default function LifeBatch({
                             : "bg-zinc-800 text-zinc-400"
                     }`}
                   >
-                    {j.status === "done" ? "Done" : j.status === "failed" ? "Failed" : j.status === "forging" ? "Forging…" : "Queued"}
+                    {j.status === "done" ? "Xong" : j.status === "failed" ? "Lỗi" : j.status === "forging" ? "Đang rèn…" : "Đang chờ"}
                   </span>
                   <span className="truncate text-zinc-500">{j.file.name}</span>
                 </p>
@@ -108,21 +109,21 @@ export default function LifeBatch({
                         href={"/boss/" + j.result.boss_id}
                         className="arena-btn-primary rounded-full px-4 py-1 text-xs font-bold text-white"
                       >
-                        ⚔ Fight
+                        Đánh boss
                       </Link>
                     </p>
                   </div>
                 ) : null}
-                {j.status === "failed" ? <p className="mt-1 text-xs text-red-400">{j.error ?? "Forge failed."}</p> : null}
+                {j.status === "failed" ? <p role="alert" className="mt-1 text-xs text-red-400">{j.error ?? "Rèn boss thất bại."}</p> : null}
               </div>
               {!forging && j.status !== "forging" ? (
                 <button
                   type="button"
                   onClick={() => onRemove(j.key)}
-                  aria-label={`Remove ${j.file.name}`}
+                  aria-label={`Gỡ ${j.file.name}`}
                   className="shrink-0 rounded-full px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
                 >
-                  ✕
+                  <XIcon className="h-3.5 w-3.5" />
                 </button>
               ) : null}
             </li>
@@ -136,7 +137,7 @@ export default function LifeBatch({
         disabled={forging || queued === 0}
         className="arena-btn-primary font-display rounded-full px-5 py-3 text-base font-bold text-white disabled:opacity-40 disabled:shadow-none"
       >
-        {forging ? "Forging bosses…" : queued > 0 ? `Forge ${queued} boss${queued === 1 ? "" : "es"}` : "Forge bosses"}
+        {forging ? "Đang rèn boss…" : queued > 0 ? `Rèn ${queued} boss` : "Rèn boss"}
       </button>
     </div>
   );

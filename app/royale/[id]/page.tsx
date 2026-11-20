@@ -38,8 +38,8 @@ function RoyaleArenaInner() {
     if (!id) return;
     try {
       const r = await fetch(`/api/royale/${encodeURIComponent(id)}`);
-      if (!r.ok) throw new Error(await readApiError(r, "Room lookup failed."));
-      const d = await readApiJson<View>(r, "Room lookup failed.");
+      if (!r.ok) throw new Error(await readApiError(r, "Không tìm được phòng."));
+      const d = await readApiJson<View>(r, "Không tìm được phòng.");
       setView((v) => {
         if (!v || v.round !== d.round) setPicked(-1);
         return d;
@@ -47,7 +47,7 @@ function RoyaleArenaInner() {
       setNow(Date.now());
       setError("");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Room lookup failed.");
+      setError(e instanceof Error ? e.message : "Không tìm được phòng.");
     }
   }, [id]);
 
@@ -69,10 +69,10 @@ function RoyaleArenaInner() {
     setBusy(true);
     try {
       const r = await fetch(`/api/royale/${encodeURIComponent(id)}/join`, { method: "POST" });
-      if (!r.ok) throw new Error(await readApiError(r, "Join failed."));
+      if (!r.ok) throw new Error(await readApiError(r, "Vào phòng thất bại."));
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Join failed.");
+      setError(e instanceof Error ? e.message : "Vào phòng thất bại.");
     } finally {
       setBusy(false);
     }
@@ -83,10 +83,10 @@ function RoyaleArenaInner() {
     setBusy(true);
     try {
       const r = await fetch(`/api/royale/${encodeURIComponent(id)}/start`, { method: "POST" });
-      if (!r.ok) throw new Error(await readApiError(r, "Start failed."));
+      if (!r.ok) throw new Error(await readApiError(r, "Bắt đầu thất bại."));
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Start failed.");
+      setError(e instanceof Error ? e.message : "Bắt đầu thất bại.");
     } finally {
       setBusy(false);
     }
@@ -102,10 +102,10 @@ function RoyaleArenaInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answer: k }),
       });
-      if (!r.ok) throw new Error(await readApiError(r, "Answer failed."));
+      if (!r.ok) throw new Error(await readApiError(r, "Trả lời thất bại."));
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Answer failed.");
+      setError(e instanceof Error ? e.message : "Trả lời thất bại.");
     } finally {
       setBusy(false);
     }
@@ -116,16 +116,35 @@ function RoyaleArenaInner() {
   const left = ends > 0 ? Math.max(0, Math.ceil((ends - now) / 1000)) : 0;
   const answered = view?.you ? view.you.answered >= view.round : false;
 
+  // ARIA radio keyboard pattern (mirrors friends tabs): arrows move focus,
+  // Home/End jump. Focus only — answering still needs a press, so nobody
+  // submits by accident while browsing options.
+  function onOptionKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    const btns = Array.from(e.currentTarget.querySelectorAll('[role="radio"]')) as HTMLElement[];
+    if (btns.length === 0) return;
+    const cur = btns.indexOf(document.activeElement as HTMLElement);
+    const at = cur < 0 ? 0 : cur;
+    const next =
+      e.key === "ArrowRight" || e.key === "ArrowDown" ? (at + 1) % btns.length
+      : e.key === "ArrowLeft" || e.key === "ArrowUp" ? (at - 1 + btns.length) % btns.length
+      : e.key === "Home" ? 0
+      : e.key === "End" ? btns.length - 1
+      : -1;
+    if (next < 0) return;
+    e.preventDefault();
+    btns[next]?.focus();
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Battle royale"
-        title={<>{view?.section.name ?? "…"} <span className="arena-title">arena</span></>}
-        sub={view ? `Round ${Math.min(view.round + 1, view.totalRounds)}/${view.totalRounds} · ${view.roster.filter((p) => p.alive).length} alive` : "Loading room…"}
+        kicker="Đấu sinh tồn"
+        title={<>{view?.section.name ?? "…"} <span className="arena-title">sinh tồn</span></>}
+        sub={view ? `Vòng ${Math.min(view.round + 1, view.totalRounds)}/${view.totalRounds} — ${view.roster.filter((p) => p.alive).length} người còn lại` : "Đang tải phòng…"}
         right={
           view?.status === "live" && !finished ? (
-            <span role="timer" aria-label="Round time left" className={`arena-num shrink-0 font-mono text-sm tabular-nums ${left <= 5 ? "font-bold text-red-400" : "text-zinc-400"}`}>
-              {left}s
+            <span role="timer" aria-label="Thời gian còn lại của vòng" className={`arena-num shrink-0 font-mono text-sm tabular-nums ${left <= 5 ? "font-bold text-red-400" : "text-zinc-400"}`}>
+              {left} giây
             </span>
           ) : undefined
         }
@@ -135,39 +154,39 @@ function RoyaleArenaInner() {
       ) : null}
       {view?.status === "lobby" ? (
         <div className="arena-card flex flex-col items-center gap-3 rounded-2xl p-6 text-center">
-          <p className="text-sm text-zinc-300">Room ID: <span className="arena-num font-mono text-amber-300">{view.id}</span></p>
+          <p className="text-sm text-zinc-300">Mã phòng: <span className="arena-num font-mono text-amber-300">{view.id}</span></p>
           {!view.you ? (
             <button type="button" onClick={() => void join()} disabled={busy} className="arena-btn-primary rounded-full px-6 py-2.5 font-bold text-white disabled:opacity-40">
-              {busy ? "…" : "Join room"}
+              {busy ? "Đang vào…" : "Vào phòng"}
             </button>
           ) : null}
           {view.isCreator ? (
             <button type="button" onClick={() => void start()} disabled={busy || view.roster.length < 2} className="arena-btn-ghost rounded-full px-6 py-2.5 font-bold text-zinc-200 disabled:opacity-40">
-              Start ({view.roster.length}/8)
+              Bắt đầu ({view.roster.length}/8)
             </button>
           ) : (
-            <p className="text-sm text-zinc-400">Waiting for the creator to start… ({view.roster.length}/8)</p>
+            <p className="text-sm tabular-nums text-zinc-400">Chờ chủ phòng bắt đầu… ({view.roster.length}/8)</p>
           )}
         </div>
       ) : null}
       {finished && view ? (
         <div role="status" className="arena-enter arena-card rounded-2xl p-6 text-center">
-          <p className="text-xs font-bold tracking-widest text-zinc-400 uppercase">
-            {view.youWon ? "Victory" : "Game over"}
+          <p className="text-xs font-bold tracking-widest text-zinc-400">
+            {view.youWon ? "Thắng" : "Thua"}
           </p>
           <p className="mt-1 text-sm text-zinc-300">
-            Winner <span className="arena-num font-mono font-bold text-amber-300">{view.winner_short ?? "–"}</span>
+            Người thắng <span className="arena-num font-mono font-bold text-amber-300">{view.winner_short ?? "–"}</span>
           </p>
           <Link href="/royale" className="arena-btn-primary mt-3 inline-block rounded-full px-6 py-2.5 font-bold text-white">
-            New room
+            Phòng mới
           </Link>
         </div>
       ) : null}
       {view ? (
-        <div className="flex flex-wrap justify-center gap-2" aria-label="Roster">
+        <div className="flex flex-wrap justify-center gap-2" aria-label="Danh sách người chơi">
           {view.roster.map((p, i) => (
             <span key={`${p.short}-${i}`} className={`arena-num rounded-full px-3 py-1 text-sm ${p.alive ? "arena-btn-ghost text-zinc-200" : "text-zinc-600 line-through"}`}>
-              {p.you ? "You" : p.short} · {p.score}
+              {p.you ? "Bạn" : p.short} — {p.score}
             </span>
           ))}
         </div>
@@ -175,15 +194,15 @@ function RoyaleArenaInner() {
       {view?.status === "live" && !finished && view.question && view.you?.alive && !answered ? (
         <div className="arena-card rounded-2xl p-5">
           <p className="text-xs text-zinc-500">
-            Q{view.question.no} · {view.section.name} ·{" "}
+            Câu {view.question.no} — {view.section.name} —{" "}
             {view.question.tier === "verified" ? (
-              <span className="font-bold text-emerald-300">Verified</span>
+              <span className="font-bold text-emerald-300">Đã kiểm duyệt</span>
             ) : (
-              <span className="font-bold text-amber-300">AI draft</span>
+              <span className="font-bold text-amber-300">Bản nháp AI</span>
             )}
           </p>
           <MathText text={view.question.prompt_latex} className="mt-1 overflow-x-auto text-lg text-zinc-100" />
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label={`Options for round ${view.round + 1}`}>
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label={`Các đáp án cho vòng ${view.round + 1}`} onKeyDown={onOptionKeyDown}>
             {view.question.options.map((o, k) => (
               <button
                 key={k}
@@ -203,7 +222,7 @@ function RoyaleArenaInner() {
       ) : null}
       {view?.status === "live" && !finished && (!view.you?.alive ? true : answered) ? (
         <p className="text-center text-sm text-zinc-400" role="status">
-          {!view.you?.alive ? "You are out — spectating…" : "Locked in — waiting for the round…"}
+          {!view.you?.alive ? "Bạn bị loại — đang xem…" : "Đã chốt — chờ vòng đấu…"}
         </p>
       ) : null}
     </main>

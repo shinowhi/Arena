@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import MathText from "@/components/MathText";
+import { BulbIcon, CheckIcon, XIcon } from "@/components/ui/icons";
 import { skillName } from "@/lib/graph/skills";
 import { EXAM_SECONDS, URGENT_MS, examExpired, examRemainingMs, formatExamClock } from "@/lib/paper/exam";
 import { readApiError, readApiJson } from "@/lib/scan/image-prep";
@@ -139,8 +140,8 @@ function PaperInner() {
       body: JSON.stringify({ skill_tag: skill }),
     })
       .then(async (r) => {
-        if (!r.ok) throw new Error(await readApiError(r, "Paper forge failed."));
-        return readApiJson<{ questions: PQ[] }>(r, "Paper forge failed.");
+        if (!r.ok) throw new Error(await readApiError(r, "Không soạn được đề."));
+        return readApiJson<{ questions: PQ[] }>(r, "Không soạn được đề.");
       })
       .then((d) => {
         if (!alive) return;
@@ -149,7 +150,7 @@ function PaperInner() {
         setMarks(d.questions.map(() => "idle" as Mark));
       })
       .catch((e) => {
-        if (alive) setError(e instanceof Error ? e.message : "Paper forge failed.");
+        if (alive) setError(e instanceof Error ? e.message : "Không soạn được đề.");
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -164,7 +165,7 @@ function PaperInner() {
     if (!q || marks[i] === "checking" || locked) return;
     // Number("") is 0: blank input must never be graded as zero.
     if ((answers[i] ?? "").trim() === "" || !Number.isFinite(Number(answers[i]))) {
-      setGerr((g) => ({ ...g, [i]: "Enter a number." }));
+      setGerr((g) => ({ ...g, [i]: "Nhập một số nhé." }));
       return;
     }
     const n = Number(answers[i]);
@@ -181,14 +182,14 @@ function PaperInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ check: q.check, tolerance: q.tolerance, answer: n }),
       });
-      const d = await readApiJson<{ correct: boolean }>(r, "Grade failed.");
+      const d = await readApiJson<{ correct: boolean }>(r, "Chấm thất bại.");
       // A grade launched before expiry must not rewrite the final score.
       // Uses the ticking clock (same staleness budget as `locked`).
       if (exam && started && examExpired(deadline, now)) return;
       setMarks((m) => m.map((v, k) => (k === i ? (d.correct ? "right" : "wrong") : v)));
     } catch {
       setMarks((m) => m.map((v, k) => (k === i ? "idle" : v)));
-      setGerr((g) => ({ ...g, [i]: "Grading failed — retry." }));
+      setGerr((g) => ({ ...g, [i]: "Chấm thất bại — thử lại nhé." }));
     }
   }
 
@@ -198,25 +199,25 @@ function PaperInner() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker={exam ? "Timed exam" : "Practice paper"}
-        title={<>Drill <span className="arena-title">{skill ? skillName(skill) : "…"}</span></>}
+        kicker={exam ? "Thi bấm giờ" : "Đề luyện"}
+        title={<>Luyện <span className="arena-title">{skill ? skillName(skill) : "…"}</span></>}
         sub={
           exam
-            ? "10 machine-verified questions, 15 minutes. When time runs out the paper locks."
-            : "10 machine-verified questions, 2 per level. Answers are graded on the server — never revealed."
+            ? "10 câu đã kiểm chứng bằng máy, 15 phút. Hết giờ là đề khóa lại."
+            : "10 câu đã kiểm chứng bằng máy, mỗi cấp 2 câu. Đáp án chấm trên máy chủ — không bao giờ lộ."
         }
         right={
           exam && started ? (
-            <span role="timer" aria-label="Exam time left" className={`shrink-0 font-mono text-sm tabular-nums ${expired ? "font-bold text-red-400" : urgent ? "arena-urgent font-bold" : "text-zinc-400"}`}>
+            <span role="timer" aria-label="Thời gian còn lại" className={`shrink-0 font-mono text-sm tabular-nums ${expired ? "font-bold text-red-400" : urgent ? "arena-urgent font-bold" : "text-zinc-400"}`}>
               {expired ? "00:00" : formatExamClock(remaining)}
             </span>
           ) : undefined
         }
       />
       {loading ? (
-        <div className="flex flex-col gap-3" role="status" aria-label="Forging paper">
+        <div className="flex flex-col gap-3" role="status" aria-label="Đang soạn đề">
           <div className="arena-shimmer h-24 rounded-2xl" />
-          <p className="text-center text-sm text-zinc-500">Forging 10 questions, verifying answers…</p>
+          <p className="text-center text-sm text-zinc-500">Đang soạn 10 câu, kiểm chứng đáp án…</p>
         </div>
       ) : null}
       {error ? (
@@ -227,53 +228,53 @@ function PaperInner() {
           <button
             type="button"
             onClick={retryForge}
-            className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
+            className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white"
           >
-            Retry forge
+            Soạn đề khác
           </button>
         </div>
       ) : null}
       {!exam && questions ? (
         <Link
           href={`/paper?skill=${encodeURIComponent(skill)}&exam=1`}
-          className="arena-btn-ghost mx-auto w-fit rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
+          className="arena-btn-ghost mx-auto w-fit rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white"
         >
-          Take as a 15-minute timed exam
+          Thi bấm giờ 15 phút với đề này
         </Link>
       ) : null}
       {exam && questions && !started ? (
         <div className="arena-card flex flex-col items-center gap-3 rounded-2xl p-6 text-center">
-          <p className="font-display text-xl font-extrabold text-zinc-100">Paper forged. Clock ready.</p>
-          <p className="text-sm text-zinc-400">10 questions, 15 minutes. The timer starts when you begin.</p>
+          <h2 className="font-display text-xl font-extrabold text-zinc-100">Đề đã sẵn sàng, đồng hồ cũng vậy.</h2>
+          <p className="text-sm text-zinc-400">10 câu, 15 phút. Bấm giờ bắt đầu khi bạn vào thi.</p>
           <button
             type="button"
             onClick={startExam}
             className="arena-btn-primary rounded-full px-6 py-2.5 font-bold text-white"
           >
-            Start exam
+            Vào phòng thi
           </button>
         </div>
       ) : null}
       {expired ? (
         <div role="status" className="arena-enter rounded-2xl bg-red-950/40 p-4 text-center">
-          <p className="text-xs font-bold tracking-widest text-red-300 uppercase">Time&apos;s up</p>
-          <p className="mt-1 text-sm text-zinc-300">
-            Final score <span className="arena-num font-bold text-emerald-300">{score}</span>/{questions?.length ?? 10} — the paper is locked.
+          <p className="text-xs font-bold text-red-300">Hết giờ</p>
+          <p className="mt-1 text-sm text-zinc-300 tabular-nums">
+            Điểm cuối <span className="arena-num font-bold text-emerald-300">{score}</span>/{questions?.length ?? 10} — đề đã khóa.
           </p>
         </div>
       ) : null}
       {shown ? (
-        <p className="text-center text-sm text-zinc-400">
-          Score <span className="arena-num font-bold text-emerald-300">{score}</span>/{questions?.length ?? 0}
+        <p className="text-center text-sm text-zinc-400 tabular-nums">
+          Điểm <span className="arena-num font-bold text-emerald-300">{score}</span>/{questions?.length ?? 0}
         </p>
       ) : null}
       {(shown ? questions : null)?.map((q, i) => (
         <div key={i} className={`arena-card rounded-2xl p-5 ${view(marks[i]) === "right" ? "border-emerald-700" : view(marks[i]) === "wrong" ? "border-red-800" : ""}`}>
-          <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">
-            Q{i + 1} · <span className="font-bold text-amber-300">Lv {q.level}</span>
+          <p className="text-xs font-bold text-zinc-500">
+            Câu {i + 1} — <span className="font-bold text-amber-300">Cấp {q.level}</span>
           </p>
           <MathText text={q.prompt_latex} className="mt-1 overflow-x-auto text-lg text-zinc-100" />
-          <p className="mt-1 text-sm text-zinc-400"><span aria-hidden="true">💡</span> Hint: {q.hint}</p>
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-zinc-400"><BulbIcon className="h-4 w-4 text-amber-300" /> Gợi ý: {q.hint}</p>
           <div className="mt-3 flex gap-2">
             <input
               type="number"
@@ -283,8 +284,8 @@ function PaperInner() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") void grade(i);
               }}
-              placeholder="Your numeric answer"
-              aria-label={`Answer for question ${i + 1}`}
+              placeholder="Đáp số của bạn"
+              aria-label={`Đáp số câu ${i + 1}`}
               disabled={locked || marks[i] === "right"}
               className="arena-input arena-num min-w-0 flex-1 rounded-xl px-4 py-2 text-zinc-100 placeholder:text-zinc-600 disabled:opacity-50"
             />
@@ -294,18 +295,18 @@ function PaperInner() {
               disabled={locked || marks[i] === "checking" || marks[i] === "right"}
               aria-label={
                 marks[i] === "checking"
-                  ? `Checking answer ${i + 1}`
+                  ? `Đang chấm câu ${i + 1}`
                   : view(marks[i]) === "right"
-                    ? `Question ${i + 1} correct`
+                    ? `Câu ${i + 1} đúng`
                     : view(marks[i]) === "wrong"
                       ? locked
-                        ? `Question ${i + 1} incorrect, paper locked`
-                        : `Question ${i + 1} incorrect, retry`
-                      : `Check answer ${i + 1}`
+                        ? `Câu ${i + 1} sai, đề đã khóa`
+                        : `Câu ${i + 1} sai, thử lại`
+                      : `Chấm câu ${i + 1}`
               }
-              className="arena-btn-primary shrink-0 rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
+              className="arena-btn-primary inline-flex shrink-0 items-center gap-1 rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
             >
-              {marks[i] === "checking" ? "…" : view(marks[i]) === "right" ? "✓" : view(marks[i]) === "wrong" ? (locked ? "✗" : "Retry") : "Check"}
+              {marks[i] === "checking" ? "Đang chấm…" : view(marks[i]) === "right" ? <><CheckIcon className="h-4 w-4" label="Đúng" /> Đúng</> : view(marks[i]) === "wrong" ? (locked ? <XIcon className="h-4 w-4" label="Sai" /> : "Thử lại") : "Chấm"}
             </button>
           </div>
           {gerr[i] ? (

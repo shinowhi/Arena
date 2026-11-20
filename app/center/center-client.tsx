@@ -46,15 +46,23 @@ type Me = {
 };
 
 function fmtVnd(n: number): string {
-  return n.toLocaleString("en-US");
+  return n.toLocaleString("vi-VN");
 }
 
 function fmtDue(iso: string | null): string {
-  if (!iso) return "No due date";
+  if (!iso) return "Không hạn nộp";
   const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return "No due date";
-  return `Due ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+  if (!Number.isFinite(d.getTime())) return "Không hạn nộp";
+  return `Hạn ${d.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric" })}`;
 }
+
+// Display-only Vietnamese labels (status codes from the API stay unchanged).
+const STATUS_LABEL: Record<string, string> = {
+  pending: "chờ duyệt",
+  active: "đang mở",
+  expired: "hết hạn",
+  cancelled: "đã hủy",
+};
 
 function StatusBadge({ status }: { status: string }) {
   const cls =
@@ -64,7 +72,7 @@ function StatusBadge({ status }: { status: string }) {
         ? "bg-amber-900/60 text-amber-300"
         : "bg-zinc-800 text-zinc-400";
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${cls}`}>{status}</span>
+    <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${cls}`}>{STATUS_LABEL[status] ?? status}</span>
   );
 }
 
@@ -74,7 +82,7 @@ function AssignmentRow({ a, practice }: { a: Assignment; practice: boolean }) {
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold text-zinc-100">{a.title}</p>
         <p className="text-xs text-zinc-500">
-          {a.skill_name} · {fmtDue(a.due_at)}
+          {a.skill_name} — {fmtDue(a.due_at)}
         </p>
       </div>
       {practice && (
@@ -82,7 +90,7 @@ function AssignmentRow({ a, practice }: { a: Assignment; practice: boolean }) {
           href={`/drill?skill=${encodeURIComponent(a.skill_tag)}`}
           className="shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-black hover:bg-amber-400"
         >
-          Practice
+          Luyện tập
         </a>
       )}
     </li>
@@ -114,15 +122,15 @@ function Composer({ classId, onPosted }: { classId: string; onPosted: () => void
       });
       const d = (await res.json().catch(() => null)) as { id?: string; error?: string } | null;
       if (!res.ok || !d?.id) {
-        setMsg({ ok: false, text: d?.error ?? "Could not post assignment." });
+        setMsg({ ok: false, text: d?.error ?? "Không đăng được bài tập." });
       } else {
         setTitle("");
         setDue("");
-        setMsg({ ok: true, text: "Posted." });
+        setMsg({ ok: true, text: "Đã đăng." });
         onPosted();
       }
     } catch {
-      setMsg({ ok: false, text: "Could not post assignment." });
+      setMsg({ ok: false, text: "Không đăng được bài tập." });
     } finally {
       setBusy(false);
     }
@@ -130,10 +138,10 @@ function Composer({ classId, onPosted }: { classId: string; onPosted: () => void
 
   return (
     <form onSubmit={submit} className="mt-3 flex flex-col gap-2">
-      <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">New assignment</p>
+      <h2 className="text-xs font-bold tracking-widest text-zinc-500">Bài tập mới</h2>
       <div className="flex flex-col gap-2 sm:flex-row">
         <label htmlFor={`skill-${classId}`} className="sr-only">
-          Skill
+          Kỹ năng
         </label>
         <select
           id={`skill-${classId}`}
@@ -148,20 +156,20 @@ function Composer({ classId, onPosted }: { classId: string; onPosted: () => void
           ))}
         </select>
         <label htmlFor={`title-${classId}`} className="sr-only">
-          Assignment title
+          Tên bài tập
         </label>
         <input
           id={`title-${classId}`}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Assignment title"
+          placeholder="Tên bài tập"
           maxLength={120}
           className="flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600"
         />
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">
         <label htmlFor={`due-${classId}`} className="sr-only">
-          Due date (optional)
+          Hạn nộp (không bắt buộc)
         </label>
         <input
           id={`due-${classId}`}
@@ -175,7 +183,7 @@ function Composer({ classId, onPosted }: { classId: string; onPosted: () => void
           disabled={busy}
           className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-50"
         >
-          {busy ? "Posting…" : "Post assignment"}
+          {busy ? "Đang đăng…" : "Đăng bài"}
         </button>
       </div>
       {msg && (
@@ -208,14 +216,14 @@ function JoinForm({ compact, onJoined }: { compact?: boolean; onJoined: () => vo
         error?: string;
       } | null;
       if (!res.ok) {
-        setMsg({ ok: false, text: d?.error ?? "Could not join class." });
+        setMsg({ ok: false, text: d?.error ?? "Không vào lớp được." });
       } else {
         setCode("");
-        setMsg({ ok: true, text: `Joined ${d?.class_name ?? "class"} — full VIP unlocked.` });
+        setMsg({ ok: true, text: `Đã vào ${d?.class_name ?? "lớp"} — mở full VIP.` });
         onJoined();
       }
     } catch {
-      setMsg({ ok: false, text: "Could not join class." });
+      setMsg({ ok: false, text: "Không vào lớp được." });
     } finally {
       setBusy(false);
     }
@@ -224,11 +232,11 @@ function JoinForm({ compact, onJoined }: { compact?: boolean; onJoined: () => vo
   return (
     <form onSubmit={submit} className="flex flex-col gap-2">
       {!compact && (
-        <p className="text-sm font-semibold text-zinc-200">Join with a code</p>
+        <h2 className="text-sm font-semibold text-zinc-200">Vào lớp bằng mã</h2>
       )}
       <div className="flex flex-col gap-2 sm:flex-row">
         <label htmlFor={compact ? "join-code-again" : "join-code"} className="sr-only">
-          Join code
+          Mã vào lớp
         </label>
         <input
           id={compact ? "join-code-again" : "join-code"}
@@ -244,7 +252,7 @@ function JoinForm({ compact, onJoined }: { compact?: boolean; onJoined: () => vo
           disabled={busy}
           className="rounded-lg bg-amber-500 px-5 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
         >
-          {busy ? "Joining…" : "Join class"}
+          {busy ? "Đang vào…" : "Vào lớp"}
         </button>
       </div>
       {msg && (
@@ -283,15 +291,15 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
         error?: string;
       } | null;
       if (!res.ok || !d?.join_code) {
-        setMsg({ ok: false, text: d?.error ?? "Could not create class." });
+        setMsg({ ok: false, text: d?.error ?? "Không tạo được lớp." });
       } else {
         setName("");
         setCenterName("");
-        setMsg({ ok: true, text: `Created — share code ${d.join_code} with your students.` });
+        setMsg({ ok: true, text: `Đã tạo — gửi mã ${d.join_code} cho học sinh.` });
         onCreated();
       }
     } catch {
-      setMsg({ ok: false, text: "Could not create class." });
+      setMsg({ ok: false, text: "Không tạo được lớp." });
     } finally {
       setBusy(false);
     }
@@ -299,32 +307,32 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-2">
-      <p className="text-sm font-semibold text-zinc-200">Teach a new class</p>
+      <h2 className="text-sm font-semibold text-zinc-200">Mở lớp mới</h2>
       <label htmlFor="class-name" className="sr-only">
-        Class name
+        Tên lớp
       </label>
       <input
         id="class-name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Class name (e.g. Grade 12 Math — Group A)"
+        placeholder="Tên lớp (vd. Toán 12 — Nhóm A)"
         maxLength={80}
         className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600"
       />
       <div className="flex flex-col gap-2 sm:flex-row">
         <label htmlFor="center-name" className="sr-only">
-          Center name (optional)
+          Tên trung tâm (không bắt buộc)
         </label>
         <input
           id="center-name"
           value={centerName}
           onChange={(e) => setCenterName(e.target.value)}
-          placeholder="Center name (optional)"
+          placeholder="Tên trung tâm (không bắt buộc)"
           maxLength={80}
           className="flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600"
         />
         <label htmlFor="tier" className="sr-only">
-          Tier
+          Gói lớp
         </label>
         <select
           id="tier"
@@ -334,8 +342,8 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
         >
           {CLASS_TIER_CODES.map((c) => (
             <option key={c} value={c}>
-              {CLASS_TIERS[c].seats} seats — {fmtVnd(CLASS_TIERS[c].price_vnd)} VND
-              {CLASS_TIERS[c].hero ? " (popular)" : ""}
+              {CLASS_TIERS[c].seats} chỗ — {fmtVnd(CLASS_TIERS[c].price_vnd)} đ
+              {CLASS_TIERS[c].hero ? " (phổ biến)" : ""}
             </option>
           ))}
         </select>
@@ -345,7 +353,7 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
         disabled={busy}
         className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-50 sm:self-start"
       >
-        {busy ? "Creating…" : "Create class"}
+        {busy ? "Đang tạo…" : "Tạo lớp"}
       </button>
       {msg && (
         <p role="status" className={`text-sm ${msg.ok ? "text-emerald-300" : "text-red-400"}`}>
@@ -359,9 +367,9 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
 function PricingTable() {
   return (
     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-      <p className="text-sm font-semibold text-zinc-200">Class tiers</p>
+      <h2 className="text-sm font-semibold text-zinc-200">Các gói lớp</h2>
       <p className="mt-1 text-xs text-zinc-500">
-        Per-class pricing, billed to the center — students join free and get full VIP.
+        Giá theo lớp, trung tâm trả — học sinh vào miễn phí và được full VIP.
       </p>
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {CLASS_TIER_CODES.map((c) => {
@@ -374,15 +382,15 @@ function PricingTable() {
               }`}
             >
               <p className="text-sm font-bold text-zinc-100">
-                {t.seats} seats
+                {t.seats} chỗ
                 {t.hero && (
-                  <span className="ml-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase text-black">
-                    Popular
+                  <span className="ml-2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-black">
+                    Phổ biến
                   </span>
                 )}
               </p>
               <p className="mt-1 text-lg font-extrabold tabular-nums text-zinc-100">
-                {fmtVnd(t.price_vnd)} <span className="text-xs font-normal text-zinc-500">VND / 30 days</span>
+                {fmtVnd(t.price_vnd)} <span className="text-xs font-normal text-zinc-500">đ / 30 ngày</span>
               </p>
             </div>
           );
@@ -401,13 +409,13 @@ export default function CenterClient() {
       const res = await fetch("/api/center/me");
       const d = (await res.json().catch(() => null)) as Me & { error?: string };
       if (!res.ok) {
-        setError(d?.error ?? "Could not load your classes.");
+        setError(d?.error ?? "Không tải được lớp của bạn.");
         return;
       }
       setError("");
       setMe({ player_id: d.player_id, enrollment_vip: d.enrollment_vip, teaching: d.teaching ?? [], enrolled: d.enrolled ?? [] });
     } catch {
-      setError("Could not load your classes.");
+      setError("Không tải được lớp của bạn.");
     }
   }, []);
 
@@ -418,13 +426,13 @@ export default function CenterClient() {
 
   if (error) {
     return (
-      <p className="rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
+      <p role="alert" className="rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
         {error}
       </p>
     );
   }
   if (!me) {
-    return <p className="text-sm text-zinc-500">Loading your classes…</p>;
+    return <p className="text-sm text-zinc-500">Đang tải lớp của bạn…</p>;
   }
 
   const hasRoles = me.teaching.length > 0 || me.enrolled.length > 0;
@@ -433,7 +441,7 @@ export default function CenterClient() {
     <>
       {me.enrollment_vip && (
         <p className="rounded-xl border border-emerald-700 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
-          Center VIP active — your enrollment unlocks full VIP while your class is active.
+          VIP trung tâm đang bật — bạn được full VIP khi lớp còn mở.
         </p>
       )}
 
@@ -441,25 +449,25 @@ export default function CenterClient() {
         <section key={klass.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-                Teaching{klass.center ? ` · ${klass.center}` : ""}
+              <p className="text-xs font-bold tracking-widest text-emerald-400">
+                Đang dạy{klass.center ? ` — ${klass.center}` : ""}
               </p>
               <h2 className="mt-1 text-lg font-extrabold text-zinc-100">{klass.name}</h2>
             </div>
             <StatusBadge status={klass.status} />
           </div>
           <p className="mt-2 text-sm text-zinc-400">
-            Join code: <span className="rounded bg-zinc-950 px-2 py-0.5 font-mono text-amber-300">{klass.join_code}</span>
+            Mã vào: <span className="rounded bg-zinc-950 px-2 py-0.5 font-mono text-amber-300">{klass.join_code}</span>
             <span className="ml-3 tabular-nums">
-              {klass.enrolled} / {klass.seats} seats
+              {klass.enrolled} / {klass.seats} chỗ
             </span>
           </p>
           <div className="mt-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">
-              Roster ({klass.roster.length})
+            <p className="text-xs font-bold tracking-widest text-zinc-500">
+              Sĩ số ({klass.roster.length})
             </p>
             {klass.roster.length === 0 ? (
-              <p className="mt-1 text-sm text-zinc-500">No students yet — share the join code.</p>
+              <p className="mt-1 text-sm text-zinc-500">Chưa có học sinh — gửi mã vào lớp nhé.</p>
             ) : (
               <ul className="mt-2 space-y-1.5">
                 {klass.roster.map((r) => (
@@ -469,7 +477,7 @@ export default function CenterClient() {
                   >
                     <span className="font-mono text-xs text-zinc-300">{r.student.slice(0, 8)}…</span>
                     <span className="text-xs tabular-nums text-zinc-500">
-                      {r.attempts} attempts · {r.scans} scans · {r.slain} bosses slain
+                      {r.attempts} lượt làm — {r.scans} lượt quét — hạ {r.slain} boss
                     </span>
                   </li>
                 ))}
@@ -479,8 +487,8 @@ export default function CenterClient() {
           <Composer classId={klass.id} onPosted={load} />
           {klass.assignments.length > 0 && (
             <div className="mt-4">
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">
-                Assignments ({klass.assignments.length})
+              <p className="text-xs font-bold tracking-widest text-zinc-500">
+                Bài tập ({klass.assignments.length})
               </p>
               <ul className="mt-2 space-y-1.5">
                 {klass.assignments.map((a) => (
@@ -496,8 +504,8 @@ export default function CenterClient() {
         <section key={enr.class_id} className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-amber-400">
-                Enrolled{enr.center ? ` · ${enr.center}` : ""}
+              <p className="text-xs font-bold tracking-widest text-amber-400">
+                Đang học{enr.center ? ` — ${enr.center}` : ""}
               </p>
               <h2 className="mt-1 text-lg font-extrabold text-zinc-100">{enr.name}</h2>
             </div>
@@ -505,10 +513,10 @@ export default function CenterClient() {
           </div>
           {enr.status !== "active" ? (
             <p className="mt-2 text-sm text-zinc-500">
-              This class is {enr.status} — enrollment paused until your teacher re-opens it.
+              Lớp đang {STATUS_LABEL[enr.status] ?? enr.status} — tạm dừng cho đến khi thầy cô mở lại.
             </p>
           ) : enr.assignments.length === 0 ? (
-            <p className="mt-2 text-sm text-zinc-500">No assignments yet — check back soon.</p>
+            <p className="mt-2 text-sm text-zinc-500">Chưa có bài tập — quay lại sau nhé.</p>
           ) : (
             <ul className="mt-3 space-y-1.5">
               {enr.assignments.map((a) => (
@@ -533,7 +541,7 @@ export default function CenterClient() {
 
       {hasRoles && (
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-          <p className="mb-2 text-sm font-semibold text-zinc-200">Join another class</p>
+          <h2 className="mb-2 text-sm font-semibold text-zinc-200">Vào thêm lớp khác</h2>
           <JoinForm compact onJoined={load} />
         </section>
       )}

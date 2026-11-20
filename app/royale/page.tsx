@@ -20,8 +20,8 @@ export default function RoyaleLobbyPage() {
     let alive = true;
     fetch("/api/duel/options")
       .then(async (r) => {
-        if (!r.ok) throw new Error(await readApiError(r, "Options failed."));
-        return readApiJson<Opts>(r, "Options failed.");
+        if (!r.ok) throw new Error(await readApiError(r, "Không tải được tùy chọn."));
+        return readApiJson<Opts>(r, "Không tải được tùy chọn.");
       })
       .then((d) => {
         if (!alive) return;
@@ -33,7 +33,7 @@ export default function RoyaleLobbyPage() {
         }
       })
       .catch((e) => {
-        if (alive) setError(e instanceof Error ? e.message : "Options failed.");
+        if (alive) setError(e instanceof Error ? e.message : "Không tải được tùy chọn.");
       });
     return () => {
       alive = false;
@@ -50,11 +50,11 @@ export default function RoyaleLobbyPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ exam, section }),
       });
-      if (!r.ok) throw new Error(await readApiError(r, "Create failed."));
-      const d = await readApiJson<{ id: string }>(r, "Create failed.");
+      if (!r.ok) throw new Error(await readApiError(r, "Tạo phòng thất bại."));
+      const d = await readApiJson<{ id: string }>(r, "Tạo phòng thất bại.");
       router.push(`/royale/${d.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Create failed.");
+      setError(e instanceof Error ? e.message : "Tạo phòng thất bại.");
     } finally {
       setBusy(false);
     }
@@ -67,10 +67,10 @@ export default function RoyaleLobbyPage() {
     setError("");
     try {
       const r = await fetch(`/api/royale/${encodeURIComponent(id)}/join`, { method: "POST" });
-      if (!r.ok) throw new Error(await readApiError(r, "Join failed."));
+      if (!r.ok) throw new Error(await readApiError(r, "Vào phòng thất bại."));
       router.push(`/royale/${encodeURIComponent(id)}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Join failed.");
+      setError(e instanceof Error ? e.message : "Vào phòng thất bại.");
     } finally {
       setBusy(false);
     }
@@ -81,12 +81,12 @@ export default function RoyaleLobbyPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Battle royale"
-        title={<>Last <span className="arena-title">scholar</span></>}
-        sub="Up to 8 players, 10 questions, 30 seconds each. Wrong or slowest goes out. One survives."
+        kicker="Đấu sinh tồn"
+        title={<>Học giả <span className="arena-title">cuối cùng</span></>}
+        sub="Tối đa 8 người, 10 câu, mỗi câu 30 giây. Sai hoặc chậm nhất bị loại. Một người sống sót."
         right={
           <Link href="/exam" className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-zinc-200">
-            All exams
+            Mọi kỳ thi
           </Link>
         }
       />
@@ -94,16 +94,16 @@ export default function RoyaleLobbyPage() {
         <p role="alert" className="arena-card rounded-2xl p-4 text-center text-sm text-red-300">{error}</p>
       ) : null}
       <div className="arena-card flex flex-col gap-3 rounded-2xl p-6">
-        <p className="font-display text-lg font-extrabold text-zinc-100">Create a room</p>
+        <h2 className="font-display text-lg font-extrabold text-zinc-100">Tạo phòng</h2>
         <label className="flex flex-col gap-1 text-sm text-zinc-400">
-          Exam
+          Kỳ thi
           <select
             value={exam}
             onChange={(e) => {
               setExam(e.target.value);
               setSection(opts?.exams.find((x) => x.id === e.target.value)?.sections[0]?.id ?? "");
             }}
-            aria-label="Royale exam"
+            aria-label="Kỳ thi sinh tồn"
             className="arena-input rounded-xl px-4 py-2 text-zinc-100"
           >
             {opts?.exams.map((e) => (
@@ -112,15 +112,15 @@ export default function RoyaleLobbyPage() {
           </select>
         </label>
         <label className="flex flex-col gap-1 text-sm text-zinc-400">
-          Section
+          Phần thi
           <select
             value={section}
             onChange={(e) => setSection(e.target.value)}
-            aria-label="Royale section"
+            aria-label="Phần thi sinh tồn"
             className="arena-input rounded-xl px-4 py-2 text-zinc-100"
           >
             {cur?.sections.map((s) => (
-              <option key={s.id} value={s.id}>{s.name} · 10Q</option>
+              <option key={s.id} value={s.id}>{s.name} — 10 câu</option>
             ))}
           </select>
         </label>
@@ -130,18 +130,18 @@ export default function RoyaleLobbyPage() {
           disabled={busy || !section}
           className="arena-btn-primary rounded-full px-6 py-2.5 font-bold text-white disabled:opacity-40"
         >
-          {busy ? "…" : "Create room"}
+          {busy ? "Đang tạo…" : "Tạo phòng"}
         </button>
       </div>
       <div className="arena-card flex flex-col gap-3 rounded-2xl p-6">
-        <p className="font-display text-lg font-extrabold text-zinc-100">Join with room ID</p>
+        <h2 className="font-display text-lg font-extrabold text-zinc-100">Vào bằng mã phòng</h2>
         <div className="flex gap-2">
           <input
             type="text"
             value={joinId}
             onChange={(e) => setJoinId(e.target.value)}
-            placeholder="Paste room ID"
-            aria-label="Room ID"
+            placeholder="Dán mã phòng"
+            aria-label="Mã phòng"
             className="arena-input min-w-0 flex-1 rounded-xl px-4 py-2 text-zinc-100 placeholder:text-zinc-600"
           />
           <button
@@ -150,7 +150,7 @@ export default function RoyaleLobbyPage() {
             disabled={busy || joinId.trim() === ""}
             className="arena-btn-ghost shrink-0 rounded-full px-5 py-2 text-sm font-bold text-zinc-200 disabled:opacity-40"
           >
-            Join
+            Vào phòng
           </button>
         </div>
       </div>

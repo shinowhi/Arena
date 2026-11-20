@@ -136,7 +136,7 @@ export function ClusterItem({ item }: { item: ClusterItemData }) {
     <li>
       <Link
         href={item.href}
-        className="group flex min-h-[48px] items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-3 transition-all hover:-translate-y-0.5 hover:border-zinc-600 hover:bg-zinc-900"
+        className="group flex min-h-[48px] items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-3 transition-[transform,border-color,background-color] hover:-translate-y-0.5 hover:border-zinc-600 hover:bg-zinc-900"
       >
         <span
           aria-hidden="true"

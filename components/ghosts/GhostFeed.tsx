@@ -11,7 +11,7 @@ function agoVi(m: number): string {
 export default function GhostFeed({ items }: { items: FeedItem[] }) {
   return (
     <section aria-label="Mới giải xong" className="arena-card rounded-2xl p-4">
-      <p className="text-sm font-semibold text-zinc-300">Mới giải xong</p>
+      <h2 className="text-sm font-semibold text-zinc-300">Mới giải xong</h2>
       {items.length === 0 ? (
         <p className="mt-1 text-sm text-zinc-500">Chưa có ai giải tối nay — bạn mở màn nhé</p>
       ) : (

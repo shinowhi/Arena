@@ -77,27 +77,27 @@ export default function CardsPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Smart card box"
-        title="Flip before you forget"
-        sub="Spaced repetition for every formula you've unlocked."
+        kicker="Hộp thẻ thông minh"
+        title="Lật thẻ trước khi quên"
+        sub="Ôn lặp lại ngắt quãng cho mọi công thức bạn đã mở."
       />
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
-      {(unlocked === null || nowMs === 0) && !error ? <p className="text-zinc-500">Opening your card box…</p> : null}
+      {error ? <p role="alert" className="text-sm text-red-400">{error}</p> : null}
+      {(unlocked === null || nowMs === 0) && !error ? <p className="text-zinc-500">Đang mở hộp thẻ…</p> : null}
       {unlocked !== null && nowMs > 0 ? (
         <>
           {current ? (
             <div className="arena-card rounded-2xl p-6 text-center">
-              <p className="text-xs text-zinc-500">
-                {dueSkills.length} due · stage {(progress[current]?.stage ?? 0) + 1}/{INTERVALS.length}
+              <p className="text-xs tabular-nums text-zinc-500">
+                {dueSkills.length} thẻ đến hạn — bước {(progress[current]?.stage ?? 0) + 1}/{INTERVALS.length}
               </p>
               {!flipped ? (
                 <button
                   type="button"
                   onClick={() => setFlipped(true)}
-                  className="mt-3 w-full rounded-xl border border-zinc-700 p-6"
+                  className="mt-3 w-full rounded-xl border border-zinc-700 p-6 transition-colors hover:border-zinc-500 hover:bg-zinc-800/40"
                 >
                   <p className="text-lg font-bold text-zinc-100">{skillName(current)}</p>
-                  <p className="mt-1 text-xs text-zinc-500">Tap to reveal the formula</p>
+                  <p className="mt-1 text-xs text-zinc-500">Chạm để lật công thức</p>
                 </button>
               ) : (
                 <div>
@@ -111,14 +111,14 @@ export default function CardsPage() {
                       onClick={() => review(current, false)}
                       className="arena-btn-ghost rounded-full px-5 py-2 text-sm text-zinc-200"
                     >
-                      Again
+                      Chưa nhớ
                     </button>
                     <button
                       type="button"
                       onClick={() => review(current, true)}
                       className="arena-btn-primary rounded-full px-5 py-2 text-sm font-semibold text-white"
                     >
-                      Got it
+                      Nhớ rồi
                     </button>
                   </div>
                 </div>
@@ -127,15 +127,15 @@ export default function CardsPage() {
           ) : (
             <p className="arena-card rounded-2xl p-4 text-sm text-zinc-400">
               {unlocked.length === 0
-                ? "No cards yet — slay a boss to unlock your first formula card."
-                : "All caught up. Come back tomorrow."}
+                ? "Chưa có thẻ nào — hạ boss để mở thẻ công thức đầu tiên."
+                : "Ôn hết rồi. Mai quay lại nhé."}
             </p>
           )}
           {unlocked.length > 0 ? (
             <div>
-              <p className="mb-2 text-sm font-semibold text-zinc-300">
-                Collection ({unlocked.length}/{SKILL_IDS.length})
-              </p>
+              <h2 className="mb-2 text-sm font-semibold tabular-nums text-zinc-300">
+                Bộ sưu tập ({unlocked.length}/{SKILL_IDS.length})
+              </h2>
               <div className="flex flex-wrap gap-1.5">
                 {unlocked.map((s) => {
                   const p = progress[s];
@@ -143,7 +143,7 @@ export default function CardsPage() {
                   return (
                     <span
                       key={s}
-                      title={`${skillName(s)} — stage ${(p?.stage ?? 0) + 1}`}
+                      title={`${skillName(s)} — bước ${(p?.stage ?? 0) + 1}`}
                       className={`rounded-full border px-2.5 py-1 text-xs ${
                         due
                           ? "border-amber-500/60 bg-amber-950/60 text-amber-200"
@@ -158,11 +158,11 @@ export default function CardsPage() {
             </div>
           ) : null}
           <nav className="flex gap-4 text-sm">
-            <Link href="/diary" className="underline text-zinc-300">
-              Root diary
+            <Link href="/diary" className="underline text-zinc-300 hover:text-white">
+              Nhật ký gốc
             </Link>
-            <Link href="/arena" className="underline text-zinc-300">
-              Back to arena
+            <Link href="/arena" className="underline text-zinc-300 hover:text-white">
+              Về đấu trường
             </Link>
           </nav>
         </>

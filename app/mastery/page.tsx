@@ -7,13 +7,13 @@ export default function MasteryPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Your progress"
+        kicker="Tiến độ của bạn"
         title={
           <>
-            Mastery <span className="arena-title">dashboard</span>
+            Bảng <span className="arena-title">thành thạo</span>
           </>
         }
-        sub="Every skill you practiced, ranked by mastery. Drill your weak spots and watch the bars climb."
+        sub="Mọi kỹ năng bạn đã luyện, xếp theo độ thành thạo. Luyện điểm yếu và xem cột điểm tăng lên."
       />
       <MasteryClient />
     </main>

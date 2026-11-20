@@ -51,7 +51,7 @@ export default function ScreenCapture({
   async function start() {
     setError("");
     if (!navigator.mediaDevices?.getDisplayMedia) {
-      setError("Screen capture needs a desktop browser (Chrome or Edge).");
+      setError("Chụp màn hình cần trình duyệt máy tính (Chrome hoặc Edge).");
       return;
     }
     setBusy(true);
@@ -61,7 +61,7 @@ export default function ScreenCapture({
       setStage("live");
       attach(stream);
     } catch {
-      setError("Screen permission was denied. Allow it and try again.");
+      setError("Bạn chưa cho phép chia sẻ màn hình. Hãy cho phép rồi thử lại.");
     } finally {
       setBusy(false);
     }
@@ -92,7 +92,7 @@ export default function ScreenCapture({
   function freeze() {
     const video = videoRef.current;
     if (!video || video.videoWidth === 0) {
-      setError("Video not ready yet — wait a second and retry.");
+      setError("Video chưa sẵn sàng — chờ một chút rồi thử lại.");
       return;
     }
     const scale = Math.min(1, 1920 / Math.max(video.videoWidth, video.videoHeight));
@@ -101,7 +101,7 @@ export default function ScreenCapture({
     canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
     const ctx = canvas.getContext("2d");
     if (!ctx) {
-      setError("Could not grab the frame.");
+      setError("Không chụp được khung hình.");
       return;
     }
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -138,7 +138,7 @@ export default function ScreenCapture({
       canvas.toBlob((blob) => {
         setBusy(false);
         if (!blob) {
-          setError("Could not crop the image.");
+          setError("Không cắt được ảnh.");
           return;
         }
         onCapture(new File([blob], `screen-crop-${Date.now()}.png`, { type: "image/png" }));
@@ -150,19 +150,19 @@ export default function ScreenCapture({
       }, "image/png");
     } catch {
       setBusy(false);
-      setError("Could not crop the image.");
+      setError("Không cắt được ảnh.");
     }
   }
 
   return (
     <div className="arena-card flex flex-col items-center gap-3 rounded-2xl p-6 text-center">
-      <p className="text-sm font-semibold text-zinc-200">Capture your screen</p>
+      <h2 className="text-sm font-semibold text-zinc-200">Chụp màn hình của bạn</h2>
 
       {stage === null ? (
         <>
           <p className="max-w-sm text-sm text-zinc-400">
-            Pick a window or tab, freeze a frame, then drag to select the exact region with the
-            problem.
+            Chọn một cửa sổ hoặc thẻ, đóng băng một khung hình, rồi kéo để chọn đúng vùng
+            có bài cần quét.
           </p>
           <div className="flex gap-2">
             <button
@@ -171,14 +171,14 @@ export default function ScreenCapture({
               disabled={busy}
               className="arena-btn-primary rounded-full px-5 py-2 text-sm font-semibold text-white disabled:opacity-40"
             >
-              {busy ? "Opening picker…" : "Choose screen"}
+              {busy ? "Đang mở trình chọn…" : "Chọn màn hình"}
             </button>
             <button
               type="button"
               onClick={close}
               className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
             >
-              Cancel
+              Hủy
             </button>
           </div>
         </>
@@ -186,21 +186,21 @@ export default function ScreenCapture({
 
       {stage === "live" ? (
         <>
-          <video ref={videoRef} muted playsInline aria-label="Screen preview" className="max-h-64 w-full rounded-xl ring-1 ring-zinc-700" />
+          <video ref={videoRef} muted playsInline aria-label="Xem trước màn hình" className="max-h-64 w-full rounded-xl ring-1 ring-zinc-700" />
           <div className="flex gap-2">
             <button
               type="button"
               onClick={freeze}
               className="arena-btn-primary rounded-full px-5 py-2 text-sm font-semibold text-white"
             >
-              Freeze this frame
+              Đóng băng khung này
             </button>
             <button
               type="button"
               onClick={close}
               className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
             >
-              Cancel
+              Hủy
             </button>
           </div>
         </>
@@ -235,10 +235,10 @@ export default function ScreenCapture({
               setDragging(false);
             }}
             role="group"
-            aria-label="Drag to select the scan region"
+            aria-label="Kéo để chọn vùng cần quét"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img ref={imgRef} src={frame} alt="captured frame" className="block max-h-80 max-w-full" draggable={false} />
+            <img ref={imgRef} src={frame} alt="khung hình đã chụp" className="block max-h-80 max-w-full" draggable={false} />
             <div
               className="pointer-events-none absolute border-2 border-emerald-400 shadow-[0_0_0_9999px_rgba(0,0,0,0.55),0_0_16px_rgba(52,211,153,0.6)]"
               style={{
@@ -249,10 +249,10 @@ export default function ScreenCapture({
               }}
             />
           </div>
-          <p className="text-xs text-zinc-500">Drag to adjust — the green box is what gets scanned.</p>
+          <p className="text-xs text-zinc-500">Kéo để chỉnh — khung xanh là vùng sẽ quét.</p>
           {multi && added > 0 ? (
             <p className="text-xs font-semibold text-emerald-300">
-              {added} region{added === 1 ? "" : "s"} added — select another or press Done.
+              Đã thêm {added} vùng — chọn vùng khác hoặc bấm Xong.
             </p>
           ) : null}
           <div className="flex gap-2">
@@ -262,7 +262,7 @@ export default function ScreenCapture({
               disabled={busy || rect.w < 0.02 || rect.h < 0.02}
               className="arena-btn-primary rounded-full px-5 py-2 text-sm font-semibold text-white disabled:opacity-40"
             >
-              {busy ? "Cropping…" : "Scan this region"}
+              {busy ? "Đang cắt…" : "Quét vùng này"}
             </button>
             <button
               type="button"
@@ -270,7 +270,7 @@ export default function ScreenCapture({
               disabled={busy}
               className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200 disabled:opacity-40"
             >
-              Retake
+              Chụp lại
             </button>
             {multi ? (
               <button
@@ -279,7 +279,7 @@ export default function ScreenCapture({
                 disabled={busy}
                 className="arena-btn-primary rounded-full px-5 py-2 text-sm font-semibold text-white disabled:opacity-40"
               >
-                Done{added > 0 ? ` (${added})` : ""}
+                Xong{added > 0 ? ` (${added})` : ""}
               </button>
             ) : null}
             <button
@@ -287,13 +287,13 @@ export default function ScreenCapture({
               onClick={close}
               className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
             >
-              Cancel
+              Hủy
             </button>
           </div>
         </>
       ) : null}
 
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-red-400">{error}</p> : null}
     </div>
   );
 }

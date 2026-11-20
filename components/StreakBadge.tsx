@@ -25,7 +25,7 @@ export default function StreakBadge() {
   return (
     <Link
       href="/streak"
-      aria-label={zero ? "Open healing streak (no streak yet)" : "Open healing streak"}
+      aria-label={zero ? "Mở chuỗi ngày vá (chưa có chuỗi nào)" : "Mở chuỗi ngày vá"}
       className={`fixed top-3 right-3 z-50 flex items-center gap-2 rounded-full px-5 py-3 text-base font-black tracking-widest tabular-nums ${
         zero
           ? "border border-zinc-700 bg-zinc-900/80 text-zinc-400 hover:text-zinc-200"

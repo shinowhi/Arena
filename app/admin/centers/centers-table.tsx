@@ -28,6 +28,14 @@ const NEXT: Record<string, Status[]> = {
   cancelled: ["active"],
 };
 
+// Display-only Vietnamese labels (status codes sent to the API stay unchanged).
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Chờ duyệt",
+  active: "Đang mở",
+  expired: "Hết hạn",
+  cancelled: "Đã hủy",
+};
+
 export default function CentersTable({
   classes,
   centerName,
@@ -51,35 +59,35 @@ export default function CentersTable({
       });
       const d = (await res.json().catch(() => null)) as { status?: string; error?: string } | null;
       if (!res.ok || !d?.status) {
-        setMsg({ ok: false, text: d?.error ?? "Could not update status." });
+        setMsg({ ok: false, text: d?.error ?? "Không cập nhật được trạng thái." });
       } else {
-        setMsg({ ok: true, text: `Class is now ${d.status}.` });
+        setMsg({ ok: true, text: `Lớp chuyển sang ${STATUS_LABEL[d.status] ?? d.status}.` });
         router.refresh();
       }
     } catch {
-      setMsg({ ok: false, text: "Could not update status." });
+      setMsg({ ok: false, text: "Không cập nhật được trạng thái." });
     } finally {
       setBusy(null);
     }
   }
 
   if (classes.length === 0) {
-    return <p className="mt-2 text-sm text-zinc-500">No classes yet.</p>;
+    return <p className="mt-2 text-sm text-zinc-500">Chưa có lớp nào.</p>;
   }
   return (
     <div className="mt-3 overflow-auto">
       {msg && (
-        <p className={`mb-3 text-sm ${msg.ok ? "text-emerald-300" : "text-red-400"}`}>{msg.text}</p>
+        <p role="status" className={`mb-3 text-sm ${msg.ok ? "text-emerald-300" : "text-red-400"}`}>{msg.text}</p>
       )}
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-xs text-zinc-500">
-            <th className="py-1 font-semibold">Class</th>
-            <th className="py-1 font-semibold">Center</th>
-            <th className="py-1 font-semibold">Code</th>
-            <th className="py-1 text-right font-semibold">Seats</th>
-            <th className="py-1 font-semibold">Status</th>
-            <th className="py-1 text-right font-semibold">Set</th>
+            <th className="py-1 font-semibold">Lớp</th>
+            <th className="py-1 font-semibold">Trung tâm</th>
+            <th className="py-1 font-semibold">Mã vào</th>
+            <th className="py-1 text-right font-semibold">Chỗ</th>
+            <th className="py-1 font-semibold">Trạng thái</th>
+            <th className="py-1 text-right font-semibold">Chuyển</th>
           </tr>
         </thead>
         <tbody>
@@ -88,7 +96,7 @@ export default function CentersTable({
               <td className="py-1.5 pr-2">
                 <p className="font-semibold">{c.name}</p>
                 <p className="font-mono text-xs text-zinc-500">
-                  {c.plan_code} · teacher {c.teacher_player_id.slice(0, 8)}…
+                  {c.plan_code} — GV {c.teacher_player_id.slice(0, 8)}…
                 </p>
               </td>
               <td className="py-1.5 pr-2 text-xs">
@@ -98,7 +106,7 @@ export default function CentersTable({
               <td className="py-1.5 pr-2 text-right tabular-nums">
                 {c.enrolled} / {c.seats}
               </td>
-              <td className="py-1.5 pr-2 text-xs font-bold">{c.status}</td>
+              <td className="py-1.5 pr-2 text-xs font-bold">{STATUS_LABEL[c.status] ?? c.status}</td>
               <td className="py-1.5 text-right">
                 <span className="inline-flex gap-1">
                   {(NEXT[c.status] ?? (["active"] as Status[])).map((s) => (
@@ -109,7 +117,7 @@ export default function CentersTable({
                       onClick={() => setStatus(c.id, s)}
                       className="rounded-lg bg-zinc-700 px-2 py-1 text-xs font-bold text-zinc-100 hover:bg-zinc-600 disabled:opacity-50"
                     >
-                      {s}
+                      {STATUS_LABEL[s] ?? s}
                     </button>
                   ))}
                 </span>

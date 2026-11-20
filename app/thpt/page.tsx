@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import MathText from "@/components/MathText";
 import StickyTimer from "@/components/education/StickyTimer";
+import { CheckIcon, QuestionIcon } from "@/components/ui/icons";
 import { examExpired, examRemainingMs, formatExamClock, URGENT_MS } from "@/lib/paper/exam";
 import { starCount, starLabel } from "@/lib/paper/stars";
 import { track } from "@/lib/tracking/events";
@@ -65,6 +66,8 @@ function ThptInner() {
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [finished, setFinished] = useState(false);
   const [best, setBest] = useState(0);
+  const [confirming, setConfirming] = useState(false);
+  const [gradeNote, setGradeNote] = useState("");
   const autoRef = useRef(false);
 
   const storeKey = date ? `arena_thpt_v2:${date}` : "";
@@ -185,12 +188,14 @@ function ThptInner() {
     const n = Number(answers[i]);
     setAttempts((a) => a.map((v, k) => (k === i ? v + 1 : v)));
     setMarks((m) => m.map((v, k) => (k === i ? "checking" : v)));
+    setGradeNote("");
     try {
       const ok = await checkOne(q, n);
       if (started && mode === "exam" && examExpired(deadline, Date.now())) return;
       setMarks((m) => m.map((v, k) => (k === i ? (ok ? "right" : "wrong") : v)));
     } catch {
       setMarks((m) => m.map((v, k) => (k === i ? "idle" : v)));
+      setGradeNote(`Chấm câu ${i + 1} thất bại, thử lại nhé.`);
     }
   }
 
@@ -208,9 +213,11 @@ function ThptInner() {
   async function gradeAll(): Promise<number> {
     if (!questions || submitted || grading) return 0;
     setGrading(true);
+    setGradeNote("");
     const todo = questions.map((_, i) => i).filter((i) => (answers[i] ?? "").trim() !== "" && Number.isFinite(Number(answers[i])));
     setProgress({ done: 0, total: todo.length });
     let right = 0;
+    let failed = 0;
     for (const i of todo) {
       const q = questions[i];
       try {
@@ -220,18 +227,20 @@ function ThptInner() {
         setAttempts((a) => a.map((v, k) => (k === i ? v + 1 : v)));
       } catch {
         // One bad grade must not block the rest.
+        failed += 1;
       }
       setProgress((p) => ({ ...p, done: p.done + 1 }));
     }
     setGrading(false);
+    if (failed > 0) setGradeNote(`Có ${failed} câu chấm thất bại vì mạng, các câu còn lại vẫn được chấm.`);
     return right;
   }
 
   async function submitExam() {
     if (!questions || submitted || grading) return;
-    if (!window.confirm("Nộp bài? Sau khi nộp sẽ không sửa được nữa.")) return;
     const right = await gradeAll();
     setSubmitted(true);
+    setConfirming(false);
     track("thpt_finished", { mode: "exam", score: right, total: questions.length });
   }
 
@@ -319,7 +328,7 @@ function ThptInner() {
               autoRef.current = false;
               setRetry((r) => r + 1);
             }}
-            className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
+            className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white"
           >
             Thử lại
           </button>
@@ -333,8 +342,8 @@ function ThptInner() {
             </p>
           ) : null}
           <div className="arena-card flex flex-col items-center gap-2 rounded-2xl p-6 text-center">
-            <p className="font-display text-xl font-extrabold text-zinc-100">Luyện tập</p>
-            <p className="text-sm text-zinc-400">Không bấm giờ · có gợi ý từng câu · chấm ngay · ăn sao theo số câu đúng ngay lần đầu</p>
+            <h2 className="font-display text-xl font-extrabold text-zinc-100">Luyện tập</h2>
+            <p className="text-sm text-zinc-400">Không bấm giờ — có gợi ý từng câu — chấm ngay — ăn sao theo số câu đúng ngay lần đầu</p>
             <button
               type="button"
               onClick={() => startPaper("practice")}
@@ -344,8 +353,8 @@ function ThptInner() {
             </button>
           </div>
           <div className="arena-card flex flex-col items-center gap-2 rounded-2xl p-6 text-center">
-            <p className="font-display text-xl font-extrabold text-zinc-100">Thi thử</p>
-            <p className="text-sm text-zinc-400">50 câu · 90 phút · không gợi ý · nộp bài mới biết điểm</p>
+            <h2 className="font-display text-xl font-extrabold text-zinc-100">Thi thử</h2>
+            <p className="text-sm text-zinc-400">50 câu — 90 phút — không gợi ý — nộp bài mới biết điểm</p>
             <button
               type="button"
               onClick={() => startPaper("exam")}
@@ -358,8 +367,8 @@ function ThptInner() {
       ) : null}
       {started && mode === "exam" && locked ? (
         <div role="status" className="arena-enter rounded-2xl bg-red-950/40 p-4 text-center">
-          <p className="text-xs font-bold tracking-widest text-red-300 uppercase">{submitted ? "Đã nộp bài" : "Hết giờ"}</p>
-          <p className="mt-1 text-sm text-zinc-300">
+          <p className="text-xs font-bold text-red-300">{submitted ? "Đã nộp bài" : "Hết giờ"}</p>
+          <p className="mt-1 text-sm text-zinc-300 tabular-nums">
             Đúng <span className="arena-num font-bold text-emerald-300">{score}/{total}</span>
             {" — "}đề đã khóa.
           </p>
@@ -370,11 +379,11 @@ function ThptInner() {
       ) : null}
       {started && mode === "practice" && finished ? (
         <div role="status" className="arena-enter arena-card rounded-2xl p-6 text-center">
-          <p className="text-xs font-bold tracking-widest text-amber-300 uppercase">Buổi luyện xong</p>
+          <p className="text-xs font-bold text-amber-300">Buổi luyện xong</p>
           <p className="font-display mt-2 text-4xl font-black text-amber-300" aria-label={`${stars} trên 3 sao`}>{starLabel(stars)}</p>
-          <p className="mt-2 text-sm text-zinc-300">
+          <p className="mt-2 text-sm text-zinc-300 tabular-nums">
             Đúng <span className="arena-num font-bold text-emerald-300">{score}/{total}</span>
-            {" · "}ăn ngay <span className="arena-num font-bold text-cyan-300">{firstTry}/{total}</span>
+            {" — "}ăn ngay <span className="arena-num font-bold text-cyan-300">{firstTry}/{total}</span>
           </p>
           {unknownQs.length > 0 ? (
             <p className="mt-1 text-xs text-amber-300">Xem lại các câu chưa chắc: {unknownQs.join(", ")}</p>
@@ -382,25 +391,28 @@ function ThptInner() {
           <button
             type="button"
             onClick={() => setFinished(false)}
-            className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200"
+            className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white"
           >
             Luyện tiếp
           </button>
         </div>
       ) : null}
       {shown ? (
-        <p className="text-center text-sm text-zinc-400">
+        <p className="text-center text-sm text-zinc-400 tabular-nums">
           Đúng <span className="arena-num font-bold text-emerald-300">{score}</span>/{total}
           {mode === "practice" ? (
-            <> · ăn ngay <span className="arena-num font-bold text-cyan-300">{firstTry}</span></>
+            <> — ăn ngay <span className="arena-num font-bold text-cyan-300">{firstTry}</span></>
           ) : null}
         </p>
+      ) : null}
+      {gradeNote ? (
+        <p role="status" className="rounded-2xl border border-amber-500/50 bg-amber-950/40 p-3 text-center text-sm text-amber-200">{gradeNote}</p>
       ) : null}
       {(shown ? questions : null)?.map((q, i) => (
         <div key={i} className={`arena-card rounded-2xl p-5 ${view(marks[i]) === "right" ? "border-emerald-700" : view(marks[i]) === "wrong" ? "border-red-800" : ""}`}>
           <div className="flex items-start justify-between gap-2">
             <p className="text-xs text-zinc-500">
-              Câu {i + 1} · {q.skill_name} · <span className="font-bold text-amber-300">Lv {q.level}</span>
+              Câu {i + 1} — {q.skill_name} — <span className="font-bold text-amber-300">Cấp {q.level}</span>
             </p>
             <button
               type="button"
@@ -409,9 +421,9 @@ function ThptInner() {
               aria-pressed={unknown[i] === true}
               title="Đánh dấu chưa chắc"
               aria-label={`Đánh dấu câu ${i + 1} chưa chắc`}
-              className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-bold transition-colors disabled:opacity-40 ${unknown[i] ? "border-amber-400 bg-amber-400/10 text-amber-300" : "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300"}`}
+              className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-bold transition-colors disabled:opacity-40 ${unknown[i] ? "border-amber-400 bg-amber-400/10 text-amber-300" : "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300"}`}
             >
-              {unknown[i] ? "❓ Chưa chắc" : "Đánh dấu"}
+              {unknown[i] ? <><QuestionIcon className="h-3.5 w-3.5" /> Chưa chắc</> : "Đánh dấu"}
             </button>
           </div>
           <MathText text={q.prompt_latex} className="mt-1 overflow-x-auto text-lg text-zinc-100" />
@@ -450,23 +462,47 @@ function ThptInner() {
                 onClick={() => void grade(i)}
                 disabled={locked || grading || marks[i] === "checking" || marks[i] === "right"}
                 aria-label={`Chấm câu ${i + 1}`}
-                className="arena-btn-primary shrink-0 rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
+                className="arena-btn-primary inline-flex shrink-0 items-center gap-1 rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
               >
-                {marks[i] === "checking" ? "…" : view(marks[i]) === "right" ? "✓" : view(marks[i]) === "wrong" ? "Thử lại" : "Chấm"}
+                {marks[i] === "checking" ? "Đang chấm…" : view(marks[i]) === "right" ? <><CheckIcon className="h-4 w-4" label="Đúng" /> Đúng</> : view(marks[i]) === "wrong" ? "Thử lại" : "Chấm"}
               </button>
             ) : null}
           </div>
         </div>
       ))}
-      {started && mode === "exam" && !locked ? (
+      {started && mode === "exam" && !locked && confirming ? (
+        <div role="alertdialog" aria-label="Xác nhận nộp bài" className="arena-enter arena-card sticky bottom-4 flex flex-col items-center gap-3 rounded-2xl p-5 text-center">
+          <p className="text-sm font-bold text-zinc-100">Nộp bài?</p>
+          <p className="text-sm text-zinc-400">Sau khi nộp sẽ không sửa được nữa.</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              disabled={grading}
+              className="arena-btn-ghost rounded-full px-5 py-2 text-sm font-bold text-zinc-200 transition-colors hover:text-white disabled:opacity-40"
+            >
+              Làm tiếp
+            </button>
+            <button
+              type="button"
+              onClick={() => void submitExam()}
+              disabled={grading}
+              className="arena-btn-primary rounded-full px-5 py-2 text-sm font-bold text-white tabular-nums disabled:opacity-60"
+            >
+              {grading ? `Đang chấm ${progress.done}/${progress.total}…` : "Nộp bài"}
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {started && mode === "exam" && !locked && !confirming ? (
         <div className="sticky bottom-4 flex justify-center">
           <button
             type="button"
-            onClick={() => void submitExam()}
+            onClick={() => setConfirming(true)}
             disabled={grading}
             className="arena-btn-primary rounded-full px-8 py-3 font-bold text-white disabled:opacity-60"
           >
-            {grading ? `Đang chấm ${progress.done}/${progress.total}…` : "Nộp bài"}
+            Nộp bài
           </button>
         </div>
       ) : null}

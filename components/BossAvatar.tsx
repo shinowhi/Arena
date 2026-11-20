@@ -19,7 +19,7 @@ export default function BossAvatar({
   return (
     <img
       src={ART[rarity] ?? ART.COMMON}
-      alt={dead ? "slain boss" : hurt ? "wounded boss" : "boss"}
+      alt={dead ? "boss đã bị hạ" : hurt ? "boss đang yếu máu" : "boss"}
       width={size}
       height={size}
       draggable={false}

@@ -92,13 +92,13 @@ export default function DiagnosisReveal({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={preview} alt="ảnh bài đã quét" className="max-h-44 w-full object-cover" />
               <div className="arena-scan-once" />
-              <p className="absolute bottom-1 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold tracking-widest text-emerald-300 uppercase">
+              <p className="absolute bottom-1 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold tracking-widest text-emerald-300">
                 Bằng chứng
               </p>
             </div>
           ) : null}
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">
+            <p className="text-xs font-bold tracking-widest text-zinc-500">
               AI đã đọc {result.items.length} bài
             </p>
             <div className="mt-2 flex max-h-44 flex-col gap-2 overflow-y-auto pr-1">
@@ -128,17 +128,17 @@ export default function DiagnosisReveal({
         </div>
 
         <div className="border-t border-zinc-800 bg-red-950/20 p-5">
-          <p className="text-xs font-bold tracking-widest text-red-400 uppercase">Kết luận</p>
+          <p className="text-xs font-bold tracking-widest text-red-400">Kết luận</p>
           <div className="mt-3 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
             <div className="arena-pop flex-1 rounded-xl border border-red-500/60 bg-red-950/60 px-4 py-3 text-center">
-              <p className="text-[10px] font-bold tracking-widest text-red-400/80 uppercase">Kỹ năng yếu</p>
+              <p className="text-[10px] font-bold tracking-widest text-red-400/80">Kỹ năng yếu</p>
               <p title={result.weak_skill} className="font-display mt-0.5 text-lg font-extrabold text-red-100">
                 {skillName(result.weak_skill)}
               </p>
             </div>
             <div className="flex items-center justify-center gap-2">
               <div className="arena-flowline h-8 w-1 rounded-full sm:h-1 sm:w-14" aria-hidden="true" />
-              <span className="text-[11px] font-bold tracking-widest whitespace-nowrap text-zinc-500 uppercase">
+              <span className="text-[11px] font-bold tracking-widest whitespace-nowrap text-zinc-500">
                 gốc rễ là
               </span>
               <div className="arena-flowline h-8 w-1 rounded-full sm:h-1 sm:w-14" aria-hidden="true" />
@@ -147,7 +147,7 @@ export default function DiagnosisReveal({
               style={{ animationDelay: "200ms" }}
               className="arena-pop flex-1 rounded-xl border border-amber-500/60 bg-amber-950/60 px-4 py-3 text-center"
             >
-              <p className="text-[10px] font-bold tracking-widest text-amber-400/80 uppercase">Gốc rễ</p>
+              <p className="text-[10px] font-bold tracking-widest text-amber-400/80">Gốc rễ</p>
               <p title={result.root_cause} className="font-display mt-0.5 text-lg font-extrabold text-amber-100">
                 {skillName(result.root_cause)}
               </p>
@@ -187,7 +187,7 @@ export default function DiagnosisReveal({
             </div>
           ) : null}
           {sample ? (
-            <p className="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-950/30 px-4 py-2 text-center text-xs font-bold tracking-widest text-emerald-300 uppercase">
+            <p className="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-950/30 px-4 py-2 text-center text-xs font-bold tracking-widest text-emerald-300">
               Ảnh mẫu có sẵn — không cần chờ AI
             </p>
           ) : (
@@ -210,7 +210,7 @@ export default function DiagnosisReveal({
           )}
 
           <div className="mt-4 border-t border-zinc-800 pt-3">
-            <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Kế hoạch vá gốc</p>
+            <p className="text-xs font-bold tracking-widest text-zinc-500">Kế hoạch vá gốc</p>
             <ol className="mt-2 flex flex-col gap-2">
               <li className="flex items-start gap-2 text-sm">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-xs font-bold text-amber-300">
@@ -240,7 +240,7 @@ export default function DiagnosisReveal({
                 disabled={summoning}
                 className="arena-btn-primary arena-cta-pulse font-display rounded-full px-7 py-3 text-base font-bold text-white disabled:opacity-40 disabled:shadow-none"
               >
-                {summoning ? "Đang rèn 5 câu, kiểm đáp án…" : "⚔ Gọi boss"}
+                {summoning ? "Đang rèn 5 câu, kiểm đáp án…" : "Gọi boss"}
               </button>
             ) : (
               <p className="text-sm text-zinc-500">Độ tin cậy thấp — chụp lại ảnh rõ hơn.</p>

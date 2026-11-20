@@ -14,7 +14,7 @@ type Ctx =
 type Thread = { id: string; title: string; created_at: string; preview: string };
 type Nudge = { label: string; href: string; reason: string };
 
-const HELLO = "Hi! I'm your AI tutor. Ask me anything you're studying — or paste a problem and we'll work through it together.";
+const HELLO = "Chào bạn! Mình là gia sư AI. Hỏi bài đang học, hoặc dán đề vào đây, mình cùng bạn gỡ từng bước nhé.";
 
 function ctxFromParams(p: URLSearchParams): Ctx {
   if (p.get("ctx") === "miss" && p.get("boss")) {
@@ -33,9 +33,9 @@ function ctxKey(c: Ctx): string {
 }
 
 function reasonLabel(reason: string): string {
-  if (reason === "due") return "Due";
-  if (reason === "weak") return "Weak";
-  return "Suggested";
+  if (reason === "due") return "Đến hạn";
+  if (reason === "weak") return "Yếu";
+  return "Gợi ý";
 }
 
 function TutorInner() {
@@ -84,7 +84,13 @@ function TutorInner() {
   }, [storeKey, messages, question, activeThread]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    let reduce = false;
+    try {
+      reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch {
+      reduce = false;
+    }
+    bottomRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "end" });
   }, [messages, sending]);
 
   // VIP status, thread list, and homework nudges load once; every failure
@@ -147,12 +153,12 @@ function TutorInner() {
         setUpsell(true);
         return;
       }
-      if (!r.ok) throw new Error(await readApiError(r, "Could not create thread."));
-      const t = await readApiJson<Thread>(r, "Could not create thread.");
+      if (!r.ok) throw new Error(await readApiError(r, "Không tạo được đoạn chat."));
+      const t = await readApiJson<Thread>(r, "Không tạo được đoạn chat.");
       setThreads((ts) => (ts ? [t, ...ts] : [t]));
       selectThread(t.id);
     } catch (e) {
-      setThreadsError(e instanceof Error ? e.message : "Could not create thread.");
+      setThreadsError(e instanceof Error ? e.message : "Không tạo được đoạn chat.");
     } finally {
       setCreating(false);
     }
@@ -181,12 +187,12 @@ function TutorInner() {
         // Thread gone or foreign mid-session: drop back to stateless chat.
         setActiveThread(null);
       }
-      if (!r.ok) throw new Error(await readApiError(r, "Tutor failed."));
-      const d = await readApiJson<{ reply: string; question: string | null }>(r, "Tutor failed.");
+      if (!r.ok) throw new Error(await readApiError(r, "Gia sư trả lời thất bại."));
+      const d = await readApiJson<{ reply: string; question: string | null }>(r, "Gia sư trả lời thất bại.");
       setMessages((m) => [...m, { role: "assistant" as const, content: d.reply }].slice(-20));
       if (typeof d.question === "string") setQuestion(d.question);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Tutor failed.");
+      setError(e instanceof Error ? e.message : "Gia sư trả lời thất bại.");
     } finally {
       setSending(false);
     }
@@ -195,29 +201,29 @@ function TutorInner() {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-4 py-8">
       <PageHeader
-        kicker="AI tutor"
-        title={<>Ask <span className="arena-title">anything</span></>}
-        sub={ctx.kind === "none" ? "Free study chat. Socratic by default — I guide, you solve." : "Attached to your live question. I guide — I never reveal the answer."}
+        kicker="Gia sư AI"
+        title={<>Hỏi <span className="arena-title">gia sư</span></>}
+        sub={ctx.kind === "none" ? "Chat học bài miễn phí. Mình gợi mở — bạn tự giải." : "Gắn với câu bạn đang làm. Mình gợi mở — không bao giờ lộ đáp án."}
       />
       <div className="flex flex-col gap-4 md:flex-row md:items-start">
-        <aside aria-label="Chat threads" className="arena-card w-full shrink-0 rounded-2xl p-4 md:w-64">
+        <aside aria-label="Các đoạn chat" className="arena-card w-full shrink-0 rounded-2xl p-4 md:w-64">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Threads</p>
+            <p className="text-xs font-bold tracking-widest text-zinc-500">Đoạn chat</p>
             {activeThread ? (
               <button
                 type="button"
                 onClick={() => selectThread(null)}
                 className="text-xs font-bold text-amber-300 hover:text-amber-200"
               >
-                New chat
+                Chat mới
               </button>
             ) : null}
           </div>
           <div className="mt-2 flex max-h-56 flex-col gap-1 overflow-y-auto md:max-h-96">
             {threads === null ? (
-              <span className="arena-shimmer inline-block h-8 w-full rounded-lg" role="status" aria-label="Loading threads" />
+              <span className="arena-shimmer inline-block h-8 w-full rounded-lg" role="status" aria-label="Đang tải đoạn chat" />
             ) : threads.length === 0 ? (
-              <p className="text-sm text-zinc-500">No threads yet — VIPs can keep chats with memory.</p>
+              <p className="text-sm text-zinc-500">Chưa có đoạn nào — VIP giữ được chat có nhớ bài.</p>
             ) : (
               threads.map((t) => (
                 <button
@@ -239,16 +245,16 @@ function TutorInner() {
             disabled={creating}
             className="arena-btn-primary mt-3 w-full rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
           >
-            {creating ? "Creating…" : "+ New thread (VIP)"}
+            {creating ? "Đang tạo…" : "+ Đoạn mới (VIP)"}
           </button>
           {threadsError ? (
             <p role="alert" className="mt-2 text-xs text-red-300">{threadsError}</p>
           ) : null}
           {upsell || vip === false ? (
             <p className="mt-2 text-xs text-zinc-400">
-              Thread memory is a VIP feature.{" "}
+              Chat có nhớ bài là tính năng VIP.{" "}
               <Link href="/vip" className="font-bold text-amber-300 hover:text-amber-200">
-                Get VIP
+                Lên VIP
               </Link>
             </p>
           ) : null}
@@ -256,7 +262,7 @@ function TutorInner() {
         <section className="flex min-w-0 flex-1 flex-col gap-4">
           {nudges && nudges.length > 0 ? (
             <div className="arena-card rounded-2xl p-4">
-              <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Review due</p>
+              <p className="text-xs font-bold tracking-widest text-zinc-500">Đến hạn ôn</p>
               <ul className="mt-2 flex flex-col gap-2">
                 {nudges.map((ng) => (
                   <li key={ng.href} className="flex items-center justify-between gap-3">
@@ -268,7 +274,7 @@ function TutorInner() {
                       href={ng.href.startsWith("/drill") ? ng.href : "/drill"}
                       className="arena-btn-primary shrink-0 rounded-full px-4 py-1.5 text-xs font-bold text-white"
                     >
-                      Practice
+                      Luyện tập
                     </Link>
                   </li>
                 ))}
@@ -277,18 +283,18 @@ function TutorInner() {
           ) : null}
           {question ? (
             <div className="arena-card rounded-2xl p-4">
-              <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Stuck on</p>
+              <p className="text-xs font-bold tracking-widest text-zinc-500">Đang kẹt ở</p>
               <MathText text={question} className="mt-1 overflow-x-auto text-zinc-100" />
             </div>
           ) : null}
-          <div className="flex flex-col gap-3" role="log" aria-label="Tutor chat" aria-live="polite">
+          <div className="flex flex-col gap-3" role="log" aria-label="Chat với gia sư" aria-live="polite">
             {messages.map((m, i) => (
               <div key={i} className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${m.role === "user" ? "arena-btn-primary self-end text-white" : "arena-card self-start text-zinc-100"}`}>
                 <MathText text={m.content} className="text-[15px] leading-relaxed" />
               </div>
             ))}
             {sending ? (
-              <div className="arena-card max-w-[85%] self-start rounded-2xl px-4 py-2.5" role="status" aria-label="Tutor typing">
+              <div className="arena-card max-w-[85%] self-start rounded-2xl px-4 py-2.5" role="status" aria-label="Gia sư đang trả lời">
                 <span className="arena-shimmer inline-block h-4 w-24 rounded" />
               </div>
             ) : null}
@@ -305,8 +311,8 @@ function TutorInner() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") void send();
               }}
-              placeholder="Ask a concept, paste a problem…"
-              aria-label="Message the tutor"
+              placeholder="Hỏi khái niệm, dán đề vào…"
+              aria-label="Nhắn cho gia sư"
               maxLength={2000}
               disabled={sending}
               className="arena-input min-w-0 flex-1 rounded-full px-5 py-2.5 text-zinc-100 placeholder:text-zinc-600 disabled:opacity-50"
@@ -317,7 +323,7 @@ function TutorInner() {
               disabled={sending || draft.trim() === ""}
               className="arena-btn-primary shrink-0 rounded-full px-6 py-2.5 font-bold text-white disabled:opacity-40"
             >
-              Send
+              Gửi
             </button>
           </div>
         </section>
