@@ -11,8 +11,8 @@ import MeActions from "./me-actions";
 // linked player, and the role; the client island owns export/delete/logout.
 
 export const metadata = {
-  title: "My account — BossLearn",
-  description: "Your login, linked progress, data export, and account deletion.",
+  title: "Tài khoản — BossLearn",
+  description: "Đăng nhập, tiến độ đã liên kết, tải dữ liệu và xóa tài khoản.",
 };
 
 type MeStatus = {
@@ -55,15 +55,15 @@ async function AccountStatus() {
   if (!s.authed) {
     return (
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">You are browsing as a guest</p>
+        <p className="text-sm font-semibold text-zinc-200">Bạn đang dùng ẩn danh</p>
         <p className="mt-1 text-sm text-zinc-400">
-          Log in to sync your progress across devices and manage your data.
+          Đăng nhập để đồng bộ tiến độ giữa các thiết bị và quản lý dữ liệu.
         </p>
         <Link
           href="/login"
-          className="mt-4 inline-block rounded-full bg-emerald-600 px-6 py-2.5 font-bold text-white"
+          className="arena-btn-primary mt-4 inline-block rounded-full px-6 py-2.5 font-bold text-white"
         >
-          Log in
+          Đăng nhập
         </Link>
       </section>
     );
@@ -77,21 +77,23 @@ async function AccountStatus() {
             <dd className="font-semibold break-all text-zinc-100">{s.email ?? "—"}</dd>
           </div>
           <div className="flex items-baseline justify-between gap-4">
-            <dt className="text-zinc-400">Linked player</dt>
+            <dt className="text-zinc-400">Nhân vật đã liên kết</dt>
             <dd className="font-mono font-semibold text-zinc-100">
-              {s.playerId ? shortId(s.playerId) : "not linked yet"}
+              {s.playerId ? shortId(s.playerId) : "chưa liên kết"}
             </dd>
           </div>
           <div className="flex items-baseline justify-between gap-4">
-            <dt className="text-zinc-400">Role</dt>
-            <dd className="font-semibold text-zinc-100 capitalize">{s.role ?? "—"}</dd>
+            <dt className="text-zinc-400">Vai trò</dt>
+            <dd className="font-semibold text-zinc-100">
+              {s.role === "student" ? "Học sinh" : s.role === "parent" ? "Phụ huynh" : s.role === "teacher" ? "Giáo viên" : "—"}
+            </dd>
           </div>
         </dl>
         {s.role === "parent" ? (
           <p className="mt-4 text-sm text-zinc-400">
-            Manage your kids and parental consents on the{" "}
-            <Link href="/family" className="font-semibold text-emerald-300 underline">
-              Family page
+            Quản lý các con và xác nhận phụ huynh tại{" "}
+            <Link href="/family" className="font-semibold text-cyan-300 underline hover:text-white">
+              trang Gia đình
             </Link>
             .
           </p>
@@ -105,19 +107,18 @@ async function AccountStatus() {
 export default function MePage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
-      <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">Account</p>
-      <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">My account</h1>
+      <h1 className="font-display text-2xl font-extrabold text-zinc-100">Tài khoản của tôi</h1>
 
-      <Suspense fallback={<p className="mt-6 text-sm text-zinc-500">Loading your account…</p>}>
+      <Suspense fallback={<p className="mt-6 text-sm text-zinc-500">Đang tải tài khoản…</p>}>
         <AccountStatus />
       </Suspense>
 
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Your data, your call</p>
+        <p className="text-sm font-semibold text-zinc-200">Dữ liệu của bạn, bạn quyết</p>
         <p className="mt-1 text-sm text-zinc-400">
-          Export downloads everything linked to your login as one JSON file. Delete erases your
-          game progress, family links, and login — most of it instantly, and anything needing
-          manual cleanup within 72 hours of your request. Questions? Email {SUPPORT_CONTACT}.
+          Tải về mọi thứ gắn với tài khoản của bạn trong một file JSON. Xóa sẽ xóa tiến độ học,
+          liên kết gia đình và đăng nhập — hầu hết ngay lập tức, phần cần dọn thủ công trong vòng
+          72 giờ sau yêu cầu. Thắc mắc? Email {SUPPORT_CONTACT}.
         </p>
       </section>
     </main>

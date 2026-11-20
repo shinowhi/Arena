@@ -39,8 +39,8 @@ type MeOk =
     };
 
 function planLabel(code: string): string {
-  if (code === "family_2") return "Family · 2 kids";
-  if (code === "family_4") return "Family · 4 kids";
+  if (code === "family_2") return "Gói Gia đình (2 con)";
+  if (code === "family_4") return "Gói Gia đình (4 con)";
   return code;
 }
 
@@ -48,24 +48,24 @@ function StatsRow({ stats }: { stats: KidStats }) {
   return (
     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-300">
       <span>
-        <span className="arena-num font-bold text-zinc-100">{stats.scans}</span> scans
+        <span className="arena-num font-bold text-zinc-100">{stats.scans}</span> lượt quét
       </span>
       <span>
-        <span className="arena-num font-bold text-zinc-100">{stats.drills}</span> drills
+        <span className="arena-num font-bold text-zinc-100">{stats.drills}</span> lượt luyện
       </span>
       <span>
-        Top-5 mastery{" "}
+        Thạo top-5{" "}
         <span className="arena-num font-bold text-emerald-300">
           {stats.avg_mastery_top5 === null ? "—" : `${stats.avg_mastery_top5}%`}
         </span>
       </span>
       <span>
-        <span className="arena-num font-bold text-zinc-100">{stats.skills_slain}</span> bosses slain
+        <span className="arena-num font-bold text-zinc-100">{stats.skills_slain}</span> boss đã diệt
       </span>
       {stats.vip ? (
         <span className="font-bold text-amber-300">VIP</span>
       ) : (
-        <span className="text-zinc-500">VIP off</span>
+        <span className="text-zinc-500">Chưa VIP</span>
       )}
     </div>
   );
@@ -85,10 +85,10 @@ export default function FamilyClient() {
     setError("");
     try {
       const r = await fetch("/api/family/me", { cache: "no-store" });
-      if (!r.ok) throw new Error(await readApiError(r, "Family failed to load."));
-      setMe(await readApiJson<MeOk>(r, "Family failed to load."));
+      if (!r.ok) throw new Error(await readApiError(r, "Không tải được trang Gia đình."));
+      setMe(await readApiJson<MeOk>(r, "Không tải được trang Gia đình."));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Family failed to load.");
+      setError(e instanceof Error ? e.message : "Không tải được trang Gia đình.");
     } finally {
       setLoading(false);
     }
@@ -106,10 +106,10 @@ export default function FamilyClient() {
     setError("");
     try {
       const r = await fetch("/api/family/create", { method: "POST" });
-      if (!r.ok) throw new Error(await readApiError(r, "Could not create family."));
+      if (!r.ok) throw new Error(await readApiError(r, "Không tạo được gia đình."));
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not create family.");
+      setError(e instanceof Error ? e.message : "Không tạo được gia đình.");
     } finally {
       setBusy(null);
     }
@@ -124,11 +124,11 @@ export default function FamilyClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),
       });
-      if (!r.ok) throw new Error(await readApiError(r, "Could not join family."));
+      if (!r.ok) throw new Error(await readApiError(r, "Không tham gia được gia đình."));
       setCode("");
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not join family.");
+      setError(e instanceof Error ? e.message : "Không tham gia được gia đình.");
     } finally {
       setBusy(null);
     }
@@ -151,12 +151,12 @@ export default function FamilyClient() {
         throw new Error(
           typeof data?.error === "string" && data.error.trim().length > 0
             ? data.error.trim()
-            : "Could not record consent.",
+            : "Không ghi nhận được xác nhận.",
         );
       }
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not record consent.");
+      setError(e instanceof Error ? e.message : "Không ghi nhận được xác nhận.");
     } finally {
       setConsentBusy(null);
     }
@@ -175,33 +175,33 @@ export default function FamilyClient() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Family plan"
+        kicker="Gói Gia đình"
         title={
           <>
-            One plan, <span className="arena-title">every kid</span>
+            Một gói, <span className="arena-title">cho mọi con</span>
           </>
         }
-        sub="A Family plan shares VIP with the kids and shows a simple progress report per kid."
+        sub="Gói Gia đình chia sẻ VIP cho các con và báo cáo tiến độ đơn giản từng con."
       />
       {loading ? (
-        <div className="flex flex-col gap-3" role="status" aria-label="Loading family">
+        <div className="flex flex-col gap-3" role="status" aria-label="Đang tải trang Gia đình">
           <div className="arena-shimmer h-24 rounded-2xl" />
         </div>
       ) : null}
       {error ? (
         <p role="alert" className="rounded-2xl bg-red-950/40 p-4 text-sm text-zinc-200">
-          {error}
+          {error} Tải lại trang — nếu vẫn lỗi, đăng xuất rồi đăng nhập lại.
         </p>
       ) : null}
       {!loading && me?.role === "parent" ? (
         <>
           <div className="arena-card rounded-2xl p-5 text-center">
-            <p className="text-xs font-bold tracking-widest text-zinc-400 uppercase">
-              {planLabel(me.family.plan_code)} · {me.family.seats_used}/{me.family.seats_total}{" "}
-              seats used
+            <p className="text-xs font-medium text-zinc-400">
+              {planLabel(me.family.plan_code)} — đã dùng {me.family.seats_used} trên{" "}
+              {me.family.seats_total} chỗ
             </p>
             <p
-              aria-label="Family link code"
+              aria-label="Mã liên kết gia đình"
               className="arena-num mt-2 text-4xl font-extrabold tracking-[0.2em] text-zinc-50"
             >
               {me.family.link_code}
@@ -211,17 +211,17 @@ export default function FamilyClient() {
               onClick={() => void copyCode(me.family.link_code)}
               className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-bold text-zinc-200"
             >
-              {copied ? "Copied" : "Copy code"}
+              {copied ? "Đã chép" : "Chép mã"}
             </button>
             <p className="mt-3 text-sm text-zinc-400">
-              On the kid&apos;s device: open Family, enter this code, done. No login needed.
+              Trên máy của con: mở trang Gia đình, nhập mã này là xong. Không cần đăng nhập.
             </p>
           </div>
           <div className="flex flex-col gap-3">
             {me.members.length === 0 ? (
               <div className="arena-card rounded-2xl p-5 text-center">
                 <p className="text-sm text-zinc-300">
-                  No kids joined yet — share the code above to fill the seats.
+                  Chưa có con nào tham gia — chia sẻ mã bên trên để lấp chỗ.
                 </p>
               </div>
             ) : null}
@@ -235,7 +235,7 @@ export default function FamilyClient() {
                   {childId ? (
                     consented ? (
                       <p className="mt-2 text-sm font-bold text-emerald-300">
-                        Parental consent recorded
+                        Đã ghi nhận xác nhận của phụ huynh
                       </p>
                     ) : (
                       <button
@@ -244,7 +244,7 @@ export default function FamilyClient() {
                         disabled={consentBusy !== null}
                         className="arena-btn-ghost mt-2 rounded-full px-5 py-2 text-sm font-bold text-zinc-200 disabled:opacity-40"
                       >
-                        {consentBusy === childId ? "Recording…" : "Record parental consent"}
+                        {consentBusy === childId ? "Đang ghi nhận…" : "Xác nhận cho con"}
                       </button>
                     )
                   ) : null}
@@ -257,15 +257,15 @@ export default function FamilyClient() {
       {!loading && me?.role === "child" ? (
         <>
           <div className="arena-card rounded-2xl p-5 text-center">
-            <p className="text-xs font-bold tracking-widest text-zinc-400 uppercase">
+            <p className="text-xs font-medium text-zinc-400">
               {planLabel(me.family.plan_code)}
             </p>
             <p className="font-display mt-1 text-xl font-extrabold text-zinc-100">
-              You are in the family
+              Bạn đã vào gia đình
             </p>
             <p className="mt-1 text-sm text-zinc-400">
-              {me.family.seats_used}/{me.family.seats_total} seats used · VIP is shared while the
-              parent plan stays active.
+              Đã dùng {me.family.seats_used}/{me.family.seats_total} chỗ — VIP được chia sẻ khi gói
+              của phụ huynh còn hiệu lực.
             </p>
           </div>
           <div className="flex flex-col gap-3">
@@ -281,10 +281,10 @@ export default function FamilyClient() {
       {!loading && (!me || me.role === "none") ? (
         <>
           <div className="arena-card rounded-2xl p-5">
-            <p className="font-display text-lg font-extrabold text-zinc-100">For parents</p>
+            <p className="font-display text-lg font-extrabold text-zinc-100">Dành cho phụ huynh</p>
             <p className="mt-1 text-sm text-zinc-400">
-              Buy a Family plan first (Family 2 kids or Family 4 kids), then create the family here
-              to get the 8-letter code.
+              Mua gói Gia đình trước (Gia đình 2 con hoặc 4 con), rồi tạo gia đình tại đây để lấy mã
+              8 ký tự.
             </p>
             <button
               type="button"
@@ -292,24 +292,24 @@ export default function FamilyClient() {
               disabled={busy !== null}
               className="arena-btn-primary mt-3 rounded-full px-6 py-2.5 font-bold text-white disabled:opacity-40"
             >
-              {busy === "create" ? "Creating…" : "Create family"}
+              {busy === "create" ? "Đang tạo…" : "Tạo gia đình"}
             </button>
           </div>
           <div className="arena-card rounded-2xl p-5">
-            <p className="font-display text-lg font-extrabold text-zinc-100">For kids</p>
+            <p className="font-display text-lg font-extrabold text-zinc-100">Dành cho các con</p>
             <p className="mt-1 text-sm text-zinc-400">
-              Got the code from a parent? Enter it here to join — VIP unlocks right away.
+              Có mã từ phụ huynh? Nhập vào đây để tham gia — VIP mở ngay.
             </p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="8-letter code"
+                placeholder="Mã 8 ký tự"
                 maxLength={8}
                 autoCapitalize="characters"
                 autoComplete="off"
                 spellCheck={false}
-                aria-label="Family code"
+                aria-label="Mã gia đình"
                 className="arena-num min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-center text-lg tracking-[0.2em] text-zinc-100 uppercase placeholder:text-zinc-600"
               />
               <button
@@ -318,7 +318,7 @@ export default function FamilyClient() {
                 disabled={busy !== null || code.trim().length === 0}
                 className="arena-btn-primary shrink-0 rounded-full px-6 py-2.5 font-bold text-white disabled:opacity-40"
               >
-                {busy === "join" ? "Joining…" : "Join family"}
+                {busy === "join" ? "Đang tham gia…" : "Tham gia"}
               </button>
             </div>
           </div>

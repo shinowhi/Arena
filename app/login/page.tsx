@@ -5,19 +5,20 @@ import LoginForm from "./login-form";
 // client form prechecks via /api/auth/otp-request, then calls Supabase Auth
 // directly in the browser so the PKCE verifier lands in browser cookies).
 export const metadata = {
-  title: "Log in — BossLearn",
-  description: "Log in with a magic email link or Google to sync your progress across devices.",
+  title: "Đăng nhập — BossLearn",
+  description: "Đăng nhập bằng link email hoặc Google để đồng bộ tiến độ giữa các thiết bị.",
 };
 
 export default function LoginPage() {
   return (
     <main className="mx-auto max-w-md px-4 py-10">
-      <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">Account</p>
-      <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">Log in to BossLearn</h1>
+      <h1 className="font-display text-2xl font-extrabold text-zinc-100">
+        Đăng nhập <span translate="no">BossLearn</span>
+      </h1>
       <p className="mt-2 text-sm text-zinc-400">
-        One login keeps your progress, VIP, and family in sync on every device.
+        Một tài khoản giữ tiến độ, VIP và gia đình của bạn đồng bộ trên mọi thiết bị.
       </p>
-      <Suspense fallback={<p className="mt-6 text-sm text-zinc-500">Loading…</p>}>
+      <Suspense fallback={<p className="mt-6 text-sm text-zinc-500">Đang tải…</p>}>
         <LoginForm />
       </Suspense>
     </main>

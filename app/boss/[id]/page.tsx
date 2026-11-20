@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import MathText from "@/components/MathText";
 import PageHeader from "@/components/ui/PageHeader";
+import { BulbIcon, TrophyIcon } from "@/components/ui/icons";
 import { skillName } from "@/lib/graph/skills";
 import HpBar from "@/components/HpBar";
 import BossAvatar from "@/components/BossAvatar";
@@ -103,7 +104,7 @@ function BossInner() {
   const isRevenge = search.get("revenge") === "1";
   const [boss, setBoss] = useState<BossView | null>(null);
   const isGauntlet = search.get("gauntlet") === "1" || boss?.skill_tag === "gauntlet";
-  const bossName = !boss ? "" : isGauntlet ? "Mixed Gauntlet" : skillName(boss.skill_tag);
+  const bossName = !boss ? "" : isGauntlet ? "Gauntlet tổng hợp" : skillName(boss.skill_tag);
   const [idx, setIdx] = useState(0);
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
@@ -132,24 +133,24 @@ function BossInner() {
         body: JSON.stringify({ boss_id: id, question_index: idx % boss.questions.length, wrong_answer: n }),
       });
       const d = (await r.json()) as { nudge?: string; error?: string };
-      if (!r.ok) throw new Error(d.error ?? "Tutor failed.");
+      if (!r.ok) throw new Error(d.error ?? "Gia sư lỗi.");
       setTutor({ loading: false, text: d.nudge ?? "" });
     } catch {
-      setTutor({ loading: false, text: "Tutor failed — retry." });
+      setTutor({ loading: false, text: "Gia sư lỗi — thử lại." });
     }
   }
 
   async function copyWin() {
     if (!boss) return;
-    const comboBit = combo >= 2 ? ` with a x${combo} combo` : "";
-    const timeBit = t0 > 0 ? ` in ${fmt(Date.now() - t0)}` : "";
+    const comboBit = combo >= 2 ? ` với combo x${combo}` : "";
+    const timeBit = t0 > 0 ? ` trong ${fmt(Date.now() - t0)}` : "";
     const text =
-      `I slayed the ${bossName} boss in BossLearn${comboBit}${timeBit} — ` +
-      `5 machine-verified questions down. Think you can? ${window.location.origin}`;
+      `Mình vừa diệt boss ${bossName} trong BossLearn${comboBit}${timeBit} — ` +
+      `5 câu máy kiểm xong. Bạn làm được không? ${window.location.origin}`;
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      window.prompt("Copy your victory:", text);
+      window.prompt("Chép chiến thắng của bạn:", text);
       return;
     }
     setCopiedWin(true);
@@ -179,7 +180,7 @@ function BossInner() {
     fetch("/api/boss/" + id)
       .then(async (r) => {
         const d = (await r.json()) as BossView & { error?: string };
-        if (!r.ok) throw new Error(d.error ?? "Load failed.");
+        if (!r.ok) throw new Error(d.error ?? "Tải thất bại.");
         setBoss(d);
         setT0(Date.now());
         const done = new Set<number>(d.correct_indices);
@@ -195,10 +196,10 @@ function BossInner() {
           } catch {
             m = false;
           }
-          speak(`I am ${d.skill_tag === "gauntlet" ? "Mixed Gauntlet" : skillName(d.skill_tag)}. Answer my five questions, if you can.`, m);
+          speak(`Ta là ${d.skill_tag === "gauntlet" ? "Gauntlet tổng hợp" : skillName(d.skill_tag)}. Trả lời năm câu hỏi của ta, nếu ngươi có thể.`, m);
         }
       })
-      .catch((e) => setMsg(e instanceof Error ? e.message : "Load failed."));
+      .catch((e) => setMsg(e instanceof Error ? e.message : "Tải thất bại."));
   }, [id]);
   useEffect(() => {
     // Client-only read after hydration; microtask keeps the no-sync-setState lint rule happy.
@@ -264,12 +265,12 @@ function BossInner() {
     if (!boss || busy || boss.status !== "ALIVE") return;
     // Number("") is 0: blank input must never attack as zero.
     if (answer.trim() === "") {
-      setMsg("Enter a number.");
+      setMsg("Nhập một con số.");
       return;
     }
     const n = Number(answer);
     if (!Number.isFinite(n)) {
-      setMsg("Enter a number.");
+      setMsg("Nhập một con số.");
       return;
     }
     setBusy(true);
@@ -290,10 +291,10 @@ function BossInner() {
         setBoss({ ...boss, status: d.status ?? "EXPIRED" });
         return;
       }
-      if (!res.ok) throw new Error(d.error ?? "Attack failed.");
+      if (!res.ok) throw new Error(d.error ?? "Đánh thất bại.");
       setBoss({ ...boss, current_hp: d.current_hp, status: d.status });
       if (d.correct) {
-        setMsg("Hit! " + skillOf(avatar.species).skill + " -" + d.damage + " HP");
+        setMsg("Trúng! " + skillOf(avatar.species).skill + " -" + d.damage + " HP");
         setAnswer("");
         setDmg(d.damage);
         setCombo((c) => c + 1);
@@ -302,7 +303,7 @@ function BossInner() {
         setTimeout(() => setFlash(false), 600);
         playSound(d.status === "DEAD" ? "victory" : "hit", muted);
       } else {
-        setMsg("Miss. Check the hint and try again.");
+        setMsg("Trượt. Xem gợi ý rồi thử lại.");
         setCombo(0);
         setMiss(true);
         setTimeout(() => setMiss(false), 500);
@@ -311,10 +312,10 @@ function BossInner() {
     } catch (e) {
       setMsg(
         e instanceof DOMException && e.name === "AbortError"
-          ? "Attack timed out. Reload to see the latest HP before retrying."
+          ? "Đánh quá lâu. Tải lại để xem HP mới nhất rồi thử lại."
           : e instanceof Error
             ? e.message
-            : "Attack failed.",
+            : "Đánh thất bại.",
       );
     } finally {
       clearTimeout(timer);
@@ -326,7 +327,7 @@ function BossInner() {
     return (
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-8">
         <div className="arena-shimmer h-40 rounded-2xl" />
-        <p className="text-sm text-zinc-500">{msg || "Summoning boss…"}</p>
+        <p className="text-sm text-zinc-500">{msg || "Đang triệu hồi boss…"}</p>
       </main>
     );
   }
@@ -336,7 +337,7 @@ function BossInner() {
   const left = new Date(boss.despawn_at).getTime() - now;
   const urgent = left < 60000 && boss.status === "ALIVE";
   const ring = pct <= 0 ? "border-zinc-600" : pct <= 25 ? "border-red-500 shadow-[0_0_36px_rgba(239,68,68,0.5)]" : pct <= 50 ? "border-amber-500/70 shadow-[0_0_28px_rgba(245,158,11,0.35)]" : "border-zinc-700 shadow-[0_0_28px_rgba(239,68,68,0.25)]";
-  const msgColor = msg.startsWith("Hit") ? "text-emerald-400 font-semibold" : msg.startsWith("Miss") || msg.startsWith("Enter") ? "text-red-400" : "text-zinc-400";
+  const msgColor = msg.startsWith("Trúng") ? "text-emerald-400 font-semibold" : msg.startsWith("Trượt") || msg.startsWith("Nhập") ? "text-red-400" : "text-zinc-400";
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
@@ -344,7 +345,7 @@ function BossInner() {
         <BossIntro name={bossName} onSkip={() => setIntro(false)} />
       ) : null}
       <PageHeader
-        kicker="Boss fight"
+        kicker="Đánh boss"
         title={bossName}
         right={
           <span className={`shrink-0 font-mono text-sm tabular-nums ${urgent ? "arena-urgent font-bold" : "text-zinc-400"}`}>
@@ -360,17 +361,17 @@ function BossInner() {
       ) : null}
       {isRevenge ? (
         <div className="arena-enter rounded-2xl bg-red-950/40 p-4 text-center">
-          <p className="text-xs font-bold tracking-widest text-red-300 uppercase">Revenge boss</p>
+          <p className="text-sm font-bold text-red-300">Boss phục thù</p>
           <p className="mt-1 text-sm text-zinc-300">
-            Fresh questions on {skillName(boss.skill_tag)} — avoids your recent ones.
+            Câu hỏi mới về {skillName(boss.skill_tag)} — tránh các câu bạn vừa gặp.
           </p>
         </div>
       ) : null}
       {isGauntlet ? (
         <div className="arena-enter rounded-2xl bg-amber-950/40 p-4 text-center">
-          <p className="text-xs font-bold tracking-widest text-amber-300 uppercase">Gauntlet run</p>
+          <p className="text-sm font-bold text-amber-300">Lượt gauntlet</p>
           <p className="mt-1 text-sm text-zinc-300">
-            Five skills, one boss — each level tests a different gap.
+            Năm kỹ năng, một boss — mỗi cấp độ kiểm tra một lỗ hổng khác nhau.
           </p>
         </div>
       ) : null}
@@ -379,7 +380,7 @@ function BossInner() {
           <div className={flash ? "arena-lunge" : "arena-float"}>
             <CharRig spec={avatar} size={144} attacking={flash} />
           </div>
-          <div className={`overflow-hidden rounded-full border-2 bg-zinc-900/80 p-3 transition-all ${ring} ${flash ? "arena-shake" : "arena-float"}`}>
+          <div className={`overflow-hidden rounded-full border-2 bg-zinc-900/80 p-3 transition-colors ${ring} ${flash ? "arena-shake" : "arena-float"}`}>
             <BossAvatar pct={pct} rarity={boss.rarity} size={104} />
           </div>
         </div>
@@ -409,11 +410,11 @@ function BossInner() {
       </div>
       {rootParam !== "" && rootParam !== boss.skill_tag ? (
         <div className="arena-enter rounded-2xl border border-cyan-500/50 bg-cyan-950/40 p-4 text-center">
-          <p className="text-xs font-bold tracking-widest text-cyan-300 uppercase">Time portal open</p>
+          <p className="text-sm font-bold text-cyan-300">Cổng thời gian mở</p>
           <p className="mt-1 text-sm text-zinc-300">
-            This {skillName(boss.skill_tag)} boss is rooted in{" "}
-            <span className="font-bold text-cyan-200">{skillName(rootParam)}</span> — patch the past to
-            fix the present.
+            Boss {skillName(boss.skill_tag)} này bắt nguồn từ{" "}
+            <span className="font-bold text-cyan-200">{skillName(rootParam)}</span> — vá quá khứ để
+            sửa hiện tại.
           </p>
         </div>
       ) : null}
@@ -442,43 +443,45 @@ function BossInner() {
             ))}
           </div>
           <div className="relative">
-            <p className="text-3xl" aria-hidden="true">🏆</p>
-            <p className="arena-title font-display mt-2 text-3xl font-black">Boss slain.</p>
-            <p className="mt-1 text-sm text-zinc-400">Skill patched. The root cause is closed.</p>
-            {t0 > 0 ? <p className="mt-1 text-sm text-zinc-500">Slain in {fmt(now - t0)}</p> : null}
+            <p className="flex justify-center" aria-hidden="true">
+              <TrophyIcon className="h-9 w-9 text-amber-300" />
+            </p>
+            <p className="arena-title font-display mt-2 text-3xl font-black">Diệt gọn boss.</p>
+            <p className="mt-1 text-sm text-zinc-400">Đã vá kỹ năng. Gốc rễ đã đóng.</p>
+            {t0 > 0 ? <p className="mt-1 text-sm text-zinc-500">Diệt trong {fmt(now - t0)}</p> : null}
             <nav className="mt-4 flex flex-wrap justify-center gap-3 text-sm">
               <Link href="/arena" className="arena-btn-primary rounded-full px-5 py-2 font-semibold text-white">
-                Back to arena
+                Về đấu trường
               </Link>
               <Link href="/scan" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
-                Scan more work
+                Quét thêm bài
               </Link>
               <Link href="/revenge" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
-                Challenge revenge boss
+                Thách boss phục thù
               </Link>
               <Link href="/badges" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
-                Weekly badges
+                Huy hiệu tuần
               </Link>
               <Link href="/gauntlet" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
-                Gauntlet boss
+                Boss gauntlet
               </Link>
               <Link href="/pvp" className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200">
-                PVP duel
+                Đấu PVP
               </Link>
               <button
                 type="button"
                 onClick={copyWin}
                 className="arena-btn-ghost rounded-full px-5 py-2 font-medium text-zinc-200"
               >
-                {copiedWin ? "Copied!" : "Copy result"}
+                {copiedWin ? "Đã chép!" : "Chép kết quả"}
               </button>
               <ShareCard
-                kicker="Arena victory"
-                title={`${bossName} boss slain`}
+                kicker="Thắng đấu trường"
+                title={`Diệt boss ${bossName}`}
                 stats={[
-                  `${boss.questions.length} questions conquered`,
-                  t0 > 0 ? `Slain in ${fmt(now - t0)}` : "Victory",
-                  "Answers machine-verified",
+                  `${boss.questions.length} câu đã chinh phục`,
+                  t0 > 0 ? `Diệt trong ${fmt(now - t0)}` : "Chiến thắng",
+                  "Đáp án máy đã kiểm",
                 ]}
               />
             </nav>
@@ -486,9 +489,9 @@ function BossInner() {
         </div>
       ) : boss.status !== "ALIVE" ? (
         <div className="arena-card rounded-2xl p-6 text-center">
-          <p className="text-lg font-bold">This boss has expired.</p>
+          <p className="text-lg font-bold">Boss này đã hết hạn.</p>
           <Link href="/scan" className="arena-btn-ghost mt-3 inline-block rounded-full px-5 py-2 text-sm font-medium text-zinc-200">
-            Scan your work to summon a fresh one
+            Quét bài để triệu hồi boss mới
           </Link>
         </div>
       ) : (
@@ -504,22 +507,24 @@ function BossInner() {
                 ))}
               </div>
               <p className="arena-num text-sm text-zinc-400">
-                {(idx % boss.questions.length) + 1}/{boss.questions.length} ·{" "}
+                {(idx % boss.questions.length) + 1}/{boss.questions.length} —{" "}
                 <span className="font-bold text-amber-300">Lv {q.level}</span>
-                {idx >= boss.questions.length ? " · looping" : null}
+                {idx >= boss.questions.length ? " (looping)" : null}
               </p>
             </div>
             <button
               type="button"
               onClick={toggleMute}
-              aria-label={muted ? "Unmute sound effects" : "Mute sound effects"}
+              aria-label={muted ? "Bật âm thanh" : "Tắt âm thanh"}
               className="shrink-0 rounded-full border border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-800"
             >
-              {muted ? "Sound off" : "Sound on"}
+              {muted ? "Tắt tiếng" : "Bật tiếng"}
             </button>
           </div>
           <MathText text={q.prompt_latex} className="overflow-x-auto text-xl text-zinc-100" />
-          <p className="text-sm text-zinc-400"><span aria-hidden="true">💡</span> Hint: {q.hint}</p>
+          <p className="flex items-center gap-1.5 text-sm text-zinc-400">
+            <BulbIcon className="h-4 w-4" /> Gợi ý: {q.hint}
+          </p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <input
               type="number"
@@ -529,8 +534,8 @@ function BossInner() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") attack();
               }}
-              placeholder="Your numeric answer"
-              aria-label="Your numeric answer"
+              placeholder="Đáp án số của bạn"
+              aria-label="Đáp án số của bạn"
               className="arena-input arena-num min-w-0 w-full flex-1 rounded-xl px-4 py-2.5 text-lg text-zinc-100 placeholder:text-zinc-600"
             />
             <button
@@ -538,11 +543,11 @@ function BossInner() {
               disabled={busy}
               className="arena-btn-primary min-h-[48px] w-full rounded-full px-6 py-2.5 font-bold text-white disabled:opacity-40 disabled:shadow-none sm:w-auto sm:shrink-0"
             >
-              {busy ? "…" : "⚔ Attack"}
+              {busy ? "Đang đánh…" : "Đánh"}
             </button>
           </div>
           {msg ? <p className={`text-sm ${msgColor}`}>{msg}</p> : null}
-          {msg.startsWith("Miss") ? (
+          {msg.startsWith("Trượt") ? (
             <div className="flex flex-col gap-2">
               <button
                 type="button"
@@ -550,7 +555,7 @@ function BossInner() {
                 disabled={tutor.loading}
                 className="arena-btn-ghost w-fit rounded-full px-4 py-1.5 text-sm font-medium text-zinc-200 disabled:opacity-40"
               >
-                {tutor.loading ? "Thinking…" : "Why was I wrong?"}
+                {tutor.loading ? "Đang nghĩ…" : "Sao mình sai?"}
               </button>
               {tutor.text ? (
                 <p className="rounded-xl bg-zinc-900/70 px-3 py-2 text-sm text-zinc-300">{tutor.text}</p>
@@ -569,7 +574,7 @@ function BossInner() {
 }
 export default function BossPage() {
   return (
-    <Suspense fallback={<main className="mx-auto w-full max-w-2xl px-4 py-8"><p className="text-zinc-500">Loading boss…</p></main>}>
+    <Suspense fallback={<main className="mx-auto w-full max-w-2xl px-4 py-8"><p className="text-zinc-500">Đang tải boss…</p></main>}>
       <BossInner />
     </Suspense>
   );

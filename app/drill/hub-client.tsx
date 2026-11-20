@@ -53,14 +53,14 @@ export default function HubClient() {
       });
     fetch("/api/drill/mine")
       .then(async (r) => {
-        if (!r.ok) throw new Error(await readApiError(r, "Could not load your drill sets."));
-        return readApiJson<{ sets: MineSet[] }>(r, "Could not load your drill sets.");
+        if (!r.ok) throw new Error(await readApiError(r, "Không tải được các bộ luyện của bạn."));
+        return readApiJson<{ sets: MineSet[] }>(r, "Không tải được các bộ luyện của bạn.");
       })
       .then((d) => {
         if (alive) setSets(d.sets);
       })
       .catch((e) => {
-        if (alive) setSetsError(e instanceof Error ? e.message : "Could not load your drill sets.");
+        if (alive) setSetsError(e instanceof Error ? e.message : "Không tải được các bộ luyện của bạn.");
       });
     return () => {
       alive = false;
@@ -81,11 +81,11 @@ export default function HubClient() {
         router.push("/vip");
         return;
       }
-      if (!r.ok) throw new Error(await readApiError(r, "Drill forge failed."));
-      const d = await readApiJson<{ id: string }>(r, "Drill forge failed.");
+      if (!r.ok) throw new Error(await readApiError(r, "Tạo bộ luyện thất bại."));
+      const d = await readApiJson<{ id: string }>(r, "Tạo bộ luyện thất bại.");
       router.push(`/drill/${d.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Drill forge failed.");
+      setError(e instanceof Error ? e.message : "Tạo bộ luyện thất bại.");
       setBusy(null);
     }
   }
@@ -99,20 +99,20 @@ export default function HubClient() {
       const dataUrl = await readAsDataUrl(prepared.file);
       await create("upload", { image: dataUrl });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Photo read failed.");
+      setError(e instanceof Error ? e.message : "Đọc ảnh thất bại.");
       setBusy(null);
     }
   }
 
   const busyLabel =
     busy === "weak"
-      ? "Forging weak-skills drill…"
+      ? "Đang tạo bộ luyện kỹ năng yếu…"
       : busy === "misses"
-        ? "Gathering your misses…"
+        ? "Đang gom các câu bạn làm sai…"
         : busy === "topic"
-          ? "Forging topic drill…"
+          ? "Đang tạo bộ luyện theo chủ đề…"
           : busy === "upload"
-            ? "Reading photo and forging drill…"
+            ? "Đang đọc ảnh và tạo bộ luyện…"
             : null;
 
   return (
@@ -130,7 +130,7 @@ export default function HubClient() {
 
       <div className="flex items-center justify-between gap-3">
         <label htmlFor="drill-count" className="text-sm text-zinc-400">
-          Questions per set
+          Số câu mỗi bộ
         </label>
         <select
           id="drill-count"
@@ -141,7 +141,7 @@ export default function HubClient() {
         >
           {COUNTS.map((c) => (
             <option key={c} value={c}>
-              {c} questions
+              {c} câu
             </option>
           ))}
         </select>
@@ -149,40 +149,40 @@ export default function HubClient() {
 
       <section className="grid gap-3 sm:grid-cols-2">
         <div className="arena-card flex flex-col gap-2 rounded-2xl p-5">
-          <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Weak skills</p>
-          <p className="text-sm text-zinc-400">A mixed set from your most-missed scan skills.</p>
+          <p className="text-sm font-bold text-zinc-100">Kỹ năng yếu</p>
+          <p className="text-sm text-zinc-400">Bộ trộn từ các kỹ năng bạn hay sai khi quét.</p>
           <button
             type="button"
             onClick={() => void create("weak")}
             disabled={busy !== null}
             className="arena-btn-primary mt-auto min-h-[48px] w-full rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
           >
-            Drill weak skills
+            Luyện kỹ năng yếu
           </button>
         </div>
         <div className="arena-card flex flex-col gap-2 rounded-2xl p-5">
-          <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">My misses</p>
-          <p className="text-sm text-zinc-400">The exact questions you missed, lined up again.</p>
+          <p className="text-sm font-bold text-zinc-100">Câu đã sai</p>
+          <p className="text-sm text-zinc-400">Đúng các câu bạn đã làm sai, xếp lại cho bạn.</p>
           <button
             type="button"
             onClick={() => void create("misses")}
             disabled={busy !== null}
             className="arena-btn-primary mt-auto min-h-[48px] w-full rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
           >
-            Drill my misses
+            Luyện câu đã sai
           </button>
         </div>
         <div className="arena-card flex flex-col gap-2 rounded-2xl p-5">
-          <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Topic</p>
-          <p className="text-sm text-zinc-400">Ten levels of one skill, rising difficulty.</p>
+          <p className="text-sm font-bold text-zinc-100">Chủ đề</p>
+          <p className="text-sm text-zinc-400">Mười cấp độ của một kỹ năng, khó dần.</p>
           <select
-            aria-label="Topic skill"
+            aria-label="Kỹ năng chủ đề"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             disabled={busy !== null}
             className="arena-input min-h-[48px] w-full rounded-xl px-4 py-2 text-zinc-100 disabled:opacity-50"
           >
-            <option value="">Choose a skill…</option>
+            <option value="">Chọn kỹ năng…</option>
             {SKILL_IDS.map((id) => (
               <option key={id} value={id}>
                 {skillName(id)}
@@ -193,7 +193,7 @@ export default function HubClient() {
             type="button"
             onClick={() => {
               if (!topic) {
-                setError("Choose a skill first.");
+                setError("Chọn kỹ năng trước đã.");
                 return;
               }
               void create("topic", { topic });
@@ -201,12 +201,12 @@ export default function HubClient() {
             disabled={busy !== null}
             className="arena-btn-primary min-h-[48px] w-full rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
           >
-            Drill this topic
+            Luyện chủ đề này
           </button>
         </div>
         <div className="arena-card flex flex-col gap-2 rounded-2xl p-5">
-          <p className="flex items-center gap-2 text-xs font-bold tracking-widest text-zinc-500 uppercase">
-            Upload photo
+          <p className="flex items-center gap-2 text-sm font-bold text-zinc-100">
+            Tải ảnh lên
             {vip === false ? (
               <Link
                 href="/vip"
@@ -216,12 +216,12 @@ export default function HubClient() {
               </Link>
             ) : null}
           </p>
-          <p className="text-sm text-zinc-400">One photo becomes question 1 of a fresh set.</p>
+          <p className="text-sm text-zinc-400">Một tấm ảnh thành câu 1 của bộ mới.</p>
           <input
             ref={fileRef}
             type="file"
             accept="image/*"
-            aria-label="Photo for upload drill"
+            aria-label="Ảnh để tạo bộ luyện"
             disabled={busy !== null || vip === false}
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -235,7 +235,7 @@ export default function HubClient() {
               href="/vip"
               className="arena-btn-ghost mt-auto inline-block min-h-[48px] w-full rounded-full px-5 py-3 text-center text-sm font-bold text-amber-200"
             >
-              Unlock photo drills with VIP
+              Mở luyện bằng ảnh với VIP
             </Link>
           ) : (
             <button
@@ -244,7 +244,7 @@ export default function HubClient() {
               disabled={busy !== null || vip === null}
               className="arena-btn-primary mt-auto min-h-[48px] w-full rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
             >
-              {vip === null ? "Checking VIP…" : "Upload and drill"}
+              {vip === null ? "Đang kiểm tra VIP…" : "Tải ảnh và luyện"}
             </button>
           )}
         </div>
@@ -253,7 +253,7 @@ export default function HubClient() {
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-bold tracking-widest text-zinc-500 uppercase">My recent sets</h2>
         {sets === null && !setsError ? (
-          <div className="arena-shimmer h-16 rounded-2xl" role="status" aria-label="Loading your sets" />
+          <div className="arena-shimmer h-16 rounded-2xl" role="status" aria-label="Đang tải các bộ của bạn" />
         ) : null}
         {setsError ? (
           <p role="alert" className="text-sm text-zinc-500">
@@ -261,24 +261,24 @@ export default function HubClient() {
           </p>
         ) : null}
         {sets && sets.length === 0 ? (
-          <p className="text-sm text-zinc-500">No drill sets yet — forge your first one above.</p>
+          <p className="text-sm text-zinc-500">Chưa có bộ luyện nào — tạo bộ đầu tiên bên trên.</p>
         ) : null}
         {sets?.map((s) => (
           <Link
             key={s.id}
             href={`/drill/${s.id}`}
-            className="arena-card flex min-h-[48px] items-center justify-between gap-3 rounded-2xl px-4 py-3"
+            className="arena-card flex min-h-[48px] items-center justify-between gap-3 rounded-2xl px-4 py-3 transition-colors hover:border-zinc-600"
           >
             <span className="min-w-0">
               <span className="block truncate text-sm font-semibold text-zinc-100">{s.title}</span>
               <span className="block text-xs text-zinc-500">
-                {s.source} · {new Date(s.created).toLocaleDateString()}
+                {s.source} — {new Date(s.created).toLocaleDateString()}
               </span>
             </span>
             {typeof s.score === "number" ? (
               <span className="arena-num shrink-0 text-sm font-bold text-emerald-300">{s.score}%</span>
             ) : (
-              <span className="shrink-0 text-xs text-zinc-500">Unplayed</span>
+              <span className="shrink-0 text-xs text-zinc-500">Chưa làm</span>
             )}
           </Link>
         ))}

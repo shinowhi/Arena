@@ -7,13 +7,13 @@ export default function DrillPage() {
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-8">
       <PageHeader
-        kicker="Self practice"
+        kicker="Tự luyện"
         title={
           <>
-            Drill <span className="arena-title">hub</span>
+            Trung tâm <span className="arena-title">luyện tập</span>
           </>
         }
-        sub="Forge a practice set from your weak skills, your misses, any topic, or a photo. Answers stay on the server — only your score comes back."
+        sub="Bộ luyện từ kỹ năng yếu, câu đã sai, chủ đề hoặc ảnh."
       />
       <HubClient />
     </main>

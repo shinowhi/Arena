@@ -47,7 +47,7 @@ function ChatInner() {
         }
         setFriends(Array.isArray(data.friends) ? data.friends : []);
       } catch {
-        if (alive) setMsg("Could not load friends.");
+        if (alive) setMsg("Could not load friends. Reload the page to retry.");
       }
     }
     void loadFriends();
@@ -93,7 +93,8 @@ function ChatInner() {
   }, [peer]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    bottomRef.current?.scrollIntoView(reduce ? { behavior: "auto" } : { behavior: "smooth" });
   }, [messages.length]);
 
   async function send() {
@@ -116,13 +117,13 @@ function ChatInner() {
         setNeedsMigration(true);
         return;
       }
-      if (!res.ok) throw new Error(typeof data?.error === "string" ? data.error : "Could not send.");
+      if (!res.ok) throw new Error(typeof data?.error === "string" ? data.error : "Không gửi được tin nhắn.");
       setDraft("");
       const reload = await fetch(`/api/social/chat?with=${encodeURIComponent(peer)}`);
       const fresh = (await reload.json().catch(() => null)) as { messages?: Msg[] } | null;
       if (Array.isArray(fresh?.messages)) setMessages(fresh.messages);
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "Could not send.");
+      setMsg(e instanceof Error ? e.message : "Không gửi được tin nhắn.");
     } finally {
       setSending(false);
     }
@@ -131,21 +132,21 @@ function ChatInner() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
       <PageHeader
-        kicker="Direct messages"
-        title="Chat"
-        sub="Private messages with friends only — strangers cannot reach you here."
+        kicker="Tin nhắn riêng"
+        title="Trò chuyện"
+        sub="Chỉ nhắn tin với bạn bè — người lạ không thể liên lạc ở đây."
       />
 
       {needsMigration && (
         <div className="mt-4 rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
-          Chat needs a database update (migration 0006) — ask the site owner to run it in
+          Trò chuyện cần cập nhật cơ sở dữ liệu (migration 0006) — nhờ chủ web chạy trong
           Supabase.
         </div>
       )}
 
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <label className="block text-xs text-zinc-400">
-          Friend
+          Bạn bè
           <select
             value={peer}
             onChange={(e) => {
@@ -154,7 +155,7 @@ function ChatInner() {
             }}
             className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
           >
-            <option value="">Pick a friend…</option>
+            <option value="">Chọn bạn…</option>
             {friends.map((f) => (
               <option key={f.id} value={f.peer_id}>{f.label ?? f.peer_id}</option>
             ))}
@@ -162,7 +163,7 @@ function ChatInner() {
         </label>
         {friends.length === 0 && !needsMigration && (
           <p className="mt-2 text-sm text-zinc-500">
-            No friends yet — <Link href="/friends" className="text-amber-300 underline">add one</Link> first.
+            Chưa có bạn bè — <Link href="/friends" className="text-amber-300 underline">kết bạn</Link> trước đã.
           </p>
         )}
 
@@ -171,7 +172,7 @@ function ChatInner() {
             <div className="mt-4 h-80 space-y-2 overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-950 p-3">
               {messages.length === 0 && (
                 <p className="text-center text-sm text-zinc-500">
-                  Say hi to {peerLabel || "your friend"} — messages appear here.
+                  Chào {peerLabel || "bạn"} một câu đi — tin nhắn sẽ hiện ở đây.
                 </p>
               )}
               {messages.map((m) => (
@@ -195,8 +196,8 @@ function ChatInner() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void send();
                 }}
-                placeholder={`Message ${peerLabel || "friend"}…`}
-                aria-label="Message"
+                placeholder={`Nhắn cho ${peerLabel || "bạn"}…`}
+                aria-label="Tin nhắn"
                 maxLength={MESSAGE_MAX_LEN}
                 className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
               />
@@ -205,17 +206,21 @@ function ChatInner() {
                 disabled={sending || !draft.trim()}
                 className="shrink-0 rounded-lg bg-sky-500 px-4 py-2 text-sm font-bold text-black hover:bg-sky-400 disabled:opacity-50"
               >
-                {sending ? "…" : "Send"}
+                {sending ? "Đang gửi…" : "Gửi"}
               </button>
             </div>
-            <p className="mt-1 text-right text-[11px] text-zinc-600">
+            <p className="mt-1 text-right text-[11px] tabular-nums text-zinc-600">
               {draft.length}/{MESSAGE_MAX_LEN}
             </p>
           </>
         )}
       </section>
 
-      {msg && <p className="mt-3 text-sm text-amber-300">{msg}</p>}
+      {msg && (
+        <p role="status" className="mt-3 text-sm text-amber-300">
+          {msg}
+        </p>
+      )}
     </main>
   );
 }

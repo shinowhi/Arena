@@ -106,6 +106,30 @@ export default function ScanPage() {
     setBatch([]);
   }
 
+  // ARIA tabs/radio keyboard pattern: arrows move within each group (roving
+  // focus), Home/End jump. Shared by the mode tablist and subject radiogroup.
+  const modeRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const subjectRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  function moveInGroup(
+    e: React.KeyboardEvent,
+    idx: number,
+    ids: readonly unknown[],
+    refs: React.RefObject<(HTMLButtonElement | null)[]>,
+    select: (i: number) => void,
+  ) {
+    const last = ids.length - 1;
+    const next =
+      e.key === "ArrowRight" || e.key === "ArrowDown" ? (idx + 1) % ids.length
+      : e.key === "ArrowLeft" || e.key === "ArrowUp" ? (idx + last) % ids.length
+      : e.key === "Home" ? 0
+      : e.key === "End" ? last
+      : -1;
+    if (next < 0) return;
+    e.preventDefault();
+    select(next);
+    refs.current[next]?.focus();
+  }
+
   function resetAll() {
     for (const j of jobs) URL.revokeObjectURL(j.url);
     for (const b of batch) URL.revokeObjectURL(b.url);
@@ -398,13 +422,22 @@ export default function ScanPage() {
       <RaidBanner />
       <Onboarding />
       <div className="mx-auto flex gap-1 rounded-full border border-zinc-800 bg-zinc-900/60 p-1" role="tablist" aria-label="Chế độ quét">
-        {(["exam", "life"] as const).map((m) => (
+        {(["exam", "life"] as const).map((m, idx) => (
           <button
             key={m}
             type="button"
             role="tab"
             aria-selected={mode === m}
+            tabIndex={mode === m ? 0 : -1}
+            ref={(el) => {
+              modeRefs.current[idx] = el;
+            }}
             onClick={() => switchMode(m)}
+            onKeyDown={(e) =>
+              moveInGroup(e, idx, ["exam", "life"], modeRefs, (i) =>
+                switchMode(i === 0 ? "exam" : "life"),
+              )
+            }
             className={`rounded-full px-5 py-1.5 text-sm font-medium transition-colors ${
               mode === m ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-200"
             }`}
@@ -414,13 +447,18 @@ export default function ScanPage() {
         ))}
       </div>
       <div className="mx-auto flex flex-wrap justify-center gap-2" role="radiogroup" aria-label="Môn học">
-        {(Object.keys(SUBJECT_LABEL) as SubjectId[]).map((s) => (
+        {(Object.keys(SUBJECT_LABEL) as SubjectId[]).map((s, idx, arr) => (
           <button
             key={s}
             type="button"
             role="radio"
             aria-checked={subject === s}
+            tabIndex={subject === s ? 0 : -1}
+            ref={(el) => {
+              subjectRefs.current[idx] = el;
+            }}
             onClick={() => setSubject(s)}
+            onKeyDown={(e) => moveInGroup(e, idx, arr, subjectRefs, (i) => setSubject(arr[i]))}
             className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${subject === s ? "border-emerald-400 bg-emerald-400/10 text-emerald-300" : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"}`}
           >
             {SUBJECT_LABEL[s]}
@@ -461,7 +499,7 @@ export default function ScanPage() {
           setDragging(false);
           handleFiles(e.dataTransfer.files);
         }}
-        className={`arena-enter arena-d1 arena-card flex flex-col items-center gap-4 rounded-2xl border-dashed p-8 text-center transition-all ${dragging ? "scale-[1.01] border-red-500 shadow-[0_0_32px_rgba(239,68,68,0.35)]" : ""}`}
+        className={`arena-enter arena-d1 arena-card flex flex-col items-center gap-4 rounded-2xl border-dashed p-8 text-center transition-[border-color,box-shadow,transform] ${dragging ? "scale-[1.01] border-red-500 shadow-[0_0_32px_rgba(239,68,68,0.35)]" : ""}`}
       >
         {batch.length >= 2 ? (
           <div className="flex flex-col items-center gap-2">
@@ -469,12 +507,12 @@ export default function ScanPage() {
               {batch.map((b, i) => (
                 <span key={i} className="relative block h-24 w-20 overflow-hidden rounded-xl ring-1 ring-zinc-700">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={b.url} alt={`batch photo ${i + 1}`} className="h-full w-full object-cover" />
+                  <img src={b.url} alt={`batch photo ${i + 1}`} width={80} height={96} className="h-full w-full object-cover" />
                   {loading ? <span className="arena-scanline" /> : null}
                 </span>
               ))}
             </div>
-            <p className="text-xs font-bold tracking-widest text-cyan-300 uppercase">Gộp {batch.length} ảnh — kết luận chung</p>
+            <p className="text-sm font-bold text-cyan-300">Gộp {batch.length} ảnh — kết luận chung</p>
           </div>
         ) : preview ? (
           <div className="relative overflow-hidden rounded-xl ring-1 ring-zinc-700">
@@ -507,22 +545,22 @@ export default function ScanPage() {
           </button>
         </div>
         <div className="flex w-full flex-col items-center gap-2">
-          <span className="text-xs font-bold tracking-widest text-zinc-500 uppercase">Không có bài tập? Thử ảnh mẫu — có kết quả ngay</span>
+          <span className="text-sm font-medium text-zinc-400">Không có bài tập? Thử ảnh mẫu — có kết quả ngay</span>
           <div className="flex w-full flex-wrap justify-center gap-3">
             {SAMPLES.map((s) => (
               <button
                 key={s.id}
                 type="button"
                 onClick={() => loadSample(s.id, s.path, s.file)}
-                className={`group min-h-[48px] w-full overflow-hidden rounded-xl border-2 text-left transition-all sm:w-36 ${sampleId === s.id ? "border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.3)]" : "border-zinc-800 hover:border-zinc-500"}`}
+                className={`group min-h-[48px] w-full overflow-hidden rounded-xl border-2 text-left transition-colors sm:w-36 ${sampleId === s.id ? "border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.3)]" : "border-zinc-800 hover:border-zinc-500"}`}
               >
                 <span className="block h-20 w-full overflow-hidden bg-black/60">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={s.path} alt={s.label} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                  <img src={s.path} alt={s.label} width={144} height={80} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                 </span>
                 <span className="block bg-zinc-900/80 px-2.5 py-1.5">
                   <span className="block text-xs font-bold text-zinc-200">{s.label}</span>
-                  <span className="block text-[10px] font-bold tracking-widest text-emerald-400 uppercase">Mẫu · có ngay</span>
+                  <span className="block text-xs font-bold text-emerald-400">Ảnh mẫu</span>
                 </span>
               </button>
             ))}
@@ -560,15 +598,19 @@ export default function ScanPage() {
           Làm lại từ đầu
         </button>
       ) : null}
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="text-sm text-red-400">
+          {error}
+        </p>
+      ) : null}
       {result?.sample ? (
-        <p className="rounded-full border border-emerald-500/50 bg-emerald-950/40 px-4 py-1.5 text-center text-xs font-bold tracking-widest text-emerald-300 uppercase">
-          Ảnh mẫu · chẩn đoán có sẵn — gọi boss ra đánh
+        <p className="rounded-full border border-emerald-500/50 bg-emerald-950/40 px-4 py-1.5 text-center text-sm font-bold text-emerald-300">
+          Ảnh mẫu — chẩn đoán có sẵn, gọi boss ra đánh
         </p>
       ) : null}
       {result?.batch ? (
-        <p className="rounded-full border border-cyan-500/50 bg-cyan-950/40 px-4 py-1.5 text-center text-xs font-bold tracking-widest text-cyan-300 uppercase">
-          Gộp {result.batch.total} ảnh · {result.batch.votes} đồng thuận — kết luận chung
+        <p className="rounded-full border border-cyan-500/50 bg-cyan-950/40 px-4 py-1.5 text-center text-sm font-bold text-cyan-300">
+          Gộp {result.batch.total} ảnh, {result.batch.votes} đồng thuận — kết luận chung
         </p>
       ) : null}
       {result ? (

@@ -1,12 +1,13 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { displayTime } from "@/lib/social/rules";
 import { skillName } from "@/lib/graph/skills";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
+import { GiftIcon } from "@/components/ui/icons";
 
 interface Peer {
   id: string;
@@ -60,11 +61,11 @@ interface BossOpt {
 }
 
 const TABS = [
-  { id: "friends", label: "Friends" },
-  { id: "duels", label: "Duels" },
-  { id: "board", label: "Ranks" },
-  { id: "gifts", label: "Gifts" },
-  { id: "safety", label: "Safety" },
+  { id: "friends", label: "Bạn bè" },
+  { id: "duels", label: "Đấu" },
+  { id: "board", label: "Xếp hạng" },
+  { id: "gifts", label: "Quà" },
+  { id: "safety", label: "An toàn" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -95,6 +96,22 @@ function FriendsInner() {
   const [bump, setBump] = useState(0);
   const [busy, setBusy] = useState("");
   const [tab, setTab] = useState<TabId>("friends");
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  // ARIA tabs keyboard pattern: arrows move between tabs (roving focus),
+  // Home/End jump. Click/Tab+Enter keeps working as before.
+  function onTabKeyDown(e: React.KeyboardEvent, idx: number) {
+    const last = TABS.length - 1;
+    const next =
+      e.key === "ArrowRight" ? (idx + 1) % TABS.length
+      : e.key === "ArrowLeft" ? (idx + last) % TABS.length
+      : e.key === "Home" ? 0
+      : e.key === "End" ? last
+      : -1;
+    if (next < 0) return;
+    e.preventDefault();
+    setTab(TABS[next].id);
+    tabRefs.current[next]?.focus();
+  }
   const [codeState, setCodeState] = useState<"loading" | "ready" | "error">("loading");
   const [bosses, setBosses] = useState<BossOpt[] | null>(null);
   const [bossesError, setBossesError] = useState("");
@@ -140,9 +157,9 @@ function FriendsInner() {
         setBosses(Array.isArray(abRes.bosses) ? (abRes.bosses as BossOpt[]) : []);
       } catch {
         if (!alive) return;
-        setMsg("Could not load friends. Reload to retry.");
+        setMsg("Không tải được bạn bè. Tải lại để thử.");
         setCodeState("error");
-        setBossesError("Could not load live bosses.");
+        setBossesError("Không tải được boss đang live.");
       }
     }
     void load();
@@ -152,7 +169,7 @@ function FriendsInner() {
   }, [bump]);
 
   function fail(e: unknown) {
-    const m = e instanceof Error ? e.message : "Request failed.";
+    const m = e instanceof Error ? e.message : "Yêu cầu thất bại.";
     if (m === "__migration__") {
       setNeedsMigration(true);
       return;
@@ -186,9 +203,9 @@ function FriendsInner() {
     const link = `${window.location.origin}/friends?code=${code}`;
     try {
       await navigator.clipboard.writeText(link);
-      setMsg("Invite link copied — send it to a friend.");
+      setMsg("Đã chép link mời — gửi cho bạn bè đi.");
     } catch {
-      setMsg(`Copy this link: ${link}`);
+      setMsg(`Chép link này: ${link}`);
     }
   }
 
@@ -200,32 +217,32 @@ function FriendsInner() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
       <PageHeader
-        kicker="Squad up"
-        title="Friends"
-        sub="Add friends by code, duel their bosses, and compare progress. Strangers can only send you a friend request — never messages."
+        kicker="Lập đội"
+        title="Bạn bè"
+        sub="Kết bạn bằng mã, thách đấu boss của nhau và so tiến độ. Người lạ chỉ gửi được lời mời kết bạn — không bao giờ nhắn tin được."
       />
 
       {needsMigration && (
         <div className="mt-4 rounded-xl border border-amber-700 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
-          Friends need a database update (migration 0006) — ask the site owner to run it in
+          Trang bạn bè cần cập nhật cơ sở dữ liệu (migration 0006) — nhờ chủ web chạy trong
           Supabase.
         </div>
       )}
 
       <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Your friend code</p>
+        <p className="text-sm font-semibold text-zinc-200">Mã bạn bè của bạn</p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {codeState === "loading" ? (
             <code
               role="status"
-              aria-label="Loading your friend code"
+              aria-label="Đang tải mã bạn bè"
               className="animate-pulse rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-lg font-bold tracking-widest text-zinc-500"
             >
               ……
             </code>
           ) : codeState === "error" ? (
             <p className="text-sm text-red-400" role="alert">
-              Could not load your code.{" "}
+              Không tải được mã của bạn.{" "}
               <button
                 onClick={() => {
                   setCodeState("loading");
@@ -234,7 +251,7 @@ function FriendsInner() {
                 }}
                 className="font-bold underline hover:text-red-300"
               >
-                Retry
+                Thử lại
               </button>
             </p>
           ) : code ? (
@@ -247,12 +264,12 @@ function FriendsInner() {
                 disabled={!code || needsMigration}
                 className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
               >
-                Copy invite link
+                Chép link mời
               </button>
             </>
           ) : (
             <p className="text-sm text-zinc-500">
-              No code yet —{" "}
+              Chưa có mã —{" "}
               <button
                 onClick={() => {
                   setCodeState("loading");
@@ -260,7 +277,7 @@ function FriendsInner() {
                 }}
                 className="font-bold text-amber-300 underline"
               >
-                reload to mint one
+                tải lại để tạo mã
               </button>
               .
             </p>
@@ -270,31 +287,42 @@ function FriendsInner() {
           <input
             value={addCode}
             onChange={(e) => setAddCode(e.target.value.toUpperCase())}
-            placeholder="Enter a friend code"
-            aria-label="Friend code"
+            placeholder="Nhập mã bạn bè"
+            aria-label="Mã bạn bè"
             maxLength={16}
             className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm tracking-widest text-zinc-100"
           />
           <button
-            onClick={() => void run("add", "/api/social/friends", { code: addCode }, "Friend request sent.")}
+            onClick={() => void run("add", "/api/social/friends", { code: addCode }, "Đã gửi lời mời kết bạn.")}
             disabled={busy !== "" || needsMigration || !addCode.trim()}
             className="shrink-0 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-black hover:bg-emerald-400 disabled:opacity-50"
           >
-            {busy === "add" ? "…" : "Add"}
+            {busy === "add" ? "Đang thêm…" : "Thêm"}
           </button>
         </div>
       </section>
 
-      {msg && <p className="mt-3 text-sm text-amber-300">{msg}</p>}
+      {msg && (
+        <p role="status" className="mt-3 text-sm text-amber-300">
+          {msg}
+        </p>
+      )}
 
-      <div className="mt-6 flex gap-1 overflow-x-auto rounded-full border border-zinc-800 bg-zinc-900/60 p-1" role="tablist" aria-label="Friends sections">
-        {TABS.map((t) => (
+      <div className="mt-6 flex gap-1 overflow-x-auto rounded-full border border-zinc-800 bg-zinc-900/60 p-1" role="tablist" aria-label="Các mục bạn bè">
+        {TABS.map((t, idx) => (
           <button
             key={t.id}
             type="button"
             role="tab"
+            id={`tab-${t.id}`}
             aria-selected={tab === t.id}
+            aria-controls={`panel-${t.id}`}
+            tabIndex={tab === t.id ? 0 : -1}
+            ref={(el) => {
+              tabRefs.current[idx] = el;
+            }}
             onClick={() => setTab(t.id)}
+            onKeyDown={(e) => onTabKeyDown(e, idx)}
             className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
               tab === t.id ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-200"
             }`}
@@ -305,10 +333,10 @@ function FriendsInner() {
       </div>
 
       {tab === "friends" && (
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">My friends ({friends.length})</p>
+      <section role="tabpanel" id="panel-friends" aria-labelledby="tab-friends" tabIndex={0} className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+        <p className="text-sm font-semibold text-zinc-200">Bạn của tôi ({friends.length})</p>
         {friends.length === 0 && (
-          <p className="mt-2 text-sm text-zinc-500">No friends yet — share your code above.</p>
+          <p className="mt-2 text-sm text-zinc-500">Chưa có bạn — chia sẻ mã bên trên.</p>
         )}
         <ul className="mt-2 space-y-2">
           {friends.map((f) => (
@@ -318,45 +346,45 @@ function FriendsInner() {
                 href={`/chat?with=${f.peer_id}`}
                 className="rounded-md bg-sky-500 px-3 py-1 text-xs font-bold text-black hover:bg-sky-400"
               >
-                Chat
+                Nhắn tin
               </Link>
               <button
-                onClick={() => void run(`rm-${f.id}`, "/api/social/friends", { friend_id: f.peer_id }, "Friend removed.", "DELETE")}
+                onClick={() => void run(`rm-${f.id}`, "/api/social/friends", { friend_id: f.peer_id }, "Đã xóa bạn.", "DELETE")}
                 disabled={busy !== ""}
                 className="rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
               >
-                Remove
+                Xóa
               </button>
               <button
-                onClick={() => void run(`bl-${f.id}`, "/api/social/friends/block", { player_id: f.peer_id, action: "block" }, "Player blocked.")}
+                onClick={() => void run(`bl-${f.id}`, "/api/social/friends/block", { player_id: f.peer_id, action: "block" }, "Đã chặn người chơi.")}
                 disabled={busy !== ""}
                 className="rounded-md border border-zinc-700 px-3 py-1 text-xs text-red-300 hover:bg-zinc-800 disabled:opacity-50"
               >
-                Block
+                Chặn
               </button>
             </li>
           ))}
         </ul>
         {incoming.length > 0 && (
           <>
-            <p className="mt-4 text-sm font-semibold text-zinc-200">Requests for you</p>
+            <p className="mt-4 text-sm font-semibold text-zinc-200">Lời mời cho bạn</p>
             <ul className="mt-2 space-y-2">
               {incoming.map((r) => (
                 <li key={r.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2">
                   <span className="min-w-0 flex-1 truncate text-sm text-zinc-100">{r.label}</span>
                   <button
-                    onClick={() => void run(`ac-${r.id}`, "/api/social/friends/respond", { request_id: r.id, action: "accept" }, "Friend added.")}
+                    onClick={() => void run(`ac-${r.id}`, "/api/social/friends/respond", { request_id: r.id, action: "accept" }, "Đã kết bạn.")}
                     disabled={busy !== ""}
                     className="rounded-md bg-emerald-500 px-3 py-1 text-xs font-bold text-black hover:bg-emerald-400 disabled:opacity-50"
                   >
-                    Accept
+                    Đồng ý
                   </button>
                   <button
-                    onClick={() => void run(`dc-${r.id}`, "/api/social/friends/respond", { request_id: r.id, action: "decline" }, "Request declined.")}
+                    onClick={() => void run(`dc-${r.id}`, "/api/social/friends/respond", { request_id: r.id, action: "decline" }, "Đã từ chối.")}
                     disabled={busy !== ""}
                     className="rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
                   >
-                    Decline
+                    Từ chối
                   </button>
                 </li>
               ))}
@@ -365,24 +393,24 @@ function FriendsInner() {
         )}
         {outgoing.length > 0 && (
           <p className="mt-3 text-xs text-zinc-500">
-            Waiting on: {outgoing.map((r) => r.label).join(", ")}
+            Đang chờ: {outgoing.map((r) => r.label).join(", ")}
           </p>
         )}
       </section>
       )}
 
       {tab === "duels" && (
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Boss duels</p>
+      <section role="tabpanel" id="panel-duels" aria-labelledby="tab-duels" tabIndex={0} className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+        <p className="text-sm font-semibold text-zinc-200">Thách đấu boss</p>
         <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <label className="block text-xs text-zinc-400">
-            Friend
+            Bạn bè
             <select
               value={duelTo}
               onChange={(e) => setDuelTo(e.target.value)}
               className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
             >
-              <option value="">Pick a friend…</option>
+              <option value="">Chọn bạn…</option>
               {friends.map((f) => (
                 <option key={f.id} value={f.peer_id}>{f.label}</option>
               ))}
@@ -390,7 +418,7 @@ function FriendsInner() {
           </label>
           <div className="text-xs text-zinc-400">
             <label htmlFor="duel-boss" className="block">
-              Boss (live from the arena)
+              Boss (đang live từ đấu trường)
             </label>
             {bosses === null ? (
               bossesError ? (
@@ -407,7 +435,7 @@ function FriendsInner() {
               )
             ) : bosses.length === 0 ? (
               <p className="mt-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-500">
-                No live bosses — <Link href="/scan" className="font-bold text-amber-300 underline">scan to summon one</Link>.
+                Không có boss live — <Link href="/scan" className="font-bold text-amber-300 underline">quét để triệu hồi</Link>.
               </p>
             ) : (
               <select
@@ -416,10 +444,10 @@ function FriendsInner() {
                 onChange={(e) => setDuelBoss(e.target.value)}
                 className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
               >
-                <option value="">Pick a live boss…</option>
+                <option value="">Chọn boss live…</option>
                 {bosses.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {skillName(b.skill_tag)} · HP {b.current_hp}/{b.max_hp}{b.is_world ? " · world" : ""} · {b.status}
+                    {skillName(b.skill_tag)} (HP {b.current_hp}/{b.max_hp}){b.is_world ? " [world]" : ""} — {b.status}
                   </option>
                 ))}
               </select>
@@ -429,42 +457,42 @@ function FriendsInner() {
         <button
           onClick={() => {
             setDuelBoss("");
-            void run("duel", "/api/social/challenges", { to: duelTo, boss_id: duelBoss }, "Duel invite sent.");
+            void run("duel", "/api/social/challenges", { to: duelTo, boss_id: duelBoss }, "Đã gửi lời thách đấu.");
           }}
           disabled={busy !== "" || needsMigration || !duelTo || !duelBoss}
           className="mt-3 rounded-lg bg-violet-500 px-4 py-2 text-sm font-bold text-black hover:bg-violet-400 disabled:opacity-50"
         >
-          {busy === "duel" ? "…" : "Challenge to a duel"}
+          {busy === "duel" ? "Đang thách đấu…" : "Thách đấu"}
         </button>
         {duelsIn.length > 0 && (
           <ul className="mt-3 space-y-2">
             {duelsIn.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm">
                 <span className="min-w-0 flex-1 truncate text-zinc-100">
-                  {d.peer} challenged you ({d.skill}, {d.boss_status})
+                  {d.peer} thách đấu bạn ({d.skill}, {d.boss_status})
                 </span>
                 {d.status === "PENDING" ? (
                   <>
                     <button
-                      onClick={() => void run(`da-${d.id}`, "/api/social/challenges/respond", { challenge_id: d.id, action: "accept" }, "Duel accepted — good luck!")}
+                      onClick={() => void run(`da-${d.id}`, "/api/social/challenges/respond", { challenge_id: d.id, action: "accept" }, "Đã nhận đấu — chúc may mắn!")}
                       disabled={busy !== ""}
                       className="rounded-md bg-emerald-500 px-3 py-1 text-xs font-bold text-black hover:bg-emerald-400 disabled:opacity-50"
                     >
-                      Accept
+                      Nhận đấu
                     </button>
                     <button
-                      onClick={() => void run(`dd-${d.id}`, "/api/social/challenges/respond", { challenge_id: d.id, action: "decline" }, "Duel declined.")}
+                      onClick={() => void run(`dd-${d.id}`, "/api/social/challenges/respond", { challenge_id: d.id, action: "decline" }, "Đã từ chối đấu.")}
                       disabled={busy !== ""}
                       className="rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
                     >
-                      Decline
+                      Từ chối
                     </button>
                   </>
                 ) : (
                   <span className="text-xs text-zinc-500">{d.status}</span>
                 )}
                 <Link href={d.link} className="rounded-md bg-violet-500 px-3 py-1 text-xs font-bold text-black hover:bg-violet-400">
-                  Fight →
+                  Đánh →
                 </Link>
               </li>
             ))}
@@ -475,10 +503,10 @@ function FriendsInner() {
             {duelsOut.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm">
                 <span className="min-w-0 flex-1 truncate text-zinc-400">
-                  You → {d.peer} ({d.skill}) · {d.status}
+                  Bạn → {d.peer} ({d.skill}) — {d.status}
                 </span>
                 <Link href={d.link} className="rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-200 hover:bg-zinc-800">
-                  Open boss →
+                  Mở boss →
                 </Link>
               </li>
             ))}
@@ -488,14 +516,14 @@ function FriendsInner() {
       )}
 
       {tab === "board" && (
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Friends leaderboard</p>
+      <section role="tabpanel" id="panel-board" aria-labelledby="tab-board" tabIndex={0} className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+        <p className="text-sm font-semibold text-zinc-200">Bảng xếp hạng bạn bè</p>
         {board.length === 0 ? (
           <div className="mt-3">
             <EmptyState
-              title="No rankings yet."
-              body="Slay bosses and add friends — your circle's rankings land here."
-              actionLabel="Enter the arena"
+              title="Chưa có xếp hạng."
+              body="Diệt boss và kết bạn — bảng xếp hạng của nhóm sẽ hiện ở đây."
+              actionLabel="Vào đấu trường"
               actionHref="/arena"
             />
           </div>
@@ -504,19 +532,19 @@ function FriendsInner() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="text-xs text-zinc-500">
-                <th className="py-1 pr-3">Hunter</th>
+                <th className="py-1 pr-3">Thợ săn</th>
                 <th className="py-1 pr-3">XP</th>
-                <th className="py-1 pr-3">Streak</th>
-                <th className="py-1">Bosses</th>
+                <th className="py-1 pr-3">Chuỗi</th>
+                <th className="py-1">Boss</th>
               </tr>
             </thead>
             <tbody>
               {board.map((r) => (
                 <tr key={r.id} className="border-t border-zinc-800 text-zinc-100">
-                  <td className="py-1 pr-3">{r.label}{r.you ? " (you)" : ""}</td>
-                  <td className="py-1 pr-3 font-bold text-amber-300">{r.xp}</td>
-                  <td className="py-1 pr-3">{r.streak}d</td>
-                  <td className="py-1">{r.bosses}</td>
+                  <td className="py-1 pr-3">{r.label}{r.you ? " (bạn)" : ""}</td>
+                  <td className="py-1 pr-3 font-bold tabular-nums text-amber-300">{r.xp}</td>
+                  <td className="py-1 pr-3 tabular-nums">{r.streak} ngày</td>
+                  <td className="py-1 tabular-nums">{r.bosses}</td>
                 </tr>
               ))}
             </tbody>
@@ -527,17 +555,17 @@ function FriendsInner() {
       )}
 
       {tab === "gifts" && (
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Send a gift</p>
+      <section role="tabpanel" id="panel-gifts" aria-labelledby="tab-gifts" tabIndex={0} className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+        <p className="text-sm font-semibold text-zinc-200">Tặng quà</p>
         <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <label className="block text-xs text-zinc-400">
-            Friend
+            Bạn bè
             <select
               value={giftTo}
               onChange={(e) => setGiftTo(e.target.value)}
               className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
             >
-              <option value="">Pick a friend…</option>
+              <option value="">Chọn bạn…</option>
               {friends.map((f) => (
                 <option key={f.id} value={f.peer_id}>{f.label}</option>
               ))}
@@ -555,11 +583,11 @@ function FriendsInner() {
             />
           </label>
           <label className="block text-xs text-zinc-400">
-            Item label (optional)
+            Tên vật phẩm (không bắt buộc)
             <input
               value={giftItem}
               onChange={(e) => setGiftItem(e.target.value)}
-              placeholder="e.g. hint token"
+              placeholder="vd. thẻ gợi ý"
               maxLength={40}
               className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
             />
@@ -568,19 +596,24 @@ function FriendsInner() {
         <button
           onClick={() => {
             setGiftItem("");
-            void run("gift", "/api/social/gifts", { to: giftTo, xp_amount: giftXp, item: giftItem }, "Gift sent.");
+            void run("gift", "/api/social/gifts", { to: giftTo, xp_amount: giftXp, item: giftItem }, "Đã gửi quà.");
           }}
           disabled={busy !== "" || needsMigration || !giftTo}
           className="mt-3 rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
         >
-          {busy === "gift" ? "…" : "Send gift"}
+          {busy === "gift" ? "Đang gửi…" : "Tặng quà"}
         </button>
         {received.length > 0 && (
           <ul className="mt-3 space-y-1 text-sm text-zinc-300">
             {received.slice(0, 5).map((g) => (
-              <li key={g.id}>
-                🎁 {g.peer} sent you {g.xp_amount > 0 ? `${g.xp_amount} XP` : ""}{g.xp_amount > 0 && g.item ? " + " : ""}{g.item ?? ""}{" "}
-                <span className="text-zinc-500">· {displayTime(g.created_at)}</span>
+              <li key={g.id} className="flex items-center gap-1.5">
+                <GiftIcon className="h-4 w-4 text-amber-300" />
+                <span>
+                  {g.peer} tặng bạn {g.xp_amount > 0 ? `${g.xp_amount} XP` : ""}
+                  {g.xp_amount > 0 && g.item ? " + " : ""}
+                  {g.item ?? ""}{" "}
+                  <span className="text-zinc-500">({displayTime(g.created_at)})</span>
+                </span>
               </li>
             ))}
           </ul>
@@ -589,8 +622,10 @@ function FriendsInner() {
           <ul className="mt-2 space-y-1 text-sm text-zinc-400">
             {sent.slice(0, 5).map((g) => (
               <li key={g.id}>
-                You sent {g.peer} {g.xp_amount > 0 ? `${g.xp_amount} XP` : ""}{g.xp_amount > 0 && g.item ? " + " : ""}{g.item ?? ""}{" "}
-                <span className="text-zinc-600">· {displayTime(g.created_at)}</span>
+                Bạn tặng {g.peer} {g.xp_amount > 0 ? `${g.xp_amount} XP` : ""}
+                {g.xp_amount > 0 && g.item ? " + " : ""}
+                {g.item ?? ""}{" "}
+                <span className="text-zinc-600">({displayTime(g.created_at)})</span>
               </li>
             ))}
           </ul>
@@ -599,54 +634,57 @@ function FriendsInner() {
       )}
 
       {tab === "safety" && (
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-        <p className="text-sm font-semibold text-zinc-200">Safety</p>
+      <section role="tabpanel" id="panel-safety" aria-labelledby="tab-safety" tabIndex={0} className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+        <p className="text-sm font-semibold text-zinc-200">An toàn</p>
         <p className="mt-1 text-xs text-zinc-500">
-          Blocked players cannot message you 1-1. Group rooms are shared — leave any room you share with them. Reports go to the site owner.
+          Người bị chặn không thể nhắn riêng cho bạn. Phòng nhóm là chung — hãy rời phòng nào có họ. Báo cáo sẽ gửi tới chủ web.
         </p>
         <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <label className="block text-xs text-zinc-400">
-            Player
+            Người chơi
             <select
               value={reportPeer}
               onChange={(e) => setReportPeer(e.target.value)}
               className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
             >
-              <option value="">Pick a player…</option>
+              <option value="">Chọn người chơi…</option>
               {knownPeers.map((p) => (
                 <option key={p.id} value={p.id}>{p.label}</option>
               ))}
             </select>
           </label>
           <label className="block text-xs text-zinc-400">
-            Reason
+            Lý do
             <select
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
               className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
             >
-              {["Spam", "Harassment", "Cheating", "Inappropriate name", "Other"].map((r) => (
+              {["Spam", "Quấy rối", "Gian lận", "Tên không phù hợp", "Khác"].map((r) => (
                 <option key={r} value={r}>{r}</option>
               ))}
             </select>
           </label>
         </div>
-        <input
-          value={reportDetails}
-          onChange={(e) => setReportDetails(e.target.value)}
-          placeholder="Details (optional, max 500)"
-          maxLength={500}
-          className="mt-2 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
-        />
+        <label className="mt-2 block text-xs text-zinc-400">
+          Chi tiết (không bắt buộc, tối đa 500)
+          <input
+            value={reportDetails}
+            onChange={(e) => setReportDetails(e.target.value)}
+            placeholder="Chuyện gì đã xảy ra?"
+            maxLength={500}
+            className="mt-1 block w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+          />
+        </label>
         <button
           onClick={() => {
             setReportDetails("");
-            void run("report", "/api/social/report", { reported_id: reportPeer, reason: reportReason, details: reportDetails }, "Report sent. Thanks for keeping Arena safe.");
+            void run("report", "/api/social/report", { reported_id: reportPeer, reason: reportReason, details: reportDetails }, "Đã gửi báo cáo. Cảm ơn bạn đã giữ BossLearn an toàn.");
           }}
           disabled={busy !== "" || needsMigration || !reportPeer}
           className="mt-3 rounded-lg border border-red-800 bg-red-950/40 px-4 py-2 text-sm font-bold text-red-200 hover:bg-red-900/40 disabled:opacity-50"
         >
-          {busy === "report" ? "…" : "Send report"}
+          {busy === "report" ? "Đang gửi…" : "Gửi báo cáo"}
         </button>
       </section>
       )}
@@ -657,7 +695,7 @@ function FriendsInner() {
 export default function FriendsPage() {
   return (
     <Suspense
-      fallback={<main className="mx-auto max-w-2xl px-4 py-10 text-sm text-zinc-400">Loading friends…</main>}
+      fallback={<main className="mx-auto max-w-2xl px-4 py-10 text-sm text-zinc-400">Đang tải bạn bè…</main>}
     >
       <FriendsInner />
     </Suspense>

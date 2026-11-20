@@ -23,9 +23,9 @@ import { readApiError } from "@/lib/scan/image-prep";
 // pending cookie is OTP-path-only. The callback prefers ?role=, then the
 // pending cookie, then student.
 const ROLES = [
-  { value: "student", label: "Student" },
-  { value: "parent", label: "Parent" },
-  { value: "teacher", label: "Teacher" },
+  { value: "student", label: "Học sinh" },
+  { value: "parent", label: "Phụ huynh" },
+  { value: "teacher", label: "Giáo viên" },
 ];
 const VALID_ROLES = new Set(ROLES.map((r) => r.value));
 
@@ -39,15 +39,15 @@ export default function LoginForm() {
   const errParam = params.get("err");
   const [error, setError] = useState(
     errParam === "claimed"
-      ? "That device progress belonged to another account."
+      ? "Tiến độ của thiết bị này thuộc về tài khoản khác."
       : errParam === "exchange"
-        ? "This login link expired or was already used — request a fresh one below."
+        ? "Link đăng nhập đã hết hạn hoặc đã dùng — xin link mới bên dưới."
         : errParam === "nouser"
-          ? "Login session unreadable — please try again."
+          ? "Không đọc được phiên đăng nhập — thử lại giúp mình."
           : errParam === "link" || (errParam !== null && errParam.startsWith("link-"))
-            ? "Account setup hiccup — please try again."
+            ? "Lỗi tạo tài khoản — tải lại trang và xin link đăng nhập mới."
             : errParam
-              ? "Login failed — please try again."
+              ? "Đăng nhập thất bại — thử lại giúp mình."
               : "",
   );
 
@@ -63,7 +63,7 @@ export default function LoginForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, role }),
       });
-      if (!pre.ok) throw new Error(await readApiError(pre, "Could not send the login email."));
+      if (!pre.ok) throw new Error(await readApiError(pre, "Không gửi được email đăng nhập."));
       const auth = createAuthBrowserClient();
       const { error: otpError } = await auth.auth.signInWithOtp({
         email: email.trim().toLowerCase(),
@@ -72,7 +72,7 @@ export default function LoginForm() {
       if (otpError) throw new Error(otpError.message);
       setSent(true);
     } catch (e2) {
-      setError(e2 instanceof Error ? e2.message : "Could not send the login email.");
+      setError(e2 instanceof Error ? e2.message : "Không gửi được email đăng nhập.");
     } finally {
       setBusy(false);
     }
@@ -92,7 +92,7 @@ export default function LoginForm() {
       });
       if (oauthError) throw new Error(oauthError.message);
     } catch (e2) {
-      setError(e2 instanceof Error ? e2.message : "Google login failed — please try again.");
+      setError(e2 instanceof Error ? e2.message : "Đăng nhập Google thất bại — thử lại giúp mình.");
       setGoogleBusy(false);
     }
   }
@@ -106,17 +106,17 @@ export default function LoginForm() {
       ) : null}
       {sent ? (
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-          <p className="text-sm font-semibold text-zinc-100">Check your email</p>
+          <p className="text-sm font-semibold text-zinc-100">Kiểm tra email</p>
           <p className="mt-1 text-sm text-zinc-400">
-            We sent a login link to <span className="font-semibold text-zinc-200">{email}</span>.
-            Open it on this device to finish logging in.
+            Đã gửi link đăng nhập tới <span className="font-semibold text-zinc-200">{email}</span>.
+            Mở link trên thiết bị này để đăng nhập xong.
           </p>
           <button
             type="button"
             onClick={() => setSent(false)}
-            className="mt-3 cursor-pointer rounded-full border border-zinc-700 px-5 py-2 text-sm font-bold text-zinc-200 focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none"
+            className="mt-3 cursor-pointer rounded-full border border-zinc-700 px-5 py-2 text-sm font-bold text-zinc-200"
           >
-            Use a different email
+            Dùng email khác
           </button>
         </section>
       ) : (
@@ -125,7 +125,7 @@ export default function LoginForm() {
           className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5"
         >
           <label htmlFor="login-email" className="text-sm font-semibold text-zinc-200">
-            Email address
+            Địa chỉ email
           </label>
           <input
             id="login-email"
@@ -135,16 +135,16 @@ export default function LoginForm() {
             placeholder="you@example.com"
             autoComplete="email"
             required
-            className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-base text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none"
+            className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-base text-zinc-100 placeholder:text-zinc-600"
           />
           <label htmlFor="login-role" className="mt-4 block text-sm font-semibold text-zinc-200">
-            I am a…
+            Tôi là…
           </label>
           <select
             id="login-role"
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-base text-zinc-100 focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none"
+            className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-base text-zinc-100"
           >
             {ROLES.map((r) => (
               <option key={r.value} value={r.value}>
@@ -155,13 +155,13 @@ export default function LoginForm() {
           <button
             type="submit"
             disabled={busy || email.trim().length === 0}
-            className="mt-4 w-full cursor-pointer rounded-full bg-emerald-600 px-6 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none"
+            className="arena-btn-primary mt-4 w-full cursor-pointer rounded-full px-6 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {busy ? "Sending…" : "Send login link"}
+            {busy ? "Đang gửi…" : "Gửi link đăng nhập"}
           </button>
         </form>
       )}
-      <div className="mt-4 flex items-center gap-3 text-xs font-bold tracking-widest text-zinc-500 uppercase">
+      <div className="mt-4 flex items-center gap-3 text-xs font-medium text-zinc-500">
         <span className="h-px flex-1 bg-zinc-800" />
         or
         <span className="h-px flex-1 bg-zinc-800" />
@@ -170,12 +170,12 @@ export default function LoginForm() {
         type="button"
         onClick={() => void continueWithGoogle()}
         disabled={googleBusy}
-        className="mt-4 block w-full cursor-pointer rounded-full border border-zinc-700 bg-zinc-900 px-6 py-3 text-center font-bold text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none"
+        className="arena-btn-ghost mt-4 block w-full cursor-pointer rounded-full px-6 py-3 text-center font-bold text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {googleBusy ? "Redirecting to Google…" : "Continue with Google"}
+        {googleBusy ? "Đang chuyển sang Google…" : "Tiếp tục với Google"}
       </button>
       <p className="mt-4 text-center text-xs text-zinc-500">
-        Logging in links this device&apos;s progress to your account.
+        Đăng nhập sẽ gắn tiến độ của thiết bị này vào tài khoản của bạn.
       </p>
     </div>
   );

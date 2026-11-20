@@ -6,25 +6,27 @@ import Link from "next/link";
 export default function MarketPage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-10">
-      <p className="text-xs font-bold uppercase tracking-widest text-amber-400">Night market</p>
-      <h1 className="mt-1 text-2xl font-extrabold text-zinc-100">Taking a break</h1>
+      <p className="text-xs font-medium text-zinc-400">Chợ treo thưởng</p>
+      <h1 className="font-display mt-1 text-2xl font-extrabold text-zinc-100">
+        Treo thưởng đang tạm nghỉ
+      </h1>
       <p className="mt-3 text-sm leading-relaxed text-zinc-400">
-        The bounty market is paused for now — too quiet to be fun. Your XP and past bounties are
-        safe. Meanwhile, the best way to earn is the old-fashioned way: scan a problem, slay the
-        boss, and climb the exams.
+        Đăng và nhận thưởng đang tạm dừng để tập trung vào phần học chính. XP và các thưởng cũ của
+        bạn vẫn an toàn. Còn cách kiếm XP tốt nhất vẫn như xưa: quét bài, diệt boss rồi leo các kỳ
+        thi.
       </p>
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/scan"
-          className="inline-flex min-h-[48px] items-center rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400"
+          className="arena-btn-primary inline-flex min-h-[48px] items-center rounded-full px-6 py-2 text-sm font-bold text-white"
         >
-          Scan a problem
+          Quét bài
         </Link>
         <Link
           href="/exam"
-          className="inline-flex min-h-[48px] items-center rounded-lg border border-zinc-700 px-4 py-2 text-sm font-bold text-zinc-200 hover:bg-zinc-800"
+          className="arena-btn-ghost inline-flex min-h-[48px] items-center rounded-full px-6 py-2 text-sm font-bold text-zinc-200"
         >
-          Take a mock exam
+          Thi thử
         </Link>
       </div>
     </main>
