@@ -100,13 +100,13 @@ export default function PvpLobby() {
         </p>
       ) : null}
       <div className="arena-card flex flex-col gap-3 rounded-2xl p-5">
-        <h2 className="text-xs font-bold tracking-widest text-zinc-500">Vào bằng link</h2>
+        <h2 id="pvp-join-heading" className="text-xs font-bold tracking-widest text-zinc-500">Vào bằng link</h2>
         <div className="flex gap-2">
           <input
             value={joinId}
             onChange={(e) => setJoinId(e.target.value)}
             placeholder="Dán link hoặc mã phòng"
-            aria-label="Link hoặc mã phòng"
+            aria-labelledby="pvp-join-heading"
             className="arena-input min-w-0 flex-1 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600"
           />
           <button

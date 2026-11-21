@@ -49,6 +49,7 @@ const BOSS_STATUS_LABEL: Record<string, string> = {
 
 export default function ArenaPage() {
   const [bosses, setBosses] = useState<BossCard[] | null>(null);
+  const [bossesError, setBossesError] = useState(false);
   const [now, setNow] = useState(() => (typeof window === "undefined" ? 0 : Date.now()));
   const [playerId, setPlayerId] = useState("");
   const [xp, setXp] = useState(0);
@@ -57,22 +58,29 @@ export default function ArenaPage() {
   const [avatar, setAvatar] = useState<AvatarSpec>(DEFAULT_AVATAR);
   const [builderOpen, setBuilderOpen] = useState(false);
   const [leaders, setLeaders] = useState<Leader[] | null>(null);
+  const [leadersError, setLeadersError] = useState(false);
+  const [bump, setBump] = useState(0);
   const [rush, setRush] = useState<Rush | null>(null);
   const [rushRanks, setRushRanks] = useState<RushRank[] | null>(null);
 
   useEffect(() => {
     let stop = false;
     // SECURITY PHASE-1: 2s polling replaces the anon realtime subscription
-    // (revoked in migration 0019). Fail-soft: errors keep the last list, and
-    // only the very first load falls back to [].
+    // (revoked in migration 0019). Poll errors keep the last list; only the
+    // very first load surfaces an error + retry (never fail-soft-to-empty).
     const loadBosses = (initial: boolean) => {
       fetch("/api/arena/active-bosses")
-        .then((r) => r.json())
+        .then((r) => {
+          if (!r.ok) throw new Error("bosses failed");
+          return r.json();
+        })
         .then((d) => {
-          if (!stop) setBosses(d.bosses ?? []);
+          if (stop) return;
+          setBossesError(false);
+          setBosses(d.bosses ?? []);
         })
         .catch(() => {
-          if (!stop && initial) setBosses([]);
+          if (!stop && initial) setBossesError(true);
         });
     };
     loadBosses(true);
@@ -103,12 +111,17 @@ export default function ArenaPage() {
       })
       .catch(() => {});
     fetch("/api/leaderboard")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("leaderboard failed");
+        return r.json();
+      })
       .then((d) => {
-        if (!stop) setLeaders(d.leaders ?? []);
+        if (stop) return;
+        setLeadersError(false);
+        setLeaders(d.leaders ?? []);
       })
       .catch(() => {
-        if (!stop) setLeaders([]);
+        if (!stop) setLeadersError(true);
       });
     fetch("/api/rush/today")
       .then((r) => r.json())
@@ -133,7 +146,15 @@ export default function ArenaPage() {
       clearInterval(t);
       clearInterval(poll);
     };
-  }, []);
+  }, [bump]);
+
+  function retryArena() {
+    setBosses(null);
+    setBossesError(false);
+    setLeaders(null);
+    setLeadersError(false);
+    setBump((b) => b + 1);
+  }
 
   async function copyInvite() {
     if (!playerId) return;
@@ -169,7 +190,7 @@ export default function ArenaPage() {
         ) : null}
       </div>
       <HeroStatus label="Trực tiếp">
-        {rush ? `Rush reset sau ${fmt(new Date(rush.reset_at).getTime() - now)}` : bosses ? `${bosses.length} boss đang live` : "Đang tải đấu trường…"}
+        {rush ? `Rush reset sau ${fmt(new Date(rush.reset_at).getTime() - now)}` : bossesError ? "Không tải được đấu trường" : bosses ? `${bosses.length} boss đang live` : "Đang tải đấu trường…"}
       </HeroStatus>
       <PageHeader
         kicker="Chiến trường trực tiếp"
@@ -196,13 +217,13 @@ export default function ArenaPage() {
         }
       />
       <nav className="flex gap-2 text-xs font-semibold" aria-label="Các mục đấu trường">
-        <a href="#daily-rush" className="rounded-full border border-cyan-800 bg-cyan-950/40 px-3 py-1 text-cyan-200 transition-colors hover:bg-cyan-900/40">
+        <a href="#daily-rush" className="inline-flex min-h-[44px] items-center rounded-full border border-cyan-800 bg-cyan-950/40 px-3 py-1 text-cyan-200 transition-colors hover:bg-cyan-900/40">
           Rush hằng ngày
         </a>
-        <a href="#bosses" className="rounded-full border border-zinc-700 bg-zinc-900/60 px-3 py-1 text-zinc-300 transition-colors hover:bg-zinc-800">
+        <a href="#bosses" className="inline-flex min-h-[44px] items-center rounded-full border border-zinc-700 bg-zinc-900/60 px-3 py-1 text-zinc-300 transition-colors hover:bg-zinc-800">
           Boss
         </a>
-        <a href="#hunters" className="rounded-full border border-zinc-700 bg-zinc-900/60 px-3 py-1 text-zinc-300 transition-colors hover:bg-zinc-800">
+        <a href="#hunters" className="inline-flex min-h-[44px] items-center rounded-full border border-zinc-700 bg-zinc-900/60 px-3 py-1 text-zinc-300 transition-colors hover:bg-zinc-800">
           Top thợ săn
         </a>
       </nav>
@@ -249,7 +270,18 @@ export default function ArenaPage() {
           ) : null}
         </Link>
       ) : null}
-      {bosses === null ? (
+      {bossesError ? (
+        <div className="arena-card rounded-2xl p-6 text-center" role="alert">
+          <p className="text-sm text-zinc-300">Không tải được boss — kiểm tra mạng rồi thử lại nhé.</p>
+          <button
+            type="button"
+            onClick={retryArena}
+            className="arena-btn-ghost mt-3 inline-flex min-h-[44px] items-center rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white"
+          >
+            Thử lại
+          </button>
+        </div>
+      ) : bosses === null ? (
         <div className="flex flex-col gap-3" role="status" aria-busy="true" aria-label="Đang tải boss đấu trường">
           {[0, 1].map((k) => (
             <div key={k} className="arena-card flex flex-col gap-3 rounded-2xl p-5">
@@ -322,7 +354,18 @@ export default function ArenaPage() {
       </div>
       <div id="hunters" className="arena-card scroll-mt-4 rounded-2xl p-5">
         <h2 className="font-display text-lg font-extrabold text-zinc-100">Top thợ săn</h2>
-        {leaders === null ? (
+        {leadersError ? (
+          <div className="mt-3 rounded-xl border border-red-800 bg-red-950/40 p-4 text-center" role="alert">
+            <p className="text-sm text-zinc-300">Không tải được bảng xếp hạng.</p>
+            <button
+              type="button"
+              onClick={retryArena}
+              className="arena-btn-ghost mt-2 inline-flex min-h-[44px] items-center rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white"
+            >
+              Thử lại
+            </button>
+          </div>
+        ) : leaders === null ? (
           <div className="mt-3 flex flex-col gap-2" role="status" aria-busy="true" aria-label="Đang tải bảng xếp hạng">
             {[0, 1, 2].map((k) => (
               <div key={k} className="flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/50 px-3 py-2">

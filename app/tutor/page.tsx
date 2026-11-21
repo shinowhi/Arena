@@ -47,6 +47,8 @@ function TutorInner() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [threads, setThreads] = useState<Thread[] | null>(null);
+  const [threadsLoadError, setThreadsLoadError] = useState(false);
+  const [threadsBump, setThreadsBump] = useState(0);
   const [activeThread, setActiveThread] = useState<string | null>(null);
   const [vip, setVip] = useState<boolean | null>(null);
   const [upsell, setUpsell] = useState(false);
@@ -93,8 +95,8 @@ function TutorInner() {
     bottomRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "end" });
   }, [messages, sending]);
 
-  // VIP status, thread list, and homework nudges load once; every failure
-  // degrades to plain stateless chat (the card/list simply stays hidden).
+  // VIP status and homework nudges load once; failures degrade to plain
+  // stateless chat (the card simply stays hidden).
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -105,16 +107,6 @@ function TutorInner() {
         if (alive) setVip(d.vip === true);
       } catch {
         // Unknown: the new-thread button attempt-gates via 402 instead.
-      }
-    })();
-    (async () => {
-      try {
-        const r = await fetch("/api/tutor/threads");
-        if (!r.ok) throw new Error("threads failed");
-        const d = await readApiJson<{ threads: Thread[] }>(r, "Threads failed.");
-        if (alive) setThreads(Array.isArray(d.threads) ? d.threads : []);
-      } catch {
-        if (alive) setThreads([]);
       }
     })();
     (async () => {
@@ -131,6 +123,32 @@ function TutorInner() {
       alive = false;
     };
   }, []);
+
+  // Thread list: fetch failure surfaces an error + retry, never an empty list.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const r = await fetch("/api/tutor/threads");
+        if (!r.ok) throw new Error("threads failed");
+        const d = await readApiJson<{ threads: Thread[] }>(r, "Threads failed.");
+        if (!alive) return;
+        setThreadsLoadError(false);
+        setThreads(Array.isArray(d.threads) ? d.threads : []);
+      } catch {
+        if (alive) setThreadsLoadError(true);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [threadsBump]);
+
+  function retryThreads() {
+    setThreadsLoadError(false);
+    setThreads(null);
+    setThreadsBump((b) => b + 1);
+  }
 
   function selectThread(id: string | null) {
     setActiveThread(id);
@@ -208,14 +226,25 @@ function TutorInner() {
               <button
                 type="button"
                 onClick={() => selectThread(null)}
-                className="text-xs font-bold text-amber-300 hover:text-amber-200"
+                className="inline-flex min-h-[44px] items-center px-2 text-xs font-bold text-amber-300 hover:text-amber-200"
               >
                 Chat mới
               </button>
             ) : null}
           </div>
           <div className="mt-2 flex max-h-56 flex-col gap-1 overflow-y-auto md:max-h-96">
-            {threads === null ? (
+            {threadsLoadError ? (
+              <div role="alert" className="rounded-lg border border-red-800 bg-red-950/40 p-3 text-center">
+                <p className="text-sm text-zinc-300">Không tải được đoạn chat.</p>
+                <button
+                  type="button"
+                  onClick={retryThreads}
+                  className="mt-1 inline-flex min-h-[44px] items-center font-bold text-amber-300 underline hover:text-amber-200"
+                >
+                  Thử lại
+                </button>
+              </div>
+            ) : threads === null ? (
               <span className="arena-shimmer inline-block h-8 w-full rounded-lg" role="status" aria-label="Đang tải đoạn chat" />
             ) : threads.length === 0 ? (
               <p className="text-sm text-zinc-500">Chưa có đoạn nào — VIP giữ được chat có nhớ bài.</p>
@@ -226,7 +255,7 @@ function TutorInner() {
                   type="button"
                   onClick={() => selectThread(t.id)}
                   aria-pressed={activeThread === t.id}
-                  className={`rounded-lg px-3 py-2 text-left ${activeThread === t.id ? "arena-btn-primary text-white" : "text-zinc-300 hover:bg-white/5"}`}
+                  className={`min-h-[44px] rounded-lg px-3 py-2 text-left ${activeThread === t.id ? "arena-btn-primary text-white" : "text-zinc-300 hover:bg-white/5"}`}
                 >
                   <span className="block truncate text-sm font-bold">{t.title}</span>
                   {t.preview ? <span className="block truncate text-xs opacity-70">{t.preview}</span> : null}
@@ -267,7 +296,7 @@ function TutorInner() {
                     </div>
                     <Link
                       href={ng.href.startsWith("/drill") ? ng.href : "/drill"}
-                      className="arena-btn-primary shrink-0 rounded-full px-4 py-1.5 text-xs font-bold text-white"
+                      className="arena-btn-primary inline-flex min-h-[44px] shrink-0 items-center rounded-full px-4 py-1.5 text-xs font-bold text-white"
                     >
                       Luyện tập
                     </Link>

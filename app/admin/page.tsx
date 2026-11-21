@@ -149,7 +149,7 @@ async function AdminBody({ searchParams }: { searchParams: Promise<{ err?: strin
         {err && <p role="alert" className="mt-2 text-sm text-red-400">Sai khóa — thử lại.</p>}
         <button
           type="submit"
-          className="mt-4 rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400"
+          className="arena-btn-primary mt-4 inline-flex min-h-[44px] items-center justify-center rounded-lg px-4 py-2 text-sm font-bold text-white"
         >
           Mở khóa
         </button>

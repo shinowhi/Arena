@@ -63,7 +63,7 @@ export function SiteHeader() {
       <AuthNavButton loginLabel="Đăng nhập" accountLabel="Tài khoản" className="ml-auto whitespace-nowrap text-zinc-400 transition-colors hover:text-white md:hidden" />
       <Link
         href="/scan"
-        className="arena-btn-primary rounded-full px-4 py-1.5 font-semibold text-white md:hidden"
+        className="arena-btn-primary inline-flex min-h-[44px] items-center rounded-full px-4 py-1.5 font-semibold text-white md:hidden"
       >
         + Quét
       </Link>

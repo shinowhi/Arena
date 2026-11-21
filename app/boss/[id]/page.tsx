@@ -526,7 +526,7 @@ function BossInner() {
               type="button"
               onClick={toggleMute}
               aria-label={muted ? "Bật âm thanh" : "Tắt âm thanh"}
-              className="shrink-0 rounded-full border border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-800"
+              className="inline-flex min-h-[44px] shrink-0 items-center rounded-full border border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-800"
             >
               {muted ? "Tắt tiếng" : "Bật tiếng"}
             </button>

@@ -303,11 +303,12 @@ export default function FamilyClient() {
           </div>
           <div className="arena-card rounded-2xl p-5">
             <p className="font-display text-lg font-extrabold text-zinc-100">Dành cho các con</p>
-            <p className="mt-1 text-sm text-zinc-400">
+            <label htmlFor="family-code" className="mt-1 block text-sm text-zinc-400">
               Có mã từ phụ huynh? Nhập vào đây để tham gia — VIP mở ngay.
-            </p>
+            </label>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <input
+                id="family-code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="Mã 8 ký tự"
@@ -315,7 +316,6 @@ export default function FamilyClient() {
                 autoCapitalize="characters"
                 autoComplete="off"
                 spellCheck={false}
-                aria-label="Mã gia đình"
                 className="arena-num min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-center text-lg tracking-[0.2em] text-zinc-100 uppercase placeholder:text-zinc-600"
               />
               <button

@@ -468,7 +468,7 @@ function ThptInner() {
               aria-pressed={unknown[i] === true}
               title="Đánh dấu chưa chắc"
               aria-label={`Đánh dấu câu ${i + 1} chưa chắc`}
-              className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-bold transition-colors disabled:opacity-40 ${unknown[i] ? "border-amber-400 bg-amber-400/10 text-amber-300" : "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300"}`}
+              className={`inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-bold transition-colors disabled:opacity-40 ${unknown[i] ? "border-amber-400 bg-amber-400/10 text-amber-300" : "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300"}`}
             >
               {unknown[i] ? <><QuestionIcon className="h-3.5 w-3.5" /> Chưa chắc</> : "Đánh dấu"}
             </button>

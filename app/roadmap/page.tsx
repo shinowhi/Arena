@@ -136,7 +136,7 @@ export default function RoadmapPage() {
           <p className="text-zinc-200">Chưa có kỹ năng yếu nào — lộ trình cần dữ liệu trước.</p>
           <Link
             href="/scan"
-            className="mt-3 inline-block rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400"
+            className="arena-btn-primary mt-3 inline-flex min-h-[44px] items-center justify-center rounded-lg px-4 py-2 text-sm font-bold text-white"
           >
             Quét bài tập để bắt đầu
           </Link>
@@ -176,7 +176,7 @@ export default function RoadmapPage() {
                       title={done ? "Bỏ đánh dấu" : "Đánh dấu"}
                       aria-label={done ? "Bỏ đánh dấu ngày" : "Đánh dấu ngày"}
                       aria-pressed={done}
-                      className={`flex h-6 w-6 items-center justify-center rounded-full border text-sm ${done ? "border-emerald-500 bg-emerald-500/20 text-emerald-300" : "border-zinc-700 text-zinc-600 hover:border-zinc-500"}`}
+                      className={`relative flex h-6 w-6 items-center justify-center rounded-full border text-sm after:absolute after:-inset-3 after:content-[''] ${done ? "border-emerald-500 bg-emerald-500/20 text-emerald-300" : "border-zinc-700 text-zinc-600 hover:border-zinc-500"}`}
                     >
                       {done ? <CheckIcon className="h-3.5 w-3.5" /> : ""}
                     </button>
@@ -192,7 +192,7 @@ export default function RoadmapPage() {
                       <button
                         onClick={() => void summon(d.focus!.tag)}
                         disabled={summoning !== ""}
-                        className="mt-2 w-full rounded-lg bg-red-600/80 px-2 py-1 text-xs font-bold text-white hover:bg-red-500 disabled:opacity-50"
+                        className="arena-btn-primary mt-2 inline-flex min-h-[44px] w-full items-center justify-center rounded-lg px-2 py-1 text-xs font-bold text-white disabled:opacity-50"
                       >
                         {summoning === d.focus.tag ? "Đang gọi…" : "Đánh"}
                       </button>

@@ -182,20 +182,21 @@ export default function ParentPage() {
       {report?.role !== "parent" && (
         <section className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
           <h2 className="text-sm font-semibold text-zinc-200">Bạn là phụ huynh?</h2>
-          <p className="mt-1 text-sm text-zinc-400">Nhập mã trên thiết bị của con:</p>
+          <label htmlFor="parent-claim" className="mt-1 block text-sm text-zinc-400">Nhập mã trên thiết bị của con:</label>
           <div className="mt-2 flex gap-2">
             <input
+              id="parent-claim"
               value={claim}
               onChange={(e) => setClaim(e.target.value.toUpperCase())}
               placeholder="ABC123"
               maxLength={12}
-              aria-label="Mã liên kết phụ huynh"
+              autoComplete="off"
               className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-center text-lg font-bold tracking-[0.2em] text-zinc-100"
             />
             <button
               onClick={claimCode}
               disabled={busy || needsMigration || !claim.trim()}
-              className="shrink-0 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-black hover:bg-emerald-400 disabled:opacity-50"
+              className="arena-btn-primary inline-flex min-h-[44px] shrink-0 items-center rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
             >
               Liên kết
             </button>

@@ -16,7 +16,7 @@ export default function GroupsPage() {
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
           href="/friends"
-          className="inline-flex min-h-[48px] items-center rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-amber-400"
+          className="arena-btn-primary inline-flex min-h-[48px] items-center rounded-lg px-4 py-2 text-sm font-bold text-white"
         >
           Rủ bạn lập đội
         </Link>

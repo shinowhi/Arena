@@ -184,7 +184,7 @@ function PvpInner() {
           <button
             type="button"
             onClick={copyLink}
-            className="shrink-0 rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
+            className="inline-flex min-h-[44px] shrink-0 items-center rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
           >
             {copied ? "Đã chép!" : "Chép link mời"}
           </button>

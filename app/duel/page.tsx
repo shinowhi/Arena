@@ -125,7 +125,7 @@ export default function DuelLobbyPage() {
         title={<>Sảnh <span className="arena-title">thách đấu</span></>}
         sub="Cùng phần, cùng đề. Điểm cao hơn thắng — hòa thì ai nhanh hơn thắng. Tính hạng ELO."
         right={
-          <Link href="/exam" className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-zinc-200">
+          <Link href="/exam" className="arena-btn-ghost inline-flex min-h-[44px] shrink-0 items-center rounded-full px-4 py-1.5 text-sm font-bold text-zinc-200">
             Mọi kỳ thi
           </Link>
         }
@@ -134,21 +134,21 @@ export default function DuelLobbyPage() {
         <p role="alert" className="arena-card rounded-2xl p-4 text-center text-sm text-red-300">{error}</p>
       ) : null}
       <div className="arena-card flex flex-col gap-3 rounded-2xl p-6">
-        <h2 className="font-display text-lg font-extrabold text-zinc-100">Vào bằng mã trận</h2>
+        <h2 id="duel-join-heading" className="font-display text-lg font-extrabold text-zinc-100">Vào bằng mã trận</h2>
         <div className="flex gap-2">
           <input
             type="text"
             value={joinId}
             onChange={(e) => setJoinId(e.target.value)}
             placeholder="Dán mã trận"
-            aria-label="Mã trận thách đấu"
+            aria-labelledby="duel-join-heading"
             className="arena-input min-w-0 flex-1 rounded-xl px-4 py-2 text-zinc-100 placeholder:text-zinc-600"
           />
           <button
             type="button"
             onClick={() => void join()}
             disabled={busy || joinId.trim() === ""}
-            className="arena-btn-ghost shrink-0 rounded-full px-5 py-2 text-sm font-bold text-zinc-200 disabled:opacity-40"
+            className="arena-btn-ghost inline-flex min-h-[44px] shrink-0 items-center rounded-full px-5 py-2 text-sm font-bold text-zinc-200 disabled:opacity-40"
           >
             Vào trận
           </button>

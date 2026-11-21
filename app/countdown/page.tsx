@@ -157,7 +157,7 @@ export default function CountdownPage() {
                       {key} — sai {w.misses} lần
                     </p>
                   </div>
-                  <Link href="/scan" className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-xs text-zinc-200 transition-colors hover:text-white">
+                  <Link href="/scan" className="arena-btn-ghost inline-flex min-h-[44px] shrink-0 items-center rounded-full px-4 py-1.5 text-xs text-zinc-200 transition-colors hover:text-white">
                     Luyện tập
                   </Link>
                 </li>

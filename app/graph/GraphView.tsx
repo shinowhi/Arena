@@ -78,7 +78,7 @@ export default function GraphView() {
               type="button"
               onClick={() => setSubject(s)}
               aria-label={`Lọc môn: ${SUBJECT_LABEL[s]}`}
-              className={`rounded-full px-3 py-1 font-semibold transition-colors ${subject === s ? "bg-zinc-100 text-zinc-900" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
+              className={`inline-flex min-h-[44px] items-center rounded-full px-3 py-1 font-semibold transition-colors ${subject === s ? "bg-zinc-100 text-zinc-900" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}
             >
               {SUBJECT_LABEL[s]}
             </button>

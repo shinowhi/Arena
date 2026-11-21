@@ -287,7 +287,7 @@ function HsaInner() {
             Kết quả <span className="arena-num font-bold text-emerald-300">{score}/{total}</span> câu đúng
             — đề đã khóa.
           </p>
-          <Link href={`/exam/review?exam=hsa&day=${date}&p3=${p3}`} className="arena-btn-ghost mt-3 inline-block rounded-full px-5 py-2 text-sm font-bold text-zinc-200 transition-colors hover:text-white">
+          <Link href={`/exam/review?exam=hsa&day=${date}&p3=${p3}`} className="arena-btn-ghost mt-3 inline-flex min-h-[44px] items-center rounded-full px-5 py-2 text-sm font-bold text-zinc-200 transition-colors hover:text-white">
             Chữa bài
           </Link>
         </div>

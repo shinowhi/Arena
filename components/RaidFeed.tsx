@@ -71,7 +71,7 @@ export default function RaidFeed({ bossId }: { bossId: string }) {
     <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-xs font-bold tracking-widest text-orange-300">Nhật ký raid</h2>
-        <button onClick={copyRaid} className="rounded-full border border-zinc-700 px-3 py-1 text-xs font-semibold text-zinc-200 transition-colors hover:bg-zinc-800">
+        <button onClick={copyRaid} className="inline-flex min-h-[44px] items-center rounded-full border border-zinc-700 px-3 py-1 text-xs font-semibold text-zinc-200 transition-colors hover:bg-zinc-800">
           {copied ? "Đã chép link!" : "Chép link raid"}
         </button>
       </div>

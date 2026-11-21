@@ -46,7 +46,7 @@ export default function LifeBatch({
           Chùm ảnh đời thường <span className="arena-num text-zinc-500 tabular-nums">({jobs.length}/3)</span>
         </h2>
         <div className="flex gap-2">
-          <label className="arena-btn-ghost cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium text-zinc-200">
+          <label className="arena-btn-ghost inline-flex min-h-[44px] cursor-pointer items-center rounded-full px-4 py-1.5 text-sm font-medium text-zinc-200">
             Thêm ảnh
             <input
               type="file"
@@ -63,7 +63,7 @@ export default function LifeBatch({
           <button
             type="button"
             onClick={onScreen}
-            className="arena-btn-ghost rounded-full px-4 py-1.5 text-sm font-medium text-zinc-200"
+            className="arena-btn-ghost inline-flex min-h-[44px] items-center rounded-full px-4 py-1.5 text-sm font-medium text-zinc-200"
           >
             Chụp màn hình
           </button>
@@ -107,7 +107,7 @@ export default function LifeBatch({
                       </span>
                       <Link
                         href={"/boss/" + j.result.boss_id}
-                        className="arena-btn-primary rounded-full px-4 py-1 text-xs font-bold text-white"
+                        className="arena-btn-primary inline-flex min-h-[44px] items-center rounded-full px-4 py-1 text-xs font-bold text-white"
                       >
                         Đánh boss
                       </Link>
@@ -121,7 +121,7 @@ export default function LifeBatch({
                   type="button"
                   onClick={() => onRemove(j.key)}
                   aria-label={`Gỡ ${j.file.name}`}
-                  className="shrink-0 rounded-full px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+                  className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
                 >
                   <XIcon className="h-3.5 w-3.5" />
                 </button>

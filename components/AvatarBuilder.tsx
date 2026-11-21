@@ -25,7 +25,7 @@ export default function AvatarBuilder({
             <p className="text-xs font-bold tracking-widest text-red-400">Tạo anh hùng</p>
             <h2 className="text-xl font-black">Chọn chiến binh của bạn</h2>
           </div>
-          <button onClick={onClose} aria-label="Đóng" className="arena-btn-ghost rounded-full px-3 py-1 text-sm">
+          <button onClick={onClose} aria-label="Đóng" className="arena-btn-ghost inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-3 py-1 text-sm">
             <XIcon className="h-4 w-4" />
           </button>
         </div>
