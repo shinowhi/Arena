@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getPlayerId } from "@/lib/game/player";
-import { countToday, FREE_SCAN_DAILY, FREE_TUTOR_DAILY, getVipUntil, isVip } from "@/lib/vip";
+import { countToday, FREE_SCAN_DAILY, FREE_TUTOR_DAILY, getVipUntil } from "@/lib/vip";
 import ClaimForm from "./claim-form";
 import { CheckIcon } from "@/components/ui/icons";
 
@@ -51,13 +51,21 @@ function UsageBar({ used, limit, label }: { used: number; limit: number | null; 
 }
 
 // Module-level loader (kept out of the component so render stays pure).
+// Independent reads run concurrently via Promise.all (previously a
+// 5-step waterfall). vip derives from vipUntil with isVip's exact
+// predicate, which also drops isVip's duplicate vip_until round-trip.
 async function loadStatus() {
-  const playerId = await getPlayerId().catch(() => null);
-  const supabase = await createClient();
-  const vipUntil = playerId ? await getVipUntil(supabase, playerId) : null;
-  const vip = playerId ? await isVip(supabase, playerId) : false;
-  const scans = playerId ? await countToday(supabase, playerId, "scan_started") : 0;
-  const tutor = playerId ? await countToday(supabase, playerId, "tutor_asked") : 0;
+  const [playerId, supabase] = await Promise.all([
+    getPlayerId().catch(() => null),
+    createClient(),
+  ]);
+  if (!playerId) return { vip: false, vipUntil: null, scans: 0, tutor: 0 };
+  const [vipUntil, scans, tutor] = await Promise.all([
+    getVipUntil(supabase, playerId),
+    countToday(supabase, playerId, "scan_started"),
+    countToday(supabase, playerId, "tutor_asked"),
+  ]);
+  const vip = !!vipUntil && Date.parse(vipUntil) > Date.now();
   return { vip, vipUntil, scans, tutor };
 }
 

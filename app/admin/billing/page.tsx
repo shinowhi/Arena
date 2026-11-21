@@ -62,13 +62,28 @@ async function loadBilling(): Promise<{
   if (pending.error) return { orders: [], metrics: zero, missing: true };
   const orders = (pending.data ?? []) as PendingOrder[];
   // Metrics (same method as /api/admin/metrics — see that route's header).
+  // The four reads are independent: fetch them concurrently (the pending
+  // gate above stays first so the missing-table early return is unchanged).
+  const [approved, c, p, e] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("player_id, amount_vnd")
+      .eq("status", "approved")
+      .limit(20000),
+    supabase.from("players").select("id", { count: "exact", head: true }),
+    supabase
+      .from("players")
+      .select("id, created_at")
+      .order("created_at", { ascending: true })
+      .limit(5000),
+    supabase
+      .from("funnel_events")
+      .select("player_id, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20000),
+  ]);
   let payers = 0;
   let revenueVnd = 0;
-  const approved = await supabase
-    .from("orders")
-    .select("player_id, amount_vnd")
-    .eq("status", "approved")
-    .limit(20000);
   if (!approved.error && Array.isArray(approved.data)) {
     const seen = new Set<string>();
     for (const row of approved.data as { player_id: string; amount_vnd: unknown }[]) {
@@ -79,18 +94,7 @@ async function loadBilling(): Promise<{
   }
   let totalPlayers = 0;
   const retention = { d1: null as number | null, d7: null as number | null, d30: null as number | null };
-  const c = await supabase.from("players").select("id", { count: "exact", head: true });
   if (!c.error) totalPlayers = c.count ?? 0;
-  const p = await supabase
-    .from("players")
-    .select("id, created_at")
-    .order("created_at", { ascending: true })
-    .limit(5000);
-  const e = await supabase
-    .from("funnel_events")
-    .select("player_id, created_at")
-    .order("created_at", { ascending: false })
-    .limit(20000);
   if (!p.error && !e.error && Array.isArray(p.data) && Array.isArray(e.data)) {
     const players = p.data as { id: string; created_at: string }[];
     const latest = new Map<string, number>();

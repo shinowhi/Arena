@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import katex from "katex";
 
 // Boss prompts mix words with $...$ math, e.g. "Evaluate $\int_{0}^{3} (4x+2) \ dx$."
@@ -31,7 +32,15 @@ function renderMixed(text: string): string {
   return html;
 }
 
-export default function MathText({ text, className }: { text: string; className?: string }) {
+// Module-level cache keyed by prompt text: exam pages re-render every
+// second on the clock ticker, and katex.renderToString is pure, so reuse
+// the output per distinct prompt instead of re-rendering each tick.
+const htmlCache = new Map<string, string | null>();
+const CACHE_MAX = 500;
+
+function cachedHtml(text: string): string | null {
+  const hit = htmlCache.get(text);
+  if (hit !== undefined) return hit;
   let html: string | null = null;
   if (text.includes("$")) {
     html = renderMixed(text);
@@ -42,6 +51,16 @@ export default function MathText({ text, className }: { text: string; className?
       html = null;
     }
   }
+  // Bound the cache: papers hold ~120 distinct prompts; clear on overflow.
+  if (htmlCache.size >= CACHE_MAX) htmlCache.clear();
+  htmlCache.set(text, html);
+  return html;
+}
+
+function MathText({ text, className }: { text: string; className?: string }) {
+  const html = useMemo(() => cachedHtml(text), [text]);
   if (html) return <div className={className} dangerouslySetInnerHTML={{ __html: html }} />;
   return <div className={className}>{text}</div>;
 }
+
+export default memo(MathText);

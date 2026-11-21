@@ -97,15 +97,58 @@ function ThptInner() {
   }, [date]);
 
   // Persist progress so a reload resumes the same paper, mode, and clock.
+  // Throttled: per-keystroke answers would otherwise rewrite the full paper
+  // on every keypress. Writes at most once per second, immediately on
+  // submit, and flushes trailing state on unmount.
+  const persistRef = useRef<{ key: string; payload: Stored } | null>(null);
+  const lastPersistRef = useRef(0);
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!storeKey || !questions) return;
-    try {
-      const payload: Stored = { questions, answers, marks, attempts, unknown, deadline, mode, submitted, started };
-      sessionStorage.setItem(storeKey, JSON.stringify(payload));
-    } catch {
-      // Quota/private mode: the exam still works, just not resumable.
+    persistRef.current = {
+      key: storeKey,
+      payload: { questions, answers, marks, attempts, unknown, deadline, mode, submitted, started },
+    };
+    const write = () => {
+      const pending = persistRef.current;
+      if (!pending) return;
+      persistRef.current = null;
+      lastPersistRef.current = Date.now();
+      try {
+        sessionStorage.setItem(pending.key, JSON.stringify(pending.payload));
+      } catch {
+        // Quota/private mode: the exam still works, just not resumable.
+      }
+    };
+    if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = null;
+    if (submitted) {
+      write();
+      return;
     }
+    if (Date.now() - lastPersistRef.current >= 1000) {
+      write();
+      return;
+    }
+    persistTimerRef.current = setTimeout(write, 1000);
+    return () => {
+      if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+      persistTimerRef.current = null;
+    };
   }, [storeKey, questions, answers, marks, attempts, unknown, deadline, mode, submitted, started]);
+  // Flush trailing throttled state on unmount (navigation away mid-paper).
+  useEffect(() => {
+    return () => {
+      const pending = persistRef.current;
+      if (!pending) return;
+      persistRef.current = null;
+      try {
+        sessionStorage.setItem(pending.key, JSON.stringify(pending.payload));
+      } catch {
+        // Quota/private mode: nothing to resume.
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;

@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
@@ -72,14 +72,55 @@ function HsaInner() {
     return () => clearTimeout(t);
   }, [curExpired, sections, cur]);
 
+  // Throttled persist: per-pick answers would otherwise rewrite the full
+  // paper on every selection. Writes at most once per second, immediately
+  // when all sections lock, and flushes trailing state on unmount.
+  const persistRef = useRef<{ key: string; payload: { sections: HSection[]; cur: number; deadlines: number[]; picked: number[][]; marks: Mark[][] } } | null>(null);
+  const lastPersistRef = useRef(0);
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!storeKey || !sections) return;
-    try {
-      sessionStorage.setItem(storeKey, JSON.stringify({ sections, cur, deadlines, picked, marks }));
-    } catch {
-      // Quota/private mode: the exam still works, just not resumable.
+    persistRef.current = { key: storeKey, payload: { sections, cur, deadlines, picked, marks } };
+    const write = () => {
+      const pending = persistRef.current;
+      if (!pending) return;
+      persistRef.current = null;
+      lastPersistRef.current = Date.now();
+      try {
+        sessionStorage.setItem(pending.key, JSON.stringify(pending.payload));
+      } catch {
+        // Quota/private mode: the exam still works, just not resumable.
+      }
+    };
+    if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = null;
+    if (allDone) {
+      write();
+      return;
     }
-  }, [storeKey, sections, cur, deadlines, picked, marks]);
+    if (Date.now() - lastPersistRef.current >= 1000) {
+      write();
+      return;
+    }
+    persistTimerRef.current = setTimeout(write, 1000);
+    return () => {
+      if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+      persistTimerRef.current = null;
+    };
+  }, [storeKey, sections, cur, deadlines, picked, marks, allDone]);
+  // Flush trailing throttled state on unmount (navigation away mid-paper).
+  useEffect(() => {
+    return () => {
+      const pending = persistRef.current;
+      if (!pending) return;
+      persistRef.current = null;
+      try {
+        sessionStorage.setItem(pending.key, JSON.stringify(pending.payload));
+      } catch {
+        // Quota/private mode: nothing to resume.
+      }
+    };
+  }, []);
 
   function chooseP3(choice: string) {
     const wantDay = /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : todayStr();
