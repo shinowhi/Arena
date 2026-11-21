@@ -12,8 +12,12 @@ import BossAvatar from "@/components/BossAvatar";
 import BossIntro from "@/components/BossIntro";
 import Onboarding from "@/components/education/Onboarding";
 import RaidFeed from "@/components/RaidFeed";
-import ShareCard from "@/components/ShareCard";
+import dynamic from "next/dynamic";
 import CharRig from "@/components/CharRig";
+
+// Victory-gated: only mounts on the DEAD screen, so keep it out of the
+// initial fight bundle (client-only: canvas + navigator.share).
+const ShareCard = dynamic(() => import("@/components/ShareCard"), { ssr: false });
 import { DEFAULT_AVATAR, loadAvatar, skillOf, type AvatarSpec } from "@/lib/game/avatar";
 
 type BossView = {

@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
@@ -73,17 +73,58 @@ function PaperInner() {
 
   // Persist exam progress so a reload resumes the same paper and clock
   // instead of forging a fresh one. Marks are display-only here.
+  // Throttled: per-keystroke answers would otherwise rewrite the full paper
+  // on every keypress. Writes at most once per second, immediately when the
+  // paper locks, and flushes trailing state on unmount.
+  const persistRef = useRef<{ key: string; payload: { questions: PQ[]; answers: string[]; marks: Mark[]; deadline: number } } | null>(null);
+  const lastPersistRef = useRef(0);
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!exam || !skill || !questions) return;
-    try {
-      sessionStorage.setItem(
-        `arena_exam_v1:${skill}`,
-        JSON.stringify({ questions, answers, marks, deadline }),
-      );
-    } catch {
-      // Quota/private mode: the exam still works, just not resumable.
+    persistRef.current = {
+      key: `arena_exam_v1:${skill}`,
+      payload: { questions, answers, marks, deadline },
+    };
+    const write = () => {
+      const pending = persistRef.current;
+      if (!pending) return;
+      persistRef.current = null;
+      lastPersistRef.current = Date.now();
+      try {
+        sessionStorage.setItem(pending.key, JSON.stringify(pending.payload));
+      } catch {
+        // Quota/private mode: the exam still works, just not resumable.
+      }
+    };
+    if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = null;
+    if (locked) {
+      write();
+      return;
     }
-  }, [exam, skill, questions, answers, marks, deadline]);
+    if (Date.now() - lastPersistRef.current >= 1000) {
+      write();
+      return;
+    }
+    persistTimerRef.current = setTimeout(write, 1000);
+    return () => {
+      if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+      persistTimerRef.current = null;
+    };
+  }, [exam, skill, questions, answers, marks, deadline, locked]);
+  // Flush trailing throttled state on unmount (navigation away mid-paper).
+  useEffect(() => {
+    return () => {
+      const pending = persistRef.current;
+      if (!pending) return;
+      persistRef.current = null;
+      try {
+        sessionStorage.setItem(pending.key, JSON.stringify(pending.payload));
+      } catch {
+        // Quota/private mode: nothing to resume.
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;

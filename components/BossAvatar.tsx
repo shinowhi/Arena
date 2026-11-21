@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 const ART: Record<string, string> = {
   COMMON: "/art/boss-common.png",
   ELITE: "/art/boss-elite.png",
@@ -5,6 +7,7 @@ const ART: Record<string, string> = {
 };
 
 // Generated boss art (muse-image). Mood via CSS filter so callers stay unchanged.
+// Static public assets at a fixed size: trivially safe for next/image.
 export default function BossAvatar({
   pct,
   rarity = "COMMON",
@@ -17,7 +20,7 @@ export default function BossAvatar({
   const dead = pct <= 0;
   const hurt = !dead && pct <= 50;
   return (
-    <img
+    <Image
       src={ART[rarity] ?? ART.COMMON}
       alt={dead ? "boss đã bị hạ" : hurt ? "boss đang yếu máu" : "boss"}
       width={size}

@@ -7,8 +7,12 @@ import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
 import { HeroStatus } from "@/components/ui/Hero";
 import CharRig from "@/components/CharRig";
-import AvatarBuilder from "@/components/AvatarBuilder";
+import dynamic from "next/dynamic";
 import BossAvatar from "@/components/BossAvatar";
+
+// Mode-gated modal: only needed after the user opens the builder, so keep
+// it out of the initial bundle (client-only modal).
+const AvatarBuilder = dynamic(() => import("@/components/AvatarBuilder"), { ssr: false });
 import { DEFAULT_AVATAR, loadAvatar, saveAvatar, type AvatarSpec } from "@/lib/game/avatar";
 
 type BossCard = {

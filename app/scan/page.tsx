@@ -3,9 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import RaidBanner from "@/components/raid/RaidBanner";
-import DiagnosisReveal from "@/components/DiagnosisReveal";
+import dynamic from "next/dynamic";
 import Onboarding from "@/components/education/Onboarding";
-import ScreenCapture from "@/components/ScreenCapture";
+
+// Mode-gated: the capture UI only mounts after the user asks for it, and the
+// reveal only after a result exists — keep both out of the initial bundle.
+const DiagnosisReveal = dynamic(() => import("@/components/DiagnosisReveal"), { ssr: false });
+const ScreenCapture = dynamic(() => import("@/components/ScreenCapture"), { ssr: false });
 import LifeBatch, { type LifeJob } from "@/components/LifeBatch";
 import { recordRecentScan, makeThumb } from "@/lib/game/recent-scans";
 import { prepareUploadImage, readApiError, readApiJson } from "@/lib/scan/image-prep";

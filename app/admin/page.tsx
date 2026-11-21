@@ -80,8 +80,25 @@ async function loadDashboard(): Promise<{
       .gte("created_at", since);
     return r.error ? null : (r.count ?? 0);
   }
+  // VIP inventory is independent of the funnel counts: start it before the
+  // counts so all queries fly concurrently (same fail-soft semantics).
+  let codesPromise: Promise<VipCode[] | null>;
+  try {
+    // Promise.resolve assimilates the PostgREST thenable into a real Promise.
+    codesPromise = Promise.resolve(createServiceClient().rpc("admin_list_codes")).then(
+      (r) => (!r.error && Array.isArray(r.data) ? (r.data as VipCode[]) : null),
+      () => null,
+    );
+  } catch {
+    codesPromise = Promise.resolve(null);
+  }
+  // Both windows per event are independent: fetch them concurrently too
+  // (previously the 30d count waited on the 7d count per event).
   const pairs = await Promise.all(
-    EVENTS.map(async (e) => [e, await count(e, since7), await count(e, since30)] as const),
+    EVENTS.map(async (e) => {
+      const [a, b] = await Promise.all([count(e, since7), count(e, since30)]);
+      return [e, a, b] as const;
+    }),
   );
   const missing = pairs.some(([, a, b]) => a === null || b === null);
   const c7 = new Map(pairs.map(([e, a]) => [e, a ?? 0]));
@@ -101,13 +118,7 @@ async function loadDashboard(): Promise<{
   let codes: VipCode[] = [];
   let vipMissing = false;
   {
-    let rows: VipCode[] | null = null;
-    try {
-      const r = await createServiceClient().rpc("admin_list_codes");
-      if (!r.error && Array.isArray(r.data)) rows = r.data as VipCode[];
-    } catch {
-      rows = null;
-    }
+    const rows = await codesPromise;
     if (!rows) vipMissing = true;
     else codes = rows;
   }
