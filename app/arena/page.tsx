@@ -206,11 +206,11 @@ export default function ArenaPage() {
               onClick={copyInvite}
               disabled={!playerId}
               title="Cả hai cùng +50 XP"
-              className="arena-btn-ghost rounded-full px-4 py-2 text-sm font-medium text-zinc-200 disabled:opacity-40"
+              className="arena-btn-ghost min-h-[44px] rounded-full px-4 py-2 text-sm font-medium text-zinc-200 disabled:opacity-40"
             >
               {copied ? "Đã chép link!" : "Mời bạn bè"}
             </button>
-            <Link href="/scan" className="arena-btn-ghost rounded-full px-4 py-2 text-sm font-medium text-zinc-200">
+            <Link href="/scan" className="arena-btn-ghost inline-flex min-h-[44px] items-center rounded-full px-4 py-2 text-sm font-medium text-zinc-200">
               + Quét
             </Link>
           </div>
@@ -348,7 +348,7 @@ export default function ArenaPage() {
         </div>
       )}
       <div className="sticky bottom-20 z-10 flex justify-center md:bottom-6">
-        <Link href="/scan" className="arena-btn-primary rounded-full px-6 py-2.5 text-sm font-bold text-white">
+        <Link href="/scan" className="arena-btn-primary inline-flex min-h-[44px] items-center rounded-full px-6 py-2.5 text-sm font-bold text-white">
           + Quét bài mới
         </Link>
       </div>

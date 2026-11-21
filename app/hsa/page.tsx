@@ -121,6 +121,23 @@ function HsaInner() {
       }
     };
   }, []);
+  // Same flush on pagehide (reload/tab-close): React unmount cleanups do NOT
+  // run there, and a reload inside the ~1s throttle window would otherwise
+  // lose trailing answers — the exact resume case this persist exists for.
+  useEffect(() => {
+    const flush = () => {
+      const pending = persistRef.current;
+      if (!pending) return;
+      persistRef.current = null;
+      try {
+        sessionStorage.setItem(pending.key, JSON.stringify(pending.payload));
+      } catch {
+        // Quota/private mode: nothing to resume.
+      }
+    };
+    window.addEventListener("pagehide", flush);
+    return () => window.removeEventListener("pagehide", flush);
+  }, []);
 
   function chooseP3(choice: string) {
     const wantDay = /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : todayStr();

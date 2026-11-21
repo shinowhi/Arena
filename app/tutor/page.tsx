@@ -267,7 +267,7 @@ function TutorInner() {
             type="button"
             onClick={() => void newThread()}
             disabled={creating}
-            className="arena-btn-primary mt-3 w-full rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
+            className="arena-btn-primary mt-3 min-h-[44px] w-full rounded-full px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
           >
             {creating ? "Đang tạo…" : "+ Đoạn mới (VIP)"}
           </button>

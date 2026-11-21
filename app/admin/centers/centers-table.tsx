@@ -115,7 +115,7 @@ export default function CentersTable({
                       type="button"
                       disabled={busy === c.id}
                       onClick={() => setStatus(c.id, s)}
-                      className="relative rounded-lg bg-zinc-700 px-2 py-1 text-xs font-bold text-zinc-100 after:absolute after:-inset-2 after:content-[''] hover:bg-zinc-600 disabled:opacity-50"
+                      className="relative rounded-lg bg-zinc-700 px-2 py-1 text-xs font-bold text-zinc-100 after:absolute after:-inset-3 after:content-[''] hover:bg-zinc-600 disabled:opacity-50"
                     >
                       {STATUS_LABEL[s] ?? s}
                     </button>

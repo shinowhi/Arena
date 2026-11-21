@@ -315,7 +315,7 @@ function OrdersList() {
   }, [bump]);
   if (loadError) {
     return (
-      <section role="alert" className="mt-6 rounded-2xl border border-red-800 bg-red-950/40 p-5 text-center">
+      <div role="alert" className="mt-6 rounded-2xl border border-red-800 bg-red-950/40 p-5 text-center">
         <p className="text-sm text-zinc-300">Không tải được đơn hàng — kiểm tra mạng rồi thử lại nhé.</p>
         <button
           type="button"
@@ -328,7 +328,7 @@ function OrdersList() {
         >
           Thử lại
         </button>
-      </section>
+      </div>
     );
   }
   if (orders === null) return <p role="status" className="text-sm text-zinc-500">Đang tải đơn hàng…</p>;

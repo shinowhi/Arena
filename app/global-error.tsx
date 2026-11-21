@@ -35,27 +35,45 @@ export default function GlobalError({ reset }: { reset: () => void }) {
             Có lỗi nghiêm trọng
           </h1>
           <p style={{ fontSize: 14, color: "#a1a1aa", lineHeight: 1.6 }}>
-            BossLearn gặp lỗi không gỡ được. Bấm thử lại để tải lại trang —
-            tiến độ đã lưu của bạn vẫn còn nguyên.
+            BossLearn gặp lỗi không gỡ được. Thử vẽ lại trang — tiến độ đã lưu
+            của bạn vẫn còn nguyên. Nếu vẫn lỗi, về đấu trường.
           </p>
-          <button
-            type="button"
-            onClick={reset}
-            style={{
-              marginTop: 8,
-              minHeight: 48,
-              border: 0,
-              borderRadius: 9999,
-              padding: "10px 28px",
-              fontSize: 14,
-              fontWeight: 700,
-              color: "#fff",
-              background: "linear-gradient(180deg, #ef4444, #b91c1c)",
-              cursor: "pointer",
-            }}
-          >
-            Tải lại
-          </button>
+          <div style={{ marginTop: 8, display: "flex", gap: 12, justifyContent: "center" }}>
+            <button
+              type="button"
+              onClick={reset}
+              style={{
+                minHeight: 48,
+                border: 0,
+                borderRadius: 9999,
+                padding: "10px 28px",
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#fff",
+                background: "linear-gradient(180deg, #ef4444, #b91c1c)",
+                cursor: "pointer",
+              }}
+            >
+              Thử lại
+            </button>
+            <a
+              href="/arena"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                minHeight: 48,
+                borderRadius: 9999,
+                padding: "10px 28px",
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#e4e4e7",
+                border: "1px solid #3f3f46",
+                textDecoration: "none",
+              }}
+            >
+              Về đấu trường
+            </a>
+          </div>
         </main>
       </body>
     </html>

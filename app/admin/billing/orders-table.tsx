@@ -98,7 +98,7 @@ export default function OrdersTable({ orders }: { orders: PendingOrder[] }) {
                   type="button"
                   disabled={busy === o.id}
                   onClick={() => decide(o.id, "approve")}
-                  className="arena-btn-primary relative rounded-lg px-3 py-1 text-xs font-bold text-white after:absolute after:-inset-2 after:content-[''] disabled:opacity-50"
+                  className="arena-btn-primary relative rounded-lg px-3 py-1 text-xs font-bold text-white after:absolute after:-inset-3 after:content-[''] disabled:opacity-50"
                 >
                   Duyệt
                 </button>{" "}
@@ -106,7 +106,7 @@ export default function OrdersTable({ orders }: { orders: PendingOrder[] }) {
                   type="button"
                   disabled={busy === o.id}
                   onClick={() => decide(o.id, "reject")}
-                  className="relative rounded-lg bg-zinc-700 px-3 py-1 text-xs font-bold text-zinc-100 after:absolute after:-inset-2 after:content-[''] hover:bg-zinc-600 disabled:opacity-50"
+                  className="relative rounded-lg bg-zinc-700 px-3 py-1 text-xs font-bold text-zinc-100 after:absolute after:-inset-3 after:content-[''] hover:bg-zinc-600 disabled:opacity-50"
                 >
                   Từ chối
                 </button>
