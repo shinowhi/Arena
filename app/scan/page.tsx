@@ -433,7 +433,7 @@ export default function ScanPage() {
                 switchMode(i === 0 ? "exam" : "life"),
               )
             }
-            className={`rounded-full px-5 py-1.5 text-sm font-medium transition-colors ${
+            className={`inline-flex min-h-[44px] items-center rounded-full px-5 py-1.5 text-sm font-medium transition-colors ${
               mode === m ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
@@ -454,7 +454,7 @@ export default function ScanPage() {
             }}
             onClick={() => setSubject(s)}
             onKeyDown={(e) => moveInGroup(e, idx, arr, subjectRefs, (i) => setSubject(arr[i]))}
-            className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${subject === s ? "border-emerald-400 bg-emerald-400/10 text-emerald-300" : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"}`}
+            className={`inline-flex min-h-[44px] items-center rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${subject === s ? "border-emerald-400 bg-emerald-400/10 text-emerald-300" : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"}`}
           >
             {SUBJECT_LABEL[s]}
           </button>

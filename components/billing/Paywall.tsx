@@ -43,7 +43,7 @@ export default function Paywall({ reason = "paywall" }: { reason?: Reason }) {
         </div>
         <Link
           href="/billing"
-          className="rounded-lg bg-amber-500 px-5 py-2 text-center text-sm font-bold text-black transition-colors hover:bg-amber-400"
+          className="arena-btn-primary inline-flex min-h-[44px] items-center justify-center rounded-lg px-5 py-2 text-center text-sm font-bold text-white"
         >
           Xem các gói
         </Link>
@@ -116,13 +116,31 @@ function VipBadge() {
 
 function PlansGrid({
   plans,
+  loadError,
+  onRetry,
   selected,
   onSelect,
 }: {
   plans: PlanRow[] | null;
+  loadError: boolean;
+  onRetry: () => void;
   selected: string;
   onSelect: (code: string) => void;
 }) {
+  if (loadError) {
+    return (
+      <div role="alert" className="rounded-xl border border-red-800 bg-red-950/40 p-4 text-center">
+        <p className="text-sm text-zinc-300">Không tải được các gói — kiểm tra mạng rồi thử lại nhé.</p>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="arena-btn-ghost mt-2 inline-flex min-h-[44px] items-center rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
   if (plans === null) {
     return <p role="status" className="text-sm text-zinc-500">Đang tải các gói…</p>;
   }
@@ -239,7 +257,7 @@ function OrderForm({
         <button
           type="submit"
           disabled={busy || !planCode}
-          className="mt-2 rounded-lg bg-amber-500 px-5 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
+          className="arena-btn-primary mt-2 inline-flex min-h-[44px] items-center justify-center rounded-lg px-5 py-2 text-sm font-bold text-white disabled:opacity-50"
         >
           {busy ? "Đang tạo đơn hàng…" : "Tạo đơn hàng"}
         </button>
@@ -274,20 +292,45 @@ function OrderForm({
 
 function OrdersList() {
   const [orders, setOrders] = useState<OrderRow[] | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [bump, setBump] = useState(0);
   useEffect(() => {
     let live = true;
     fetch("/api/billing/orders")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("orders failed");
+        return r.json();
+      })
       .then((d) => {
-        if (live) setOrders(Array.isArray((d as { orders?: unknown }).orders) ? (d as { orders: OrderRow[] }).orders : []);
+        if (!live) return;
+        setLoadError(false);
+        setOrders(Array.isArray((d as { orders?: unknown }).orders) ? (d as { orders: OrderRow[] }).orders : []);
       })
       .catch(() => {
-        if (live) setOrders([]);
+        if (live) setLoadError(true);
       });
     return () => {
       live = false;
     };
-  }, []);
+  }, [bump]);
+  if (loadError) {
+    return (
+      <section role="alert" className="mt-6 rounded-2xl border border-red-800 bg-red-950/40 p-5 text-center">
+        <p className="text-sm text-zinc-300">Không tải được đơn hàng — kiểm tra mạng rồi thử lại nhé.</p>
+        <button
+          type="button"
+          onClick={() => {
+            setLoadError(false);
+            setOrders(null);
+            setBump((b) => b + 1);
+          }}
+          className="arena-btn-ghost mt-2 inline-flex min-h-[44px] items-center rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white"
+        >
+          Thử lại
+        </button>
+      </section>
+    );
+  }
   if (orders === null) return <p role="status" className="text-sm text-zinc-500">Đang tải đơn hàng…</p>;
   if (orders.length === 0) return null;
   return (
@@ -323,26 +366,38 @@ function OrdersList() {
 
 function BillingPanels() {
   const [plans, setPlans] = useState<PlanRow[] | null>(null);
+  const [plansError, setPlansError] = useState(false);
+  const [plansBump, setPlansBump] = useState(0);
   const [selected, setSelected] = useState("");
   useEffect(() => {
     let live = true;
     fetch("/api/billing/plans")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("plans failed");
+        return r.json();
+      })
       .then((d) => {
         if (!live) return;
         const list = Array.isArray((d as { plans?: unknown }).plans)
           ? (d as { plans: PlanRow[] }).plans
           : [];
+        setPlansError(false);
         setPlans(list);
         setSelected((s) => s || list.find((p) => p.code === "bundle_monthly")?.code || list[0]?.code || "");
       })
       .catch(() => {
-        if (live) setPlans([]);
+        if (live) setPlansError(true);
       });
     return () => {
       live = false;
     };
-  }, []);
+  }, [plansBump]);
+
+  function retryPlans() {
+    setPlansError(false);
+    setPlans(null);
+    setPlansBump((b) => b + 1);
+  }
 
   return (
     <div className="space-y-6">
@@ -350,7 +405,7 @@ function BillingPanels() {
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
         <h2 className="text-sm font-semibold text-zinc-200">Các gói</h2>
         <div className="mt-3">
-          <PlansGrid plans={plans} selected={selected} onSelect={setSelected} />
+          <PlansGrid plans={plans} loadError={plansError} onRetry={retryPlans} selected={selected} onSelect={setSelected} />
         </div>
         {plans && plans.length > 0 && (
           <OrderForm plans={plans} planCode={selected} setPlanCode={setSelected} />

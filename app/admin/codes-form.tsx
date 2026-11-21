@@ -96,7 +96,7 @@ export default function CodesForm() {
         <button
           type="submit"
           disabled={busy}
-          className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
+          className="arena-btn-primary inline-flex min-h-[44px] items-center justify-center rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
         >
           {busy ? "Đang tạo…" : "Tạo mã"}
         </button>

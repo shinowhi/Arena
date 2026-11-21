@@ -41,7 +41,7 @@ export default function DiaryPage() {
         count={entries ? entries.filter((e) => e.patched).length : "…"}
         label={entries ? `gốc đã vá trên ${entries.length} trận đã đánh` : "Đang mở nhật ký…"}
         action={
-          <Link href="/scan" className="arena-btn-ghost rounded-full px-4 py-1.5 text-xs font-semibold text-zinc-200">
+          <Link href="/scan" className="arena-btn-ghost inline-flex min-h-[44px] items-center rounded-full px-4 py-1.5 text-xs font-semibold text-zinc-200">
             Quét bài mới
           </Link>
         }

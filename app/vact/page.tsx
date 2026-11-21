@@ -264,7 +264,7 @@ function VactInner() {
                 aria-selected={tab === a}
                 onClick={() => setTab(a)}
                 onKeyDown={(e) => onTabKeyDown(e, a)}
-                className={`rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${tab === a ? "arena-btn-primary text-white" : "arena-btn-ghost text-zinc-300 hover:text-white"}`}
+                className={`inline-flex min-h-[44px] items-center rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${tab === a ? "arena-btn-primary text-white" : "arena-btn-ghost text-zinc-300 hover:text-white"}`}
               >
                 {s.name}
               </button>

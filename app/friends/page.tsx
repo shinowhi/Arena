@@ -270,7 +270,7 @@ function FriendsInner() {
               <button
                 onClick={() => void copyInvite()}
                 disabled={!code || needsMigration}
-                className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
+                className="arena-btn-primary inline-flex min-h-[44px] items-center rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
               >
                 Chép link mời
               </button>
@@ -291,19 +291,22 @@ function FriendsInner() {
             </p>
           )}
         </div>
-        <div className="mt-4 flex gap-2">
+        <label htmlFor="friend-add-code" className="mt-4 block text-xs text-zinc-400">
+          Thêm bạn bằng mã
+        </label>
+        <div className="mt-1 flex gap-2">
           <input
+            id="friend-add-code"
             value={addCode}
             onChange={(e) => setAddCode(e.target.value.toUpperCase())}
             placeholder="Nhập mã bạn bè"
-            aria-label="Mã bạn bè"
             maxLength={16}
             className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm tracking-widest text-zinc-100"
           />
           <button
             onClick={() => void run("add", "/api/social/friends", { code: addCode }, "Đã gửi lời mời kết bạn.")}
             disabled={busy !== "" || needsMigration || !addCode.trim()}
-            className="shrink-0 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-bold text-black hover:bg-emerald-400 disabled:opacity-50"
+            className="arena-btn-primary inline-flex min-h-[44px] shrink-0 items-center rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
           >
             {busy === "add" ? "Đang thêm…" : "Thêm"}
           </button>
@@ -331,7 +334,7 @@ function FriendsInner() {
             }}
             onClick={() => setTab(t.id)}
             onKeyDown={(e) => onTabKeyDown(e, idx)}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+            className={`inline-flex min-h-[44px] shrink-0 items-center rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
               tab === t.id ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
@@ -352,21 +355,21 @@ function FriendsInner() {
               <span className="min-w-0 flex-1 truncate text-sm text-zinc-100">{f.label}</span>
               <Link
                 href={`/chat?with=${f.peer_id}`}
-                className="rounded-md bg-sky-500 px-3 py-1 text-xs font-bold text-black hover:bg-sky-400"
+                className="arena-btn-ghost inline-flex min-h-[44px] items-center justify-center rounded-md px-3 py-1 text-xs font-bold text-zinc-200"
               >
                 Nhắn tin
               </Link>
               <button
                 onClick={() => void run(`rm-${f.id}`, "/api/social/friends", { friend_id: f.peer_id }, "Đã xóa bạn.", "DELETE")}
                 disabled={busy !== ""}
-                className="rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
               >
                 Xóa
               </button>
               <button
                 onClick={() => void run(`bl-${f.id}`, "/api/social/friends/block", { player_id: f.peer_id, action: "block" }, "Đã chặn người chơi.")}
                 disabled={busy !== ""}
-                className="rounded-md border border-zinc-700 px-3 py-1 text-xs text-red-300 hover:bg-zinc-800 disabled:opacity-50"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-zinc-700 px-3 py-1 text-xs text-red-300 hover:bg-zinc-800 disabled:opacity-50"
               >
                 Chặn
               </button>
@@ -383,14 +386,14 @@ function FriendsInner() {
                   <button
                     onClick={() => void run(`ac-${r.id}`, "/api/social/friends/respond", { request_id: r.id, action: "accept" }, "Đã kết bạn.")}
                     disabled={busy !== ""}
-                    className="rounded-md bg-emerald-500 px-3 py-1 text-xs font-bold text-black hover:bg-emerald-400 disabled:opacity-50"
+                    className="arena-btn-primary inline-flex min-h-[44px] items-center justify-center rounded-md px-3 py-1 text-xs font-bold text-white disabled:opacity-50"
                   >
                     Đồng ý
                   </button>
                   <button
                     onClick={() => void run(`dc-${r.id}`, "/api/social/friends/respond", { request_id: r.id, action: "decline" }, "Đã từ chối.")}
                     disabled={busy !== ""}
-                    className="rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
+                    className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
                   >
                     Từ chối
                   </button>
@@ -468,7 +471,7 @@ function FriendsInner() {
             void run("duel", "/api/social/challenges", { to: duelTo, boss_id: duelBoss }, "Đã gửi lời thách đấu.");
           }}
           disabled={busy !== "" || needsMigration || !duelTo || !duelBoss}
-          className="mt-3 rounded-lg bg-violet-500 px-4 py-2 text-sm font-bold text-black hover:bg-violet-400 disabled:opacity-50"
+          className="arena-btn-primary mt-3 inline-flex min-h-[44px] items-center rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
         >
           {busy === "duel" ? "Đang thách đấu…" : "Thách đấu"}
         </button>
@@ -484,14 +487,14 @@ function FriendsInner() {
                     <button
                       onClick={() => void run(`da-${d.id}`, "/api/social/challenges/respond", { challenge_id: d.id, action: "accept" }, "Đã nhận đấu — chúc may mắn!")}
                       disabled={busy !== ""}
-                      className="rounded-md bg-emerald-500 px-3 py-1 text-xs font-bold text-black hover:bg-emerald-400 disabled:opacity-50"
+                      className="arena-btn-primary inline-flex min-h-[44px] items-center justify-center rounded-md px-3 py-1 text-xs font-bold text-white disabled:opacity-50"
                     >
                       Nhận đấu
                     </button>
                     <button
                       onClick={() => void run(`dd-${d.id}`, "/api/social/challenges/respond", { challenge_id: d.id, action: "decline" }, "Đã từ chối đấu.")}
                       disabled={busy !== ""}
-                      className="rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
+                      className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
                     >
                       Từ chối
                     </button>
@@ -499,7 +502,7 @@ function FriendsInner() {
                 ) : (
                   <span className="text-xs text-zinc-500">{d.status}</span>
                 )}
-                <Link href={d.link} className="rounded-md bg-violet-500 px-3 py-1 text-xs font-bold text-black hover:bg-violet-400">
+                <Link href={d.link} className="arena-btn-primary inline-flex min-h-[44px] items-center justify-center rounded-md px-3 py-1 text-xs font-bold text-white">
                   Đánh →
                 </Link>
               </li>
@@ -513,7 +516,7 @@ function FriendsInner() {
                 <span className="min-w-0 flex-1 truncate text-zinc-400">
                   Bạn → {d.peer} ({d.skill}) — {d.status}
                 </span>
-                <Link href={d.link} className="rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-200 hover:bg-zinc-800">
+                <Link href={d.link} className="inline-flex min-h-[44px] items-center justify-center rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-200 hover:bg-zinc-800">
                   Mở boss →
                 </Link>
               </li>
@@ -607,7 +610,7 @@ function FriendsInner() {
             void run("gift", "/api/social/gifts", { to: giftTo, xp_amount: giftXp, item: giftItem }, "Đã gửi quà.");
           }}
           disabled={busy !== "" || needsMigration || !giftTo}
-          className="mt-3 rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
+          className="arena-btn-primary mt-3 inline-flex min-h-[44px] items-center rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
         >
           {busy === "gift" ? "Đang gửi…" : "Tặng quà"}
         </button>
@@ -690,7 +693,7 @@ function FriendsInner() {
             void run("report", "/api/social/report", { reported_id: reportPeer, reason: reportReason, details: reportDetails }, "Đã gửi báo cáo. Cảm ơn bạn đã giữ BossLearn an toàn.");
           }}
           disabled={busy !== "" || needsMigration || !reportPeer}
-          className="mt-3 rounded-lg border border-red-800 bg-red-950/40 px-4 py-2 text-sm font-bold text-red-200 hover:bg-red-900/40 disabled:opacity-50"
+          className="mt-3 inline-flex min-h-[44px] items-center rounded-lg border border-red-800 bg-red-950/40 px-4 py-2 text-sm font-bold text-red-200 hover:bg-red-900/40 disabled:opacity-50"
         >
           {busy === "report" ? "Đang gửi…" : "Gửi báo cáo"}
         </button>

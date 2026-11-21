@@ -212,7 +212,7 @@ function ChatInner() {
               <button
                 onClick={() => void send()}
                 disabled={sending || !draft.trim()}
-                className="shrink-0 rounded-lg bg-sky-500 px-4 py-2 text-sm font-bold text-black hover:bg-sky-400 disabled:opacity-50"
+                className="arena-btn-primary inline-flex min-h-[44px] shrink-0 items-center rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
               >
                 {sending ? "Đang gửi…" : "Gửi"}
               </button>

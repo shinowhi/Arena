@@ -89,7 +89,7 @@ function AssignmentRow({ a, practice }: { a: Assignment; practice: boolean }) {
       {practice && (
         <a
           href={`/drill?skill=${encodeURIComponent(a.skill_tag)}`}
-          className="shrink-0 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-black hover:bg-amber-400"
+          className="arena-btn-ghost inline-flex min-h-[44px] shrink-0 items-center rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200"
         >
           Luyện tập
         </a>
@@ -182,7 +182,7 @@ function Composer({ classId, onPosted }: { classId: string; onPosted: () => void
         <button
           type="submit"
           disabled={busy}
-          className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-50"
+          className="arena-btn-primary inline-flex min-h-[44px] items-center justify-center rounded-lg px-5 py-2 text-sm font-bold text-white disabled:opacity-50"
         >
           {busy ? "Đang đăng…" : "Đăng bài"}
         </button>
@@ -251,7 +251,7 @@ function JoinForm({ compact, onJoined }: { compact?: boolean; onJoined: () => vo
         <button
           type="submit"
           disabled={busy}
-          className="rounded-lg bg-amber-500 px-5 py-2 text-sm font-bold text-black hover:bg-amber-400 disabled:opacity-50"
+          className="arena-btn-primary inline-flex min-h-[44px] items-center justify-center rounded-lg px-5 py-2 text-sm font-bold text-white disabled:opacity-50"
         >
           {busy ? "Đang vào…" : "Vào lớp"}
         </button>
@@ -352,7 +352,7 @@ function CreateForm({ onCreated }: { onCreated: () => void }) {
       <button
         type="submit"
         disabled={busy}
-        className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-500 disabled:opacity-50 sm:self-start"
+        className="arena-btn-primary inline-flex min-h-[44px] items-center justify-center rounded-lg px-5 py-2 text-sm font-bold text-white disabled:opacity-50 sm:self-start"
       >
         {busy ? "Đang tạo…" : "Tạo lớp"}
       </button>

@@ -129,7 +129,7 @@ function ReviewInner() {
         title={<>Chữa bài <span className="arena-title">{day || "…"}</span></>}
         sub="Đáp án của bạn so với đáp án đúng. Chỉ để luyện tập: điểm này không tương đương điểm thi chính thức."
         right={
-          <Link href={backHref} className="arena-btn-ghost shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-zinc-200 transition-colors hover:text-white">
+          <Link href={backHref} className="arena-btn-ghost inline-flex min-h-[44px] shrink-0 items-center rounded-full px-4 py-1.5 text-sm font-bold text-zinc-200 transition-colors hover:text-white">
             Về bài thi
           </Link>
         }
@@ -145,7 +145,7 @@ function ReviewInner() {
           <button
             type="button"
             onClick={() => setRetry((r) => r + 1)}
-            className="arena-btn-ghost mt-3 rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white"
+            className="arena-btn-ghost mt-3 inline-flex min-h-[44px] items-center rounded-full px-5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:text-white"
           >
             Thử lại
           </button>
@@ -162,7 +162,7 @@ function ReviewInner() {
                 aria-selected={tab === a}
                 onClick={() => setTab(a)}
                 onKeyDown={(e) => onTabKeyDown(e, a)}
-                className={`rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${tab === a ? "arena-btn-primary text-white" : "arena-btn-ghost text-zinc-300 hover:text-white"}`}
+                className={`inline-flex min-h-[44px] items-center rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${tab === a ? "arena-btn-primary text-white" : "arena-btn-ghost text-zinc-300 hover:text-white"}`}
               >
                 {s.name}
               </button>
